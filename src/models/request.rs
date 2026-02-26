@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use utoipa::ToSchema;
 
 use crate::models::{
     vegetable::{Region, Season, SoilType, SunExposure, Vegetable},
@@ -25,9 +26,11 @@ mod method_serde {
 }
 
 /// A single HAL-style hyperlink.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Link {
     pub href: String,
+    /// HTTP method to use for this link (e.g. `GET`, `POST`).
+    #[schema(value_type = String, example = "GET")]
     #[serde(with = "method_serde")]
     pub method: Method,
 }
@@ -44,7 +47,7 @@ pub fn link(href: impl Into<String>, method: Method) -> Link {
 }
 
 /// Pagination metadata included in responses that return lists.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagination {
     pub page: usize,
@@ -54,11 +57,18 @@ pub struct Pagination {
 }
 
 /// Generic single-item response envelope.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[aliases(
+    VegetableApiResponse   = ApiResponse<VegetableResponse>,
+    PlanApiResponse        = ApiResponse<PlanResponse>,
+    CompanionsApiResponse  = ApiResponse<CompanionsResponse>
+)]
 pub struct ApiResponse<T> {
     pub payload: T,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
+    /// HAL-style hypermedia links.
+    #[schema(value_type = HashMap<String, Link>)]
     #[serde(rename = "_links")]
     pub links: Links,
 }
@@ -74,11 +84,29 @@ impl<T> ApiResponse<T> {
 }
 
 /// Generic paginated list response envelope.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
+    /// HAL-style hypermedia links.
+    #[schema(value_type = HashMap<String, Link>)]
+    #[serde(rename = "_links")]
+    pub links: Links,
+    pub pagination: Pagination,
+}
+
+/// OpenAPI schema for the paginated vegetables list.
+/// Uses the concrete alias `VegetableApiResponse` so utoipa emits a
+/// resolvable `$ref` for each item instead of the bare generic `ApiResponse`.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VegetableListResponse {
+    pub payload: Vec<VegetableApiResponse>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<String>,
+    /// HAL-style hypermedia links.
+    #[schema(value_type = HashMap<String, Link>)]
     #[serde(rename = "_links")]
     pub links: Links,
     pub pagination: Pagination,
@@ -96,25 +124,24 @@ impl<T> PaginatedResponse<T> {
 }
 
 /// Vegetable domain struct for use in responses.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct VegetableResponse {
     #[serde(flatten)]
     pub vegetable: Vegetable,
 }
 
 /// A single cell in the request layout grid.
-/// - `null` JSON → `Free` — plantable, empty
-/// - `"tomato"` JSON → `Planted` — pre-placed vegetable
-/// - `true` JSON → `Blocked` — non-plantable zone; `false` is treated as free
-#[derive(Debug, Clone, Deserialize)]
+/// Cell values: `null` → free/plantable, `"vegetable-id"` → pre-planted, `true` → blocked non-plantable zone.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(untagged)]
+#[schema(example = json!(null))]
 pub enum LayoutCell {
     Planted(String),
     Blocked(bool),
     Free(()),
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "PascalCase")]
 pub enum Level {
     Beginner,
@@ -122,7 +149,7 @@ pub enum Level {
 }
 
 /// A single preference entry with an optional desired cell count.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferenceEntry {
     pub id: String,
@@ -131,7 +158,7 @@ pub struct PreferenceEntry {
     pub quantity: Option<u32>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
     pub season: Season,
@@ -147,7 +174,7 @@ pub struct PlanRequest {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlannedCell {
     pub id: Option<String>,
@@ -157,7 +184,7 @@ pub struct PlannedCell {
     pub blocked: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanResponse {
     pub grid: Matrix<PlannedCell>,
@@ -167,7 +194,7 @@ pub struct PlanResponse {
     pub warnings: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CompanionsResponse {
     pub id: String,
@@ -176,9 +203,15 @@ pub struct CompanionsResponse {
     pub bad: Vec<CompanionInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CompanionInfo {
     pub id: String,
     pub name: String,
+}
+
+/// Error response returned for 4xx responses.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ErrorResponse {
+    pub error: String,
 }

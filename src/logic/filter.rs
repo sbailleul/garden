@@ -126,7 +126,10 @@ mod tests {
     fn test_filter_preferences_boost() {
         let db = get_all_vegetables();
         let req = PlanRequest {
-            preferences: Some(vec![PreferenceEntry { id: "basil".into(), quantity: None }]),
+            preferences: Some(vec![PreferenceEntry {
+                id: "basil".into(),
+                quantity: None,
+            }]),
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);

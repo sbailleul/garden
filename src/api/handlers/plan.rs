@@ -1,4 +1,7 @@
 use actix_web::{http::Method, post, web, HttpResponse, Responder};
+// Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
+#[allow(unused_imports)]
+use crate::models::request::{ErrorResponse, PlanApiResponse};
 
 use crate::{
     data::vegetables::get_all_vegetables,
@@ -8,6 +11,20 @@ use crate::{
 
 /// POST /api/plan
 /// Generates an optimised garden plan based on the provided constraints.
+#[utoipa::path(
+    post,
+    path = "/api/plan",
+    tag = "plan",
+    request_body(
+        content = PlanRequest,
+        description = "Planning constraints and grid layout",
+        content_type = "application/json"
+    ),
+    responses(
+        (status = 200, description = "Optimised garden plan",        body = PlanApiResponse),
+        (status = 400, description = "Validation error or bad JSON", body = ErrorResponse),
+    )
+)]
 #[post("/plan")]
 pub async fn post_plan(body: web::Json<PlanRequest>) -> impl Responder {
     let request = body.into_inner();
