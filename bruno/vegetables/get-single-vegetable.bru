@@ -16,6 +16,8 @@ assert {
   res.status: eq 200
   res.body.payload.id: isDefined
   res.body.payload.name: isDefined
+  res.body.payload.daysToHarvest: isDefined
+  res.body.payload.lifecycle: isDefined
   res.body._links: isDefined
 }
 
@@ -27,6 +29,11 @@ tests {
   test("response has id and name", function() {
     expect(res.body.payload.id).to.equal("tomato");
     expect(res.body.payload).to.have.property("name");
+  });
+
+  test("response has daysToHarvest and lifecycle", function() {
+    expect(res.body.payload.daysToHarvest).to.be.a("number").that.is.gt(0);
+    expect(res.body.payload.lifecycle).to.be.oneOf(["Annual", "Biennial", "Perennial"]);
   });
 
   test("_links.self points to this vegetable", function() {

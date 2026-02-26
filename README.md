@@ -9,7 +9,7 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **HATEOAS** — every response includes a `_links` object (HAL convention) with hyperlinks to related resources
 - **Grid-based layout optimisation** — greedy placement algorithm that maximises companion planting scores (30 cm per cell)
 - **Companion planting** — `+2` per good-companion neighbour, `−3` per bad-companion neighbour
-- **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, companions, beginner-friendliness)
+- **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
 - **Filtering** — by season, sun, soil, region and skill level (`Beginner` / `Expert`)
@@ -26,7 +26,7 @@ src/
   lib.rs              # library crate root
   main.rs             # binary entry point — binds to 0.0.0.0:8080
   models/
-    vegetable.rs      # Vegetable struct + enums: Season, SoilType, SunExposure, Region, Category
+    vegetable.rs      # Vegetable struct + enums: Season, SoilType, SunExposure, Region, Category, Lifecycle
     garden.rs         # GardenGrid, Cell (vegetable + blocked flag), PlacedVegetable
     request.rs        # PlanRequest, PlanResponse, PlannedCell, Level, CompanionsResponse, Link DTOs
   data/
@@ -201,6 +201,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `SunExposure` | `FullSun` `PartialShade` `Shade` |
 | `SoilType` | `Clay` `Sandy` `Loamy` `Chalky` `Humus` |
 | `Region` | `Temperate` `Mediterranean` `Oceanic` `Continental` `Mountain` |
+| `Lifecycle` | `Annual` `Biennial` `Perennial` |
 | `Level` | `Beginner` `Expert` |
 
 **Response:**

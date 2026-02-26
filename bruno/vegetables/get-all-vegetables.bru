@@ -48,9 +48,13 @@ tests {
       expect(v.payload).to.have.property("goodCompanions");
       expect(v.payload).to.have.property("badCompanions");
       expect(v.payload).to.have.property("beginnerFriendly");
+      expect(v.payload).to.have.property("daysToHarvest");
+      expect(v.payload).to.have.property("lifecycle");
       expect(v.payload.seasons).to.be.an("array").that.is.not.empty;
       expect(v.payload.goodCompanions).to.be.an("array");
       expect(v.payload.badCompanions).to.be.an("array");
+      expect(v.payload.daysToHarvest).to.be.a("number").that.is.gt(0);
+      expect(v.payload.lifecycle).to.be.oneOf(["Annual", "Biennial", "Perennial"]);
     });
   });
 

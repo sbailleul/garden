@@ -7,7 +7,7 @@ use crate::models::{
         PlannedCell, PreferenceEntry, VegetableApiResponse, VegetableListResponse,
         VegetableResponse,
     },
-    vegetable::{Category, Region, Season, SoilType, SunExposure, Vegetable},
+    vegetable::{Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable},
 };
 
 #[derive(OpenApi)]
@@ -27,7 +27,7 @@ use crate::models::{
     components(
         schemas(
             // Enums
-            Season, SoilType, SunExposure, Region, Category, Level,
+            Season, SoilType, SunExposure, Region, Category, Lifecycle, Level,
             // Vegetable
             Vegetable, VegetableResponse,
             // Plan request

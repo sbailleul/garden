@@ -58,6 +58,18 @@ impl fmt::Display for Category {
     }
 }
 
+/// Plant lifecycle: how many growing seasons the plant lives.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "PascalCase")]
+pub enum Lifecycle {
+    /// Completes its full life cycle in a single growing season.
+    Annual,
+    /// Requires two growing seasons to complete its life cycle.
+    Biennial,
+    /// Lives for three or more years, re-growing each season.
+    Perennial,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Vegetable {
@@ -69,6 +81,9 @@ pub struct Vegetable {
     pub soil_types: Vec<SoilType>,
     pub regions: Vec<Region>,
     pub spacing_cm: u32,
+    /// Approximate number of days from planting/transplanting to first harvest.
+    pub days_to_harvest: u32,
+    pub lifecycle: Lifecycle,
     pub good_companions: Vec<String>,
     pub bad_companions: Vec<String>,
     pub beginner_friendly: bool,
