@@ -10,8 +10,12 @@ pub struct PlacedVegetable {
     pub reason: String,
     /// Number of individual plants that fit in this 30 cm × 30 cm cell.
     pub plants_per_cell: u32,
-    /// How many grid cells this plant occupies per axis (1 for small plants, 2+ for large ones).
+    /// How many grid cells this plant occupies per axis.
     pub span: u32,
+    /// Grid row of the anchor (top-left) cell of this plant’s block.
+    pub anchor_row: usize,
+    /// Grid column of the anchor (top-left) cell of this plant’s block.
+    pub anchor_col: usize,
 }
 
 #[skip_serializing_none]

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 use utoipa::ToSchema;
 
 use crate::models::{
@@ -173,22 +172,97 @@ pub struct PlanRequest {
     pub layout: Matrix<LayoutCell>,
 }
 
-#[skip_serializing_none]
+/// Reference to the anchor (top-left) cell of a multi-cell plant block.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct PlannedCell {
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub reason: Option<String>,
-    /// Number of individual plants that fit in this 30 cm × 30 cm cell
-    /// (e.g. 9 for carrots at 10 cm spacing, 1 for tomatoes at 60 cm spacing).
-    pub plants_per_cell: Option<u32>,
-    /// Number of grid cells this plant occupies horizontally (1 for small plants, 2+ for large ones).
-    pub width_cells: Option<u32>,
-    /// Number of grid cells this plant occupies vertically (equals `widthCells` — spacing is symmetric).
-    pub length_cells: Option<u32>,
-    /// True when the cell is a non-plantable zone (path, alley, etc.).
-    pub blocked: bool,
+pub struct CoveredBy {
+    /// Row index of the anchor cell (0-based).
+    pub row: usize,
+    /// Column index of the anchor cell (0-based).
+    pub col: usize,
+}
+
+/// A cell in the planned garden grid.
+///
+/// Three occupied variants, plus `Empty` and `Blocked`:
+/// - `selfContained` — a plant whose spacing ≤ 30 cm; fits entirely in one cell.
+/// - `overflowing`   — the anchor (top-left) cell of a plant that spans multiple cells.
+/// - `overflowed`    — a continuation cell covered by a neighbouring anchor; carries only a
+///   back-reference so clients can look up the full data from the anchor.
+/// - `empty`         — free, unoccupied, non-blocked cell.
+/// - `blocked`       — non-plantable zone (path, alley, obstacle).
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum PlannedCell {
+    /// A plant that fits entirely within one 30 cm × 30 cm cell.
+    SelfContained {
+        id: String,
+        name: String,
+        reason: String,
+        plants_per_cell: u32,
+    },
+    /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
+    Overflowing {
+        id: String,
+        name: String,
+        reason: String,
+        plants_per_cell: u32,
+        width_cells: u32,
+        length_cells: u32,
+    },
+    /// A continuation cell covered by a multi-cell plant's anchor.
+    /// All plant data lives on the anchor cell; this cell only holds a back-reference.
+    Overflowed {
+        covered_by: CoveredBy,
+    },
+    /// A free, unoccupied, non-blocked cell.
+    Empty,
+    /// A non-plantable zone (path, alley, obstacle).
+    Blocked,
+}
+
+impl PlannedCell {
+    /// Returns the vegetable id if this cell is an anchor (`SelfContained` or `Overflowing`).
+    pub fn id(&self) -> Option<&str> {
+        match self {
+            Self::SelfContained { id, .. } | Self::Overflowing { id, .. } => Some(id),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if this cell carries or is part of a plant placement.
+    pub fn is_placed(&self) -> bool {
+        !matches!(self, Self::Empty | Self::Blocked)
+    }
+
+    /// Returns `true` if this cell is a non-plantable zone.
+    pub fn is_blocked(&self) -> bool {
+        matches!(self, Self::Blocked)
+    }
+
+    /// Returns the `coveredBy` reference for `Overflowed` cells, `None` otherwise.
+    pub fn covered_by(&self) -> Option<&CoveredBy> {
+        match self {
+            Self::Overflowed { covered_by } => Some(covered_by),
+            _ => None,
+        }
+    }
+
+    /// Returns `widthCells` for `Overflowing` anchor cells, `None` otherwise.
+    pub fn width_cells(&self) -> Option<u32> {
+        match self {
+            Self::Overflowing { width_cells, .. } => Some(*width_cells),
+            _ => None,
+        }
+    }
+
+    /// Returns `lengthCells` for `Overflowing` anchor cells, `None` otherwise.
+    pub fn length_cells(&self) -> Option<u32> {
+        match self {
+            Self::Overflowing { length_cells, .. } => Some(*length_cells),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

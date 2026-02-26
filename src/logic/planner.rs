@@ -104,7 +104,9 @@ pub fn plan_garden(
                             name: v.name.clone(),
                             reason: "Present in the existing layout.".into(),
                             plants_per_cell: plants_per_cell(v.spacing_cm),
-                            span: cell_span(v.spacing_cm),
+                            span: 1, // pre-placed cells occupy exactly one cell
+                            anchor_row: r,
+                            anchor_col: c,
                         });
                     } else {
                         warnings.push(format!(
@@ -228,6 +230,8 @@ pub fn plan_garden(
                             reason: reason.clone(),
                             plants_per_cell: ppc,
                             span: span as u32,
+                            anchor_row: r,
+                            anchor_col: c,
                         });
                 }
             }
@@ -299,30 +303,42 @@ fn build_response(
     score: i32,
     warnings: Vec<String>,
 ) -> PlanResponse {
+    use crate::models::request::CoveredBy;
+
     let planned_grid: Matrix<PlannedCell> = grid
         .cells
         .iter()
-        .map(|row| {
+        .enumerate()
+        .map(|(ro, row)| {
             row.iter()
-                .map(|cell| match &cell.vegetable {
-                    Some(v) => PlannedCell {
-                        id: Some(v.id.clone()),
-                        name: Some(v.name.clone()),
-                        reason: Some(v.reason.clone()),
-                        plants_per_cell: Some(v.plants_per_cell),
-                        width_cells: Some(v.span),
-                        length_cells: Some(v.span),
-                        blocked: false,
+                .enumerate()
+                .map(|(co, cell)| match &cell.vegetable {
+                    Some(v) if ro == v.anchor_row && co == v.anchor_col && v.span == 1 => {
+                        PlannedCell::SelfContained {
+                            id: v.id.clone(),
+                            name: v.name.clone(),
+                            reason: v.reason.clone(),
+                            plants_per_cell: v.plants_per_cell,
+                        }
+                    }
+                    Some(v) if ro == v.anchor_row && co == v.anchor_col => {
+                        PlannedCell::Overflowing {
+                            id: v.id.clone(),
+                            name: v.name.clone(),
+                            reason: v.reason.clone(),
+                            plants_per_cell: v.plants_per_cell,
+                            width_cells: v.span,
+                            length_cells: v.span,
+                        }
+                    }
+                    Some(v) => PlannedCell::Overflowed {
+                        covered_by: CoveredBy {
+                            row: v.anchor_row,
+                            col: v.anchor_col,
+                        },
                     },
-                    None => PlannedCell {
-                        id: None,
-                        name: None,
-                        reason: None,
-                        plants_per_cell: None,
-                        width_cells: None,
-                        length_cells: None,
-                        blocked: cell.blocked,
-                    },
+                    None if cell.blocked => PlannedCell::Blocked,
+                    None => PlannedCell::Empty,
                 })
                 .collect()
         })
@@ -406,14 +422,12 @@ mod tests {
         let resp = plan_garden(candidates, &req).unwrap();
         for row in &resp.grid {
             for cell in row {
-                if cell.id.is_some() {
-                    assert!(
-                        cell.reason
-                            .as_deref()
-                            .map(|r: &str| !r.is_empty())
-                            .unwrap_or(false),
-                        "Every placed cell must have a non-empty reason"
-                    );
+                match cell {
+                    PlannedCell::SelfContained { reason, .. }
+                    | PlannedCell::Overflowing { reason, .. } => {
+                        assert!(!reason.is_empty(), "Anchor cell must have a non-empty reason");
+                    }
+                    _ => {}
                 }
             }
         }
@@ -433,7 +447,7 @@ mod tests {
         // Cell [0][0] must still be "tomato"
         let first_cell = &resp.grid[0][0];
         assert_eq!(
-            first_cell.id.as_deref(),
+            first_cell.id(),
             Some("tomato"),
             "Existing cell must be preserved"
         );
@@ -453,10 +467,10 @@ mod tests {
         let mut fennel_pos = None;
         for (r, row) in resp.grid.iter().enumerate() {
             for (c, cell) in row.iter().enumerate() {
-                if cell.id.as_deref() == Some("tomato") {
+                if cell.id() == Some("tomato") {
                     tomato_pos = Some((r, c));
                 }
-                if cell.id.as_deref() == Some("fennel") {
+                if cell.id() == Some("fennel") {
                     fennel_pos = Some((r, c));
                 }
             }
@@ -482,7 +496,7 @@ mod tests {
             .grid
             .iter()
             .flat_map(|r: &Vec<PlannedCell>| r.iter())
-            .all(|c| c.id.is_none());
+            .all(|c| !c.is_placed());
         assert!(all_empty, "Grid must be empty when there are no candidates");
     }
 
@@ -501,25 +515,25 @@ mod tests {
 
         // Blocked cells must carry no vegetable and be flagged
         assert!(
-            resp.grid[0][0].id.is_none(),
+            !resp.grid[0][0].is_placed(),
             "Blocked cell [0][0] must not have a vegetable"
         );
         assert!(
-            resp.grid[0][0].blocked,
+            resp.grid[0][0].is_blocked(),
             "Cell [0][0] must be marked as blocked"
         );
         assert!(
-            resp.grid[1][1].id.is_none(),
+            !resp.grid[1][1].is_placed(),
             "Blocked cell [1][1] must not have a vegetable"
         );
         assert!(
-            resp.grid[1][1].blocked,
+            resp.grid[1][1].is_blocked(),
             "Cell [1][1] must be marked as blocked"
         );
 
         // Non-blocked cells must not be flagged
-        assert!(!resp.grid[0][1].blocked, "Cell [0][1] must not be blocked");
-        assert!(!resp.grid[1][0].blocked, "Cell [1][0] must not be blocked");
+        assert!(!resp.grid[0][1].is_blocked(), "Cell [0][1] must not be blocked");
+        assert!(!resp.grid[1][0].is_blocked(), "Cell [1][0] must not be blocked");
     }
 
     #[test]
@@ -539,7 +553,7 @@ mod tests {
             .grid
             .iter()
             .flat_map(|r: &Vec<PlannedCell>| r.iter())
-            .any(|c| c.id.is_some());
+            .any(|c| c.is_placed());
         assert!(
             !any_placed,
             "No vegetable must be placed on a fully blocked grid"
@@ -563,7 +577,7 @@ mod tests {
             .grid
             .iter()
             .flat_map(|r| r.iter())
-            .filter(|c| c.id.as_deref() == Some("basil"))
+            .filter(|c| c.id() == Some("basil"))
             .count();
         assert_eq!(basil_count, 3, "Basil must be placed exactly 3 times");
     }
@@ -574,16 +588,14 @@ mod tests {
         let req = minimal_request((4.0 * 30.0) / 100.0, (4.0 * 30.0) / 100.0, Season::Summer);
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
         let resp = plan_garden(candidates, &req).unwrap();
+        // A cell is "used" when it is placed (SelfContained, Overflowing, or Overflowed).
         let empty = resp
             .grid
             .iter()
             .flat_map(|r| r.iter())
-            .filter(|c| c.id.is_none() && !c.blocked)
+            .filter(|c| matches!(c, PlannedCell::Empty))
             .count();
-        assert_eq!(
-            empty, 0,
-            "All cells must be filled: {empty} empty cells remain"
-        );
+        assert_eq!(empty, 0, "All cells must be filled: {empty} empty cells remain");
     }
 
     #[test]
@@ -634,44 +646,52 @@ mod tests {
         let req = minimal_request(2.0, 2.0, Season::Summer);
         let resp = plan_garden(vec![tomato], &req).unwrap();
 
-        let tomato_cells: Vec<(usize, usize)> = resp
+        // Anchor cells: those with id == "tomato" (SelfContained or Overflowing)
+        let anchor_cells: Vec<(usize, usize)> = resp
             .grid
             .iter()
             .enumerate()
             .flat_map(|(r, row)| {
                 row.iter()
                     .enumerate()
-                    .filter(|(_, c)| c.id.as_deref() == Some("tomato"))
+                    .filter(|(_, c)| c.id() == Some("tomato"))
                     .map(move |(c, _)| (r, c))
             })
             .collect();
 
-        assert!(
-            !tomato_cells.is_empty(),
-            "Tomato must be placed at least once"
-        );
+        assert!(!anchor_cells.is_empty(), "Tomato must be placed at least once");
 
-        // All tomato cells must report widthCells=2 and lengthCells=2
-        for (r, c) in &tomato_cells {
+        // Each anchor must be Overflowing with widthCells=2, lengthCells=2
+        for (r, c) in &anchor_cells {
             let cell = &resp.grid[*r][*c];
-            assert_eq!(
-                cell.width_cells,
-                Some(2),
-                "Tomato cell [{r},{c}] must report widthCells=2"
-            );
-            assert_eq!(
-                cell.length_cells,
-                Some(2),
-                "Tomato cell [{r},{c}] must report lengthCells=2"
-            );
+            assert_eq!(cell.width_cells(), Some(2), "Anchor [{r},{c}] must have widthCells=2");
+            assert_eq!(cell.length_cells(), Some(2), "Anchor [{r},{c}] must have lengthCells=2");
+            assert!(cell.covered_by().is_none(), "Anchor [{r},{c}] must not have coveredBy");
         }
 
-        // Cell count must be a multiple of 4 (each placement = 2×2 block)
+        // Continuation cells: those pointing back to a tomato anchor
+        let anchor_set: std::collections::HashSet<(usize, usize)> =
+            anchor_cells.iter().cloned().collect();
+        let continuation_count = resp
+            .grid
+            .iter()
+            .enumerate()
+            .flat_map(|(r, row)| row.iter().enumerate().map(move |(c, cell)| (r, c, cell)))
+            .filter(|(r, c, cell)| {
+                cell.covered_by()
+                    .map(|cb| anchor_set.contains(&(cb.row, cb.col)))
+                    .unwrap_or(false)
+                    && !anchor_set.contains(&(*r, *c))
+            })
+            .count();
+
+        // Each 2×2 block has 1 anchor + 3 continuation cells
         assert_eq!(
-            tomato_cells.len() % 4,
-            0,
-            "Tomato cell count ({}) must be a multiple of 4",
-            tomato_cells.len()
+            continuation_count,
+            anchor_cells.len() * 3,
+            "Each 2×2 block must have 3 continuation cells; got {} anchors, {} continuations",
+            anchor_cells.len(),
+            continuation_count
         );
     }
 }

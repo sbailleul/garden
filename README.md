@@ -213,8 +213,8 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
     "warnings": [],
     "grid": [
       [
-        { "id": "tomato", "name": "Tomato", "reason": "First placed (fruit, beginner-friendly) ", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
-        { "id": null,     "name": null,     "reason": null, "blocked": true }
+        { "id": "tomato", "name": "Tomato", "reason": "...", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
+        { "coveredBy": { "row": 0, "col": 0 }, "blocked": false }
       ]
     ]
   },
@@ -227,10 +227,18 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 ```
 
 Each `PlannedCell` carries:
-- `id` / `name` / `reason` — `null` when the cell is empty or blocked
-- `plantsPerCell` — number of individual plants that fit in the 30 cm × 30 cm cell (e.g. `9` for carrots at 10 cm spacing, `1` for tomatoes at 60 cm spacing); omitted when the cell is empty or blocked
-- `widthCells` / `lengthCells` — how many grid cells the plant occupies per axis (e.g. `2` for tomatoes at 60 cm spacing, `3` for zucchini at 90 cm). All cells of the same placement share the same id/name and identical `widthCells`/`lengthCells`, linking them into a block. Omitted when the cell is empty or blocked.
+- `id` / `name` / `reason` / `plantsPerCell` / `widthCells` / `lengthCells` — present **only on the anchor cell** (top-left of the block). `null` / omitted on continuation and empty cells.
+- `coveredBy: { row, col }` — present **only on continuation cells** of a multi-cell block; points to the anchor cell (0-based row/col indices). Omitted on anchor and empty cells.
 - `blocked` — `true` when the cell is a non-plantable zone
+
+For a tomato (60 cm, span 2) placed at row 0, col 0 on a 4×4 grid:
+
+| Cell | `id` | `widthCells` | `coveredBy` |
+|---|---|---|---|
+| [0][0] | `"tomato"` | `2` | — |
+| [0][1] | — | — | `{row:0, col:0}` |
+| [1][0] | — | — | `{row:0, col:0}` |
+| [1][1] | — | — | `{row:0, col:0}` |
 
 Returns `400` with `{ "error": "..." }` for an empty `layout` or malformed JSON.
 

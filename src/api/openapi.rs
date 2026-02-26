@@ -3,7 +3,7 @@ use utoipa::OpenApi;
 use crate::models::{
     request::{
         CompanionInfo, CompanionsApiResponse, CompanionsResponse, ErrorResponse, LayoutCell, Level,
-        Link, Pagination, PlanApiResponse, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry,
+        Link, Pagination, PlanApiResponse, PlanRequest, PlanResponse, PlannedCell, CoveredBy, PreferenceEntry,
         VegetableApiResponse, VegetableListResponse, VegetableResponse,
     },
     vegetable::{Category, Region, Season, SoilType, SunExposure, Vegetable},
@@ -32,7 +32,7 @@ use crate::models::{
             // Plan request
             LayoutCell, PreferenceEntry, PlanRequest,
             // Plan response
-            PlannedCell, PlanResponse,
+            CoveredBy, PlannedCell, PlanResponse,
             // Companions
             CompanionInfo, CompanionsResponse,
             // Shared

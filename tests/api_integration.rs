@@ -339,7 +339,7 @@ async fn test_post_plan_blocked_cells_never_planted() {
     let row1 = body["payload"]["grid"][1].as_array().unwrap();
     for cell in row1 {
         assert!(cell["id"].is_null(), "Blocked cell must have no vegetable");
-        assert_eq!(cell["blocked"], true, "Blocked cell must be flagged");
+        assert_eq!(cell["type"], "blocked", "Blocked cell must have type='blocked'");
     }
 }
 
@@ -363,9 +363,9 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     for r in [0usize, 2usize] {
         let row = body["payload"]["grid"][r].as_array().unwrap();
         for cell in row {
-            assert_eq!(
-                cell["blocked"], false,
-                "Non-blocked cell must not be flagged (row {r})"
+            assert_ne!(
+                cell["type"], "blocked",
+                "Non-blocked cell must not have type='blocked' (row {r})"
             );
         }
     }
