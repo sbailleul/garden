@@ -54,16 +54,7 @@ pub enum Category {
 
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Category::Fruit => "fruit",
-            Category::Produce => "produce",
-            Category::Herb => "herb",
-            Category::Root => "root",
-            Category::Bulb => "bulb",
-            Category::Leafy => "leafy",
-            Category::Pod => "pod",
-        };
-        f.write_str(s)
+      write!(f, "{}", format!("{:?}", self).to_lowercase())
     }
 }
 
