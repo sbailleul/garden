@@ -6,7 +6,8 @@ async fn main() -> std::io::Result<()> {
     println!("🌱 Garden API started at http://{bind_addr}");
     println!("   GET  /api/vegetables");
     println!("   GET  /api/vegetables/{{id}}/companions");
-    println!("   POST /api/plan");    println!("   ");
+    println!("   POST /api/plan");
+    println!("   ");
     println!("   📖 Swagger UI → http://{bind_addr}/swagger-ui/");
     println!("   📌 OpenAPI spec → http://{bind_addr}/api-docs/openapi.json");
     HttpServer::new(|| {

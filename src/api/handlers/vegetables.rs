@@ -1,13 +1,15 @@
 use actix_web::{get, http::Method, web, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::models::request::{CompanionsApiResponse, ErrorResponse, VegetableApiResponse, VegetableListResponse};
+use crate::models::request::{
+    CompanionsApiResponse, ErrorResponse, VegetableApiResponse, VegetableListResponse,
+};
 
 use crate::{
     data::vegetables::{get_all_vegetables, get_vegetable_by_id},
     models::request::{
-        link, ApiResponse, CompanionInfo, CompanionsResponse, PaginatedResponse,
-        Pagination, VegetableResponse,
+        link, ApiResponse, CompanionInfo, CompanionsResponse, PaginatedResponse, Pagination,
+        VegetableResponse,
     },
 };
 

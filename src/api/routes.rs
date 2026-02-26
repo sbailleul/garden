@@ -13,8 +13,5 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .service(get_companions)
             .service(post_plan),
     )
-    .service(
-        SwaggerUi::new("/swagger-ui/{_:.*}")
-            .url("/api-docs/openapi.json", ApiDoc::openapi()),
-    );
+    .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()));
 }
