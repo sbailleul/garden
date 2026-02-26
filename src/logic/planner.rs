@@ -519,11 +519,7 @@ mod tests {
     #[test]
     fn test_grid_fully_filled_without_preferences() {
         // 4×4 grid, no preferences → all 16 unblocked cells must be filled
-        let req = minimal_request(
-            (4.0 * 30.0) / 100.0,
-            (4.0 * 30.0) / 100.0,
-            Season::Summer,
-        );
+        let req = minimal_request((4.0 * 30.0) / 100.0, (4.0 * 30.0) / 100.0, Season::Summer);
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
         let resp = plan_garden(candidates, &req).unwrap();
         let empty = resp
@@ -532,7 +528,10 @@ mod tests {
             .flat_map(|r| r.iter())
             .filter(|c| c.id.is_none() && !c.blocked)
             .count();
-        assert_eq!(empty, 0, "All cells must be filled: {empty} empty cells remain");
+        assert_eq!(
+            empty, 0,
+            "All cells must be filled: {empty} empty cells remain"
+        );
     }
 
     #[test]
