@@ -277,10 +277,13 @@ flowchart TD
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
 4. **Filter** — the vegetable catalogue is narrowed by `season`, `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
-6. **Allocate** — `compute_allocation` distributes the available cells:
-   - *Pass 1*: explicit `quantity` preferences are honoured first — `quantity` is the number of **plants** (placements); multiplied by the plant's cell footprint (`span²`) to obtain cell consumption, then capped at remaining space.
-   - *Pass 2*: leftover cells are split evenly; extra cells (modulo remainder) go to the highest-ranked candidates first.
-7. **Place** — for each candidate slot, the algorithm finds the free `span × span` block that maximises `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter. Every cell in the block is filled with the same vegetable, `widthCells = span`, `lengthCells = span`. If no valid block exists for a multi-cell plant the candidate is skipped (remaining single-cell candidates can still fill gaps). Placement stops when the grid is full.
+6. **Phase 1 — Explicit placement** — vegetables with an explicit `quantity` preference are placed first, in preference order, each guaranteed a minimum of `quantity` plants.
+   - `quantity` is a **plant count** (not a cell count); a tomato (`quantity: 2`) with 60 cm spacing (span 2 × 2 = 4 cells) reserves 8 cells.
+7. **Phase 2 — Iterative fill** — after explicit preferences, all candidates (in priority order) are tried repeatedly with no per-vegetable cap until every plantable cell is occupied or no candidate can place anywhere:
+   - Each pass iterates all candidates; for each one the best available `span × span` block (by companion score) is placed.
+   - Passes repeat until a full pass yields zero new placements.
+   - This ensures cells that were left vacant because a large-span plant could not find a free block are filled by smaller alternatives.
+8. **Score** — every placement adds `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter to the cumulative companion score.
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
 9. **Return** — the filled grid, cumulative companion score, warnings, and `_links`.
 

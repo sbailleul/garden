@@ -32,11 +32,10 @@ fn plants_per_cell(spacing_cm: u32) -> u32 {
     }
 }
 
-/// Distributes `available` cells across the candidate pool.
-/// Pass 1: honour explicit `quantity` preferences — `quantity` is the desired number of
-///         **plants** (placements), so it is multiplied by `span²` to get cell consumption.
-/// Pass 2: split leftover cells evenly (round-robin extra to earlier entries).
-fn compute_allocation(
+/// Distributes cells for vegetables that have an **explicit** `quantity` preference.
+/// Returns a map of `id → cell count` only for those vegetables; everything else
+/// (auto-fill candidates) is handled by a separate iterative fill phase.
+fn compute_explicit_allocation(
     candidates: &[Vegetable],
     preferences: &[PreferenceEntry],
     available: usize,
@@ -44,7 +43,6 @@ fn compute_allocation(
     let mut allocation: HashMap<String, usize> = HashMap::new();
     let mut remaining = available;
 
-    // Pass 1: explicit quantities (quantity = number of plants, not cells)
     for pref in preferences {
         if let Some(qty) = pref.quantity {
             if let Some(v) = candidates.iter().find(|v| v.id == pref.id) {
@@ -54,20 +52,6 @@ fn compute_allocation(
                 allocation.insert(pref.id.clone(), alloc);
                 remaining = remaining.saturating_sub(alloc);
             }
-        }
-    }
-
-    // Pass 2: evenly distribute remainder
-    let pool: Vec<&Vegetable> = candidates
-        .iter()
-        .filter(|v| !allocation.contains_key(&v.id))
-        .collect();
-    if !pool.is_empty() {
-        let base = remaining / pool.len();
-        let extra = remaining % pool.len();
-        for (i, v) in pool.iter().enumerate() {
-            let count = if i < extra { base + 1 } else { base };
-            allocation.insert(v.id.clone(), count);
         }
     }
 
@@ -145,8 +129,10 @@ fn count_grid_occupancy(grid: &GardenGrid) -> (usize, usize) {
     (occupied, blocked)
 }
 
-/// Converts the candidate pool and request preferences into an ordered placement queue
-/// (each vegetable repeated by its allocated count) and the per-vegetable placement cap.
+/// Converts explicit-preference allocations into an ordered placement queue
+/// (each vegetable repeated by its allocated count) and a per-vegetable placement cap.
+/// Vegetables without an explicit quantity are NOT in the queue; they are handled
+/// by the iterative fill phase.
 fn build_placement_queue<'a>(
     candidates: &'a [Vegetable],
     preferences: &[PreferenceEntry],
@@ -157,12 +143,12 @@ fn build_placement_queue<'a>(
         candidates.len(),
         free_cells
     );
-    let allocation = compute_allocation(candidates, preferences, free_cells);
+    let allocation = compute_explicit_allocation(candidates, preferences, free_cells);
 
     // Convert cell allocations → placement counts (one placement = span² cells).
-    // Guarantee at least 1 placement for any candidate with a non-zero cell budget.
     let placements_map: HashMap<String, usize> = candidates
         .iter()
+        .filter(|v| allocation.contains_key(&v.id))
         .map(|v| {
             let cells_per_slot = (cell_span(v.spacing_cm) as usize).pow(2);
             let cells = allocation.get(&v.id).copied().unwrap_or(0);
@@ -182,9 +168,10 @@ fn build_placement_queue<'a>(
         })
         .collect();
 
-    // Expand: repeat each vegetable by its placement count to form the ordered queue.
-    let queue: Vec<&Vegetable> = candidates
+    // Expand: repeat each vegetable in preference order by its placement count.
+    let queue: Vec<&Vegetable> = preferences
         .iter()
+        .filter_map(|p| candidates.iter().find(|v| v.id == p.id))
         .flat_map(|v| {
             let n = placements_map.get(&v.id).copied().unwrap_or(0);
             std::iter::repeat_n(v, n)
@@ -333,7 +320,58 @@ fn place_candidates(
     global_score
 }
 
-/// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
+/// Phase 2 — iterative greedy fill.
+///
+/// After explicit preferences have been placed, tries every candidate in priority
+/// order and places the best available block for each. Repeats until a full pass
+/// over all candidates produces zero new placements (grid is genuinely full or no
+/// candidate fits anywhere). This ensures that cells left vacant by large-span
+/// plants that could not find a free block are filled by smaller alternatives.
+fn fill_remaining_cells(
+    grid: &mut GardenGrid,
+    candidates: &[Vegetable],
+    rows: usize,
+    cols: usize,
+) -> i32 {
+    let mut total_score: i32 = 0;
+    let mut pass = 0usize;
+
+    loop {
+        pass += 1;
+        let mut placements_this_pass = 0usize;
+
+        for vegetable in candidates {
+            match find_best_block(grid, vegetable, rows, cols) {
+                None => continue,
+                Some((r, c, score)) => {
+                    let span = cell_span(vegetable.spacing_cm) as usize;
+                    let neighbor_names: Vec<String> = grid
+                        .get_block_neighbors(r, c, span)
+                        .iter()
+                        .map(|v| v.name.clone())
+                        .collect();
+                    let reason = build_reason(vegetable, &neighbor_names, score);
+                    debug!(
+                        "fill_remaining_cells pass {pass}: placing '{}' at [{r},{c}] score={score}",
+                        vegetable.id
+                    );
+                    fill_block(grid, vegetable, r, c, &reason);
+                    total_score += score;
+                    placements_this_pass += 1;
+                }
+            }
+        }
+
+        debug!("fill_remaining_cells pass {pass}: {placements_this_pass} placement(s) made");
+
+        if placements_this_pass == 0 {
+            break;
+        }
+    }
+
+    info!("fill_remaining_cells: done after {pass} pass(es), score gained = {total_score}");
+    total_score
+}
 fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
     let empty = grid
         .cells
@@ -349,7 +387,7 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
     })
 }
 
-/// Top-level orchestrator: validates the request, builds and fills the grid, returns the plan.
+/// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
 pub fn plan_garden(
     candidates: Vec<Vegetable>,
     request: &PlanRequest,
@@ -377,16 +415,23 @@ pub fn plan_garden(
 
     let preferences = request.preferences.as_deref().unwrap_or(&[]);
     let free_cells = available_cells.saturating_sub(occupied);
-    let (queue, placements_map) = build_placement_queue(&candidates, preferences, free_cells);
 
-    let score = place_candidates(&mut grid, &queue, &placements_map, rows, cols);
+    // Phase 1: place vegetables with an explicit quantity (in preference order).
+    let (queue, placements_map) = build_placement_queue(&candidates, preferences, free_cells);
+    let score_phase1 = place_candidates(&mut grid, &queue, &placements_map, rows, cols);
+
+    // Phase 2: iteratively fill every remaining cell with the best available candidate.
+    // This ensures cells left vacant by unplaceable large-span plants are never wasted.
+    let score_phase2 = fill_remaining_cells(&mut grid, &candidates, rows, cols);
+
+    let score = score_phase1 + score_phase2;
 
     if let Some(w) = empty_cells_warning(&grid) {
         warnings.push(w);
     }
 
     info!(
-        "plan_garden: done — score={score}, warnings={}",
+        "plan_garden: done — score={score} (phase1={score_phase1}, phase2={score_phase2}), warnings={}",
         warnings.len()
     );
     Ok(build_response(grid, rows, cols, score, warnings))
@@ -701,7 +746,8 @@ mod tests {
     #[test]
     fn test_preference_quantity_places_multiple_instances() {
         use crate::models::request::PreferenceEntry;
-        // 3×3 grid, request 3 basil plants
+        // 3×3 grid, request 3 basil plants.
+        // The fill phase may add more basil — the quantity is a guaranteed minimum.
         let req = PlanRequest {
             preferences: Some(vec![PreferenceEntry {
                 id: "basil".into(),
@@ -717,15 +763,17 @@ mod tests {
             .flat_map(|r| r.iter())
             .filter(|c| c.id() == Some("basil"))
             .count();
-        assert_eq!(basil_count, 3, "Basil must be placed exactly 3 times");
+        assert!(
+            basil_count >= 3,
+            "Basil must be placed at least 3 times (got {basil_count})"
+        );
     }
 
     #[test]
     fn test_preference_quantity_is_plant_count_not_cell_count() {
         use crate::models::request::PreferenceEntry;
         // Tomato: spacing=60cm → span=2 → occupies 2×2=4 cells per plant.
-        // Requesting quantity=2 means 2 plants (8 cells), not 2 cells (which would yield 1 plant).
-        // Use a large grid (6×6) so there is plenty of room.
+        // Requesting quantity=2 means at least 2 plants (8 cells), not 2 cells.
         let req = PlanRequest {
             preferences: Some(vec![PreferenceEntry {
                 id: "tomato".into(),
@@ -741,9 +789,9 @@ mod tests {
             .flat_map(|r| r.iter())
             .filter(|c| c.id() == Some("tomato"))
             .count();
-        assert_eq!(
-            tomato_anchors, 2,
-            "quantity=2 for tomato (span=2) must yield 2 plant placements, got {tomato_anchors}"
+        assert!(
+            tomato_anchors >= 2,
+            "quantity=2 for tomato (span=2) must yield at least 2 plant placements, got {tomato_anchors}"
         );
     }
 
@@ -782,18 +830,59 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_allocation_distributes_evenly() {
+    fn test_compute_explicit_allocation_honours_quantities() {
         use crate::data::vegetables::get_vegetable_by_id;
-        let tomato = get_vegetable_by_id("tomato").unwrap();
-        let carrot = get_vegetable_by_id("carrot").unwrap();
-        let leek = get_vegetable_by_id("leek").unwrap();
-        let candidates = vec![tomato, carrot, leek];
-        let allocation = compute_allocation(&candidates, &[], 10);
-        // compute_allocation distributes raw cells: 10 / 3 = base 3, extra 1
-        // → first candidate gets 4 cells, rest get 3 cells
-        assert_eq!(allocation["tomato"], 4);
-        assert_eq!(allocation["carrot"], 3);
-        assert_eq!(allocation["leek"], 3);
+        use crate::models::request::PreferenceEntry;
+        let basil = get_vegetable_by_id("basil").unwrap(); // span=1, 1 cell/plant
+        let tomato = get_vegetable_by_id("tomato").unwrap(); // span=2, 4 cells/plant
+        let carrot = get_vegetable_by_id("carrot").unwrap(); // span=1, no preference
+        let candidates = vec![basil, tomato, carrot];
+        let preferences = vec![
+            PreferenceEntry {
+                id: "basil".into(),
+                quantity: Some(2),
+            },
+            PreferenceEntry {
+                id: "tomato".into(),
+                quantity: Some(1),
+            },
+        ];
+        // basil: 2 plants × 1 cell = 2 cells
+        // tomato: 1 plant × 4 cells = 4 cells
+        // carrot: no explicit quantity — absent from the map
+        let allocation = compute_explicit_allocation(&candidates, &preferences, 20);
+        assert_eq!(allocation["basil"], 2, "basil: 2 plants × 1 cell");
+        assert_eq!(allocation["tomato"], 4, "tomato: 1 plant × 4 cells");
+        assert!(
+            !allocation.contains_key("carrot"),
+            "carrot has no explicit quantity"
+        );
+    }
+
+    #[test]
+    fn test_fill_phase_covers_cells_left_by_unplaceable_large_plants() {
+        use crate::models::request::PreferenceEntry;
+        // Grid too small for pumpkin (span=4 needs a 4×4 block) — request 1 pumpkin.
+        // The fill phase must cover the cells pumpkin could not occupy.
+        let req = PlanRequest {
+            preferences: Some(vec![PreferenceEntry {
+                id: "pumpkin".into(),
+                quantity: Some(1),
+            }]),
+            ..minimal_request(0.9, 0.9, Season::Summer) // 3×3 grid
+        };
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        let empty = resp
+            .grid
+            .iter()
+            .flat_map(|r| r.iter())
+            .filter(|c| matches!(c, PlannedCell::Empty))
+            .count();
+        assert_eq!(
+            empty, 0,
+            "Fill phase must cover cells pumpkin could not occupy; {empty} empty cell(s) remain"
+        );
     }
 
     #[test]
