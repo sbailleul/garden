@@ -3,53 +3,54 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum Season {
-    Printemps,
-    Ete,
-    Automne,
-    Hiver,
+    Spring,
+    Summer,
+    Autumn,
+    Winter,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum SoilType {
-    Argileux,
-    Sableux,
-    Limoneux,
-    Calcaire,
-    Humifere,
+    Clay,
+    Sandy,
+    Loamy,
+    Chalky,
+    Humus,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum SunExposure {
-    PleinSoleil,
-    MiOmbre,
-    Ombre,
+    FullSun,
+    PartialShade,
+    Shade,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum Region {
-    Tempere,
-    Mediterraneen,
-    Oceanique,
+    Temperate,
+    Mediterranean,
+    Oceanic,
     Continental,
-    Montagnard,
+    Mountain,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum Category {
     Fruit,
-    Legume,
-    Aromate,
-    Racine,
-    Bulbe,
-    Feuille,
-    Gousse,
+    Produce,
+    Herb,
+    Root,
+    Bulb,
+    Leafy,
+    Pod,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Vegetable {
     pub id: String,
     pub name: String,

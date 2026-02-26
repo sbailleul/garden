@@ -26,7 +26,7 @@ fn build_app() -> actix_web::App<
 }
 
 fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
-    body["grid"]
+    body["payload"]["grid"]
         .as_array()
         .unwrap_or(&vec![])
         .iter()
@@ -42,8 +42,8 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 async fn scenario_small_summer_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "width_m": 2.0,
-        "length_m": 3.0,
+        "widthM": 2.0,
+        "lengthM": 3.0,
         "season": "Summer",
         "sun": "FullSun",
         "soil": "Loamy",
@@ -56,12 +56,12 @@ async fn scenario_small_summer_garden() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    assert_eq!(body["rows"], 10, "2m x 3m → 10 rows");
-    assert_eq!(body["cols"], 7, "2m x 3m → 7 cols");
+    assert_eq!(body["payload"]["rows"], 10, "2m x 3m → 10 rows");
+    assert_eq!(body["payload"]["cols"], 7, "2m x 3m → 7 cols");
 
     let placed = collect_placed_ids(&body);
     // A beginner summer garden must contain at least one typical summer vegetable
-    let typical_summer = ["tomate", "courgette", "concombre", "haricot", "radis"];
+    let typical_summer = ["tomato", "zucchini", "cucumber", "green-bean", "radish"];
     let found_typical = typical_summer.iter().any(|id| placed.contains(&id.to_string()));
     assert!(
         found_typical,
@@ -70,7 +70,7 @@ async fn scenario_small_summer_garden() {
     );
 
     // No advanced vegetables should appear in a beginner garden
-    let advanced_vegs = ["poivron", "fenouil", "aubergine", "celeri", "asperge"];
+    let advanced_vegs = ["pepper", "fennel", "eggplant", "celery", "asparagus"];
     for id in &advanced_vegs {
         assert!(
             !placed.contains(&id.to_string()),
@@ -87,8 +87,8 @@ async fn scenario_small_summer_garden() {
 async fn scenario_spring_cool_climate() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "width_m": 1.0,
-        "length_m": 2.0,
+        "widthM": 1.0,
+        "lengthM": 2.0,
         "season": "Spring",
         "region": "Mountain",
         "soil": "Clay"
@@ -98,10 +98,10 @@ async fn scenario_spring_cool_climate() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    assert_eq!(body.get("grid").and_then(|g| g.as_array()).map(|a| !a.is_empty()), Some(true));
+    assert_eq!(body["payload"].get("grid").and_then(|g| g.as_array()).map(|a| !a.is_empty()), Some(true));
 
     // Only spring vegetables must be placed
-    let summer_only_vegs = ["tomate", "concombre", "courgette", "aubergine", "maïs"];
+    let summer_only_vegs = ["tomato", "cucumber", "zucchini", "eggplant", "corn"];
     let placed = collect_placed_ids(&body);
     for id in &summer_only_vegs {
         assert!(
@@ -120,12 +120,12 @@ async fn scenario_existing_tomatoes_add_companions() {
     let app = test::init_service(build_app()).await;
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
-        "width_m": 0.9,
-        "length_m": 0.9,
+        "widthM": 0.9,
+        "lengthM": 0.9,
         "season": "Summer",
-        "preferences": ["basilic"],
-        "existing_layout": [
-            ["tomate", null, null],
+        "preferences": ["basil"],
+        "existingLayout": [
+            ["tomato", null, null],
             [null, null, null],
             [null, null, null]
         ]
@@ -136,29 +136,29 @@ async fn scenario_existing_tomatoes_add_companions() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    // Cell [0][0] must remain "tomate"
+    // Cell [0][0] must remain "tomato"
     assert_eq!(
-        body["grid"][0][0]["id"].as_str(),
-        Some("tomate"),
+        body["payload"]["grid"][0][0]["id"].as_str(),
+        Some("tomato"),
         "Existing tomato must be preserved"
     );
 
     // Basil must be placed somewhere in the grid
     let placed = collect_placed_ids(&body);
     assert!(
-        placed.contains(&"basilic".to_string()),
+        placed.contains(&"basil".to_string()),
         "Basil (preferred and good companion of tomato) must be placed in the grid"
     );
 
-    // Le basilic doit être adjacent à la tomate ([0][0]) :
-    // positions adjacentes : [0][1] et [1][0]
-    let basilic_adjacent_to_tomato = {
-        let r0c1 = body["grid"][0][1]["id"].as_str() == Some("basilic");
-        let r1c0 = body["grid"][1][0]["id"].as_str() == Some("basilic");
+    // Basil must be adjacent to tomato at [0][0]:
+    // adjacent positions: [0][1] and [1][0]
+    let basil_adjacent_to_tomato = {
+        let r0c1 = body["payload"]["grid"][0][1]["id"].as_str() == Some("basil");
+        let r1c0 = body["payload"]["grid"][1][0]["id"].as_str() == Some("basil");
         r0c1 || r1c0
     };
     assert!(
-        basilic_adjacent_to_tomato,
+        basil_adjacent_to_tomato,
         "Basil must be placed adjacent to tomato to maximise the companion score"
     );
 }
@@ -170,8 +170,8 @@ async fn scenario_existing_tomatoes_add_companions() {
 async fn scenario_winter_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "width_m": 1.5,
-        "length_m": 1.5,
+        "widthM": 1.5,
+        "lengthM": 1.5,
         "season": "Winter",
         "region": "Oceanic"
     });
@@ -183,12 +183,12 @@ async fn scenario_winter_garden() {
     assert_eq!(resp_status_from_body(&body), None); // no error
 
     let placed = collect_placed_ids(&body);
-    // In winter, no tomatoes or courgettes
-    assert!(!placed.contains(&"tomate".to_string()), "Tomato must not appear in winter");
-    assert!(!placed.contains(&"courgette".to_string()), "Courgette must not appear in winter");
+    // In winter, no tomatoes or zucchinis
+    assert!(!placed.contains(&"tomato".to_string()), "Tomato must not appear in winter");
+    assert!(!placed.contains(&"zucchini".to_string()), "Zucchini must not appear in winter");
 
     // Winter vegetables like garlic or leek must be present
-    let winter_vegs = ["ail", "poireau", "epinard", "chou"];
+    let winter_vegs = ["garlic", "leek", "spinach", "cabbage"];
     let found_winter = winter_vegs.iter().any(|id| placed.contains(&id.to_string()));
     assert!(found_winter, "Winter vegetables must be present: {:?}", winter_vegs);
 }

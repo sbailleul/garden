@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/vegetables/tomate/companions
+  url: {{baseUrl}}/api/vegetables/tomato/companions
 }
 
 headers {
@@ -14,10 +14,10 @@ headers {
 
 assert {
   res.status: eq 200
-  res.body.id: isDefined
-  res.body.name: isDefined
-  res.body.good: isArray
-  res.body.bad: isArray
+  res.body.payload.id: isDefined
+  res.body.payload.name: isDefined
+  res.body.payload.good: isArray
+  res.body.payload.bad: isArray
 }
 
 tests {
@@ -26,33 +26,43 @@ tests {
   });
 
   test("response has id and name", function() {
-    expect(res.body).to.have.property("id", "tomate");
-    expect(res.body).to.have.property("name");
+    expect(res.body.payload).to.have.property("id", "tomato");
+    expect(res.body.payload).to.have.property("name");
   });
 
   test("good companions is an array of objects", function() {
-    expect(res.body.good).to.be.an("array");
-    res.body.good.forEach(function(c) {
+    expect(res.body.payload.good).to.be.an("array");
+    res.body.payload.good.forEach(function(c) {
       expect(c).to.have.property("id");
       expect(c).to.have.property("name");
     });
   });
 
   test("bad companions is an array of objects", function() {
-    expect(res.body.bad).to.be.an("array");
-    res.body.bad.forEach(function(c) {
+    expect(res.body.payload.bad).to.be.an("array");
+    res.body.payload.bad.forEach(function(c) {
       expect(c).to.have.property("id");
       expect(c).to.have.property("name");
     });
   });
 
   test("basil is a good companion of tomato", function() {
-    var basilic = res.body.good.find(function(c) { return c.id === "basilic"; });
-    expect(basilic).to.not.be.undefined;
+    var basil = res.body.payload.good.find(function(c) { return c.id === "basil"; });
+    expect(basil).to.not.be.undefined;
   });
 
   test("fennel is a bad companion of tomato", function() {
-    var fenouil = res.body.bad.find(function(c) { return c.id === "fenouil"; });
-    expect(fenouil).to.not.be.undefined;
+    var fennel = res.body.payload.bad.find(function(c) { return c.id === "fennel"; });
+    expect(fennel).to.not.be.undefined;
+  });
+
+  test("_links.self points to this companions endpoint", function() {
+    expect(res.body._links.self.href).to.equal("/api/vegetables/tomato/companions");
+    expect(res.body._links.self.method).to.equal("GET");
+  });
+
+  test("_links.vegetable points back to the vegetable", function() {
+    expect(res.body._links.vegetable.href).to.equal("/api/vegetables/tomato");
+    expect(res.body._links.vegetable.method).to.equal("GET");
   });
 }

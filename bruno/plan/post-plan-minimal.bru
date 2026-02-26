@@ -15,19 +15,19 @@ headers {
 
 body {
   {
-    "width_m": 2.0,
-    "length_m": 3.0,
+    "widthM": 2.0,
+    "lengthM": 3.0,
     "season": "Summer"
   }
 }
 
 assert {
   res.status: eq 200
-  res.body.grid: isArray
-  res.body.score: isDefined
-  res.body.warnings: isArray
-  res.body.rows: isDefined
-  res.body.cols: isDefined
+  res.body.payload.grid: isArray
+  res.body.payload.score: isDefined
+  res.body.payload.warnings: isArray
+  res.body.payload.rows: isDefined
+  res.body.payload.cols: isDefined
 }
 
 tests {
@@ -36,29 +36,29 @@ tests {
   });
 
   test("grid is a 2D array", function() {
-    expect(res.body.grid).to.be.an("array").that.is.not.empty;
-    res.body.grid.forEach(function(row) {
+    expect(res.body.payload.grid).to.be.an("array").that.is.not.empty;
+    res.body.payload.grid.forEach(function(row) {
       expect(row).to.be.an("array");
     });
   });
 
   test("grid dimensions match rows/cols", function() {
-    expect(res.body.grid.length).to.equal(res.body.rows);
-    res.body.grid.forEach(function(row) {
-      expect(row.length).to.equal(res.body.cols);
+    expect(res.body.payload.grid.length).to.equal(res.body.payload.rows);
+    res.body.payload.grid.forEach(function(row) {
+      expect(row.length).to.equal(res.body.payload.cols);
     });
   });
 
   test("score is a number", function() {
-    expect(res.body.score).to.be.a("number");
+    expect(res.body.payload.score).to.be.a("number");
   });
 
   test("warnings is an array", function() {
-    expect(res.body.warnings).to.be.an("array");
+    expect(res.body.payload.warnings).to.be.an("array");
   });
 
   test("placed cells have id, name and reason", function() {
-    res.body.grid.forEach(function(row) {
+    res.body.payload.grid.forEach(function(row) {
       row.forEach(function(cell) {
         if (cell.id !== null && cell.id !== undefined) {
           expect(cell).to.have.property("name");
@@ -67,5 +67,15 @@ tests {
         }
       });
     });
+  });
+
+  test("_links.self points to /api/plan", function() {
+    expect(res.body._links.self.href).to.equal("/api/plan");
+    expect(res.body._links.self.method).to.equal("POST");
+  });
+
+  test("_links.vegetables points to /api/vegetables", function() {
+    expect(res.body._links.vegetables.href).to.equal("/api/vegetables");
+    expect(res.body._links.vegetables.method).to.equal("GET");
   });
 }

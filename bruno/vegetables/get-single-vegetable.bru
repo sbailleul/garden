@@ -1,0 +1,46 @@
+meta {
+  name: Get Single Vegetable
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables/tomato
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload.id: isDefined
+  res.body.payload.name: isDefined
+  res.body._links: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("response has id and name", function() {
+    expect(res.body.payload.id).to.equal("tomato");
+    expect(res.body.payload).to.have.property("name");
+  });
+
+  test("_links.self points to this vegetable", function() {
+    expect(res.body._links.self.href).to.equal("/api/vegetables/tomato");
+    expect(res.body._links.self.method).to.equal("GET");
+  });
+
+  test("_links.companions points to companions endpoint", function() {
+    expect(res.body._links.companions.href).to.equal("/api/vegetables/tomato/companions");
+    expect(res.body._links.companions.method).to.equal("GET");
+  });
+
+  test("_links.collection points to vegetable list", function() {
+    expect(res.body._links.collection.href).to.equal("/api/vegetables");
+    expect(res.body._links.collection.method).to.equal("GET");
+  });
+}

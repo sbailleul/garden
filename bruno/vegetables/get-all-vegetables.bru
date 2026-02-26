@@ -14,8 +14,10 @@ headers {
 
 assert {
   res.status: eq 200
-  res.body: isArray
-  res.body: isNotEmpty
+  res.body.payload: isArray
+  res.body.payload: isNotEmpty
+  res.body.pagination: isDefined
+  res.body._links: isDefined
 }
 
 tests {
@@ -23,21 +25,41 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("body is a non-empty array", function() {
-    expect(res.body).to.be.an("array").that.is.not.empty;
+  test("payload is a non-empty array", function() {
+    expect(res.body.payload).to.be.an("array").that.is.not.empty;
+  });
+
+  test("response has pagination metadata", function() {
+    expect(res.body.pagination).to.be.an("object");
+    expect(res.body.pagination.total).to.be.a("number").that.is.gt(0);
+    expect(res.body.pagination.page).to.equal(1);
+  });
+
+  test("response has collection _links", function() {
+    expect(res.body._links.self.href).to.equal("/api/vegetables");
+    expect(res.body._links.self.method).to.equal("GET");
   });
 
   test("each vegetable has required fields", function() {
-    res.body.forEach(function(v) {
-      expect(v).to.have.property("id");
-      expect(v).to.have.property("name");
-      expect(v).to.have.property("seasons");
-      expect(v).to.have.property("good_companions");
-      expect(v).to.have.property("bad_companions");
-      expect(v).to.have.property("beginner_friendly");
-      expect(v.seasons).to.be.an("array").that.is.not.empty;
-      expect(v.good_companions).to.be.an("array");
-      expect(v.bad_companions).to.be.an("array");
+    res.body.payload.forEach(function(v) {
+      expect(v.payload).to.have.property("id");
+      expect(v.payload).to.have.property("name");
+      expect(v.payload).to.have.property("seasons");
+      expect(v.payload).to.have.property("goodCompanions");
+      expect(v.payload).to.have.property("badCompanions");
+      expect(v.payload).to.have.property("beginnerFriendly");
+      expect(v.payload.seasons).to.be.an("array").that.is.not.empty;
+      expect(v.payload.goodCompanions).to.be.an("array");
+      expect(v.payload.badCompanions).to.be.an("array");
+    });
+  });
+
+  test("each vegetable has _links with self and companions", function() {
+    res.body.payload.forEach(function(v) {
+      expect(v._links.self.href).to.equal("/api/vegetables/" + v.payload.id);
+      expect(v._links.self.method).to.equal("GET");
+      expect(v._links.companions.href).to.equal("/api/vegetables/" + v.payload.id + "/companions");
+      expect(v._links.companions.method).to.equal("GET");
     });
   });
 }

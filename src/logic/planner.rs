@@ -4,6 +4,7 @@ use crate::models::{
     garden::GardenGrid,
     request::{PlannedCell, PlanRequest, PlanResponse},
     vegetable::Vegetable,
+    Matrix,
 };
 
 /// Size of one grid cell in centimetres
@@ -32,6 +33,23 @@ pub fn plan_garden(
     let mut warnings: Vec<String> = Vec::new();
     let mut global_score: i32 = 0;
 
+    // Pre-fill blocked cells (paths, alleys, etc.)
+    if let Some(ref blocked_grid) = request.blocked_cells {
+        for (r, row) in blocked_grid.iter().enumerate() {
+            for (c, &is_blocked) in row.iter().enumerate() {
+                if r >= rows || c >= cols {
+                    warnings.push(format!(
+                        "Blocked cell [{r},{c}] is out of grid bounds ({rows}x{cols}), skipped."
+                    ));
+                    continue;
+                }
+                if is_blocked {
+                    grid.cells[r][c].blocked = true;
+                }
+            }
+        }
+    }
+
     // Pre-fill the grid from the existing layout
     if let Some(ref existing) = request.existing_layout {
         for (r, row) in existing.iter().enumerate() {
@@ -42,7 +60,11 @@ pub fn plan_garden(
                     continue;
                 }
                 if let Some(ref id) = cell {
-                    if let Some(v) = get_vegetable_by_id(id) {
+                    if grid.cells[r][c].blocked {
+                        warnings.push(format!(
+                            "Existing cell [{r},{c}] is in a blocked zone, vegetable '{id}' skipped."
+                        ));
+                    } else if let Some(v) = get_vegetable_by_id(id) {
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -57,7 +79,9 @@ pub fn plan_garden(
     }
 
     let occupied: usize = grid.cells.iter().flat_map(|r| r.iter()).filter(|c| c.vegetable.is_some()).count();
-    if occupied >= total_cells {
+    let blocked_count: usize = grid.cells.iter().flat_map(|r| r.iter()).filter(|c| c.blocked).count();
+    let available_cells = total_cells.saturating_sub(blocked_count);
+    if occupied >= available_cells {
         warnings.push("The grid is already fully occupied by the existing layout.".into());
         return Ok(build_response(grid, rows, cols, global_score, warnings));
     }
@@ -83,7 +107,7 @@ pub fn plan_garden(
 
         for r in 0..rows {
             for c in 0..cols {
-                if grid.cells[r][c].vegetable.is_some() {
+                if grid.cells[r][c].vegetable.is_some() || grid.cells[r][c].blocked {
                     continue;
                 }
                 let neighbor_ids: Vec<&str> = grid
@@ -121,8 +145,8 @@ pub fn plan_garden(
         }
     }
 
-    // Warn if empty cells remain
-    let empty: usize = grid.cells.iter().flat_map(|r| r.iter()).filter(|c| c.vegetable.is_none()).count();
+    // Warn if plantable cells remain empty
+    let empty: usize = grid.cells.iter().flat_map(|r| r.iter()).filter(|c| c.vegetable.is_none() && !c.blocked).count();
     if empty > 0 {
         warnings.push(format!(
             "{empty} empty cell(s): not enough compatible vegetables to fill the entire grid."
@@ -164,7 +188,7 @@ fn build_response(
     score: i32,
     warnings: Vec<String>,
 ) -> PlanResponse {
-    let planned_grid: Vec<Vec<PlannedCell>> = grid
+    let planned_grid: Matrix<PlannedCell> = grid
         .cells
         .iter()
         .map(|row| {
@@ -174,11 +198,13 @@ fn build_response(
                         id: Some(v.id.clone()),
                         name: Some(v.name.clone()),
                         reason: Some(v.reason.clone()),
+                        blocked: false,
                     },
                     None => PlannedCell {
                         id: None,
                         name: None,
                         reason: None,
+                        blocked: cell.blocked,
                     },
                 })
                 .collect()
@@ -230,6 +256,7 @@ mod tests {
             level: None,
             preferences: None,
             existing_layout: None,
+            blocked_cells: None,
         }
     }
 
@@ -276,7 +303,7 @@ mod tests {
             for cell in row {
                 if cell.id.is_some() {
                     assert!(
-                        cell.reason.as_deref().map(|r| !r.is_empty()).unwrap_or(false),
+                        cell.reason.as_deref().map(|r: &str| !r.is_empty()).unwrap_or(false),
                         "Every placed cell must have a non-empty reason"
                     );
                 }
@@ -288,18 +315,18 @@ mod tests {
     fn test_existing_layout_preserved() {
         let req = PlanRequest {
             existing_layout: Some(vec![
-                vec![Some("tomate".into()), None],
+                vec![Some("tomato".into()), None],
                 vec![None, None],
             ]),
             ..minimal_request(0.6, 0.6, Season::Summer)
         };
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
         let resp = plan_garden(candidates, &req).unwrap();
-        // La cellule [0][0] doit toujours être "tomate"
+        // Cell [0][0] must still be "tomato"
         let first_cell = &resp.grid[0][0];
         assert_eq!(
             first_cell.id.as_deref(),
-            Some("tomate"),
+            Some("tomato"),
             "Existing cell must be preserved"
         );
     }
@@ -307,28 +334,27 @@ mod tests {
     #[test]
     fn test_bad_companions_not_adjacent_when_alternatives_exist() {
         // Tomato and fennel are incompatible — on a large grid they must not be adjacent
-        let all = get_all_vegetables();
-        let tomate = get_vegetable_by_id("tomate").unwrap();
-        let fenouil = get_vegetable_by_id("fenouil").unwrap();
-        let candidates = vec![tomate, fenouil];
+        let tomato = get_vegetable_by_id("tomato").unwrap();
+        let fennel = get_vegetable_by_id("fennel").unwrap();
+        let candidates = vec![tomato, fennel];
         let req = minimal_request(3.0, 3.0, Season::Summer);
         let resp = plan_garden(candidates, &req).unwrap();
 
         // Find positions of tomato and fennel
-        let mut tomate_pos = None;
-        let mut fenouil_pos = None;
+        let mut tomato_pos = None;
+        let mut fennel_pos = None;
         for (r, row) in resp.grid.iter().enumerate() {
             for (c, cell) in row.iter().enumerate() {
-                if cell.id.as_deref() == Some("tomate") {
-                    tomate_pos = Some((r, c));
+                if cell.id.as_deref() == Some("tomato") {
+                    tomato_pos = Some((r, c));
                 }
-                if cell.id.as_deref() == Some("fenouil") {
-                    fenouil_pos = Some((r, c));
+                if cell.id.as_deref() == Some("fennel") {
+                    fennel_pos = Some((r, c));
                 }
             }
         }
 
-        if let (Some((tr, tc)), Some((fr, fc))) = (tomate_pos, fenouil_pos) {
+        if let (Some((tr, tc)), Some((fr, fc))) = (tomato_pos, fennel_pos) {
             let row_dist = (tr as i32 - fr as i32).abs();
             let col_dist = (tc as i32 - fc as i32).abs();
             // They must not be direct neighbours (Manhattan distance > 1)
@@ -344,7 +370,48 @@ mod tests {
     fn test_empty_candidates_returns_empty_grid() {
         let req = minimal_request(1.0, 1.0, Season::Summer);
         let resp = plan_garden(vec![], &req).unwrap();
-        let all_empty = resp.grid.iter().flat_map(|r| r.iter()).all(|c| c.id.is_none());
+        let all_empty = resp.grid.iter().flat_map(|r: &Vec<PlannedCell>| r.iter()).all(|c| c.id.is_none());
         assert!(all_empty, "Grid must be empty when there are no candidates");
+    }
+
+    #[test]
+    fn test_blocked_cells_are_never_planted() {
+        // 2x2 grid (0.6m x 0.6m) with [0][0] and [1][1] blocked
+        let req = PlanRequest {
+            blocked_cells: Some(vec![
+                vec![true, false],
+                vec![false, true],
+            ]),
+            ..minimal_request(0.6, 0.6, Season::Summer)
+        };
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+
+        // Blocked cells must carry no vegetable and be flagged
+        assert!(resp.grid[0][0].id.is_none(), "Blocked cell [0][0] must not have a vegetable");
+        assert!(resp.grid[0][0].blocked, "Cell [0][0] must be marked as blocked");
+        assert!(resp.grid[1][1].id.is_none(), "Blocked cell [1][1] must not have a vegetable");
+        assert!(resp.grid[1][1].blocked, "Cell [1][1] must be marked as blocked");
+
+        // Non-blocked cells must not be flagged
+        assert!(!resp.grid[0][1].blocked, "Cell [0][1] must not be blocked");
+        assert!(!resp.grid[1][0].blocked, "Cell [1][0] must not be blocked");
+    }
+
+    #[test]
+    fn test_fully_blocked_grid_returns_no_placements() {
+        // 0.9m × 0.9m → 3×3 grid; mark every cell as blocked
+        let req = PlanRequest {
+            blocked_cells: Some(vec![
+                vec![true, true, true],
+                vec![true, true, true],
+                vec![true, true, true],
+            ]),
+            ..minimal_request(0.9, 0.9, Season::Summer)
+        };
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        let any_placed = resp.grid.iter().flat_map(|r: &Vec<PlannedCell>| r.iter()).any(|c| c.id.is_some());
+        assert!(!any_placed, "No vegetable must be placed on a fully blocked grid");
     }
 }

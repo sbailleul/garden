@@ -1,5 +1,5 @@
 use crate::models::{
-    request::PlanRequest,
+    request::{Level, PlanRequest},
     vegetable::Vegetable,
 };
 
@@ -7,11 +7,7 @@ use crate::models::{
 /// User preferences are moved to the top, followed by a stable alphabetical sort.
 pub fn filter_vegetables(db: &[Vegetable], request: &PlanRequest) -> Vec<Vegetable> {
     let preferences = request.preferences.clone().unwrap_or_default();
-    let is_beginner = request
-        .level
-        .as_deref()
-        .map(|l| l.to_lowercase().contains("beginner"))
-        .unwrap_or(false);
+    let is_beginner = matches!(request.level, Some(Level::Beginner));
 
     let mut filtered: Vec<Vegetable> = db
         .iter()
@@ -66,7 +62,7 @@ mod tests {
     use super::*;
     use crate::data::vegetables::get_all_vegetables;
     use crate::models::{
-        request::PlanRequest,
+        request::{Level, PlanRequest},
         vegetable::{Region, Season, SoilType, SunExposure},
     };
 
@@ -81,6 +77,7 @@ mod tests {
             level: None,
             preferences: None,
             existing_layout: None,
+            blocked_cells: None,
         }
     }
 
@@ -101,11 +98,11 @@ mod tests {
     #[test]
     fn test_filter_by_season_excludes_wrong_season() {
         let db = get_all_vegetables();
-        // La tomate ne pousse qu'en été → doit être exclue en hiver
+        // Tomato only grows in summer → must be excluded in winter
         let req = make_request(Season::Winter);
         let result = filter_vegetables(&db, &req);
         assert!(
-            !result.iter().any(|v| v.id == "tomate"),
+            !result.iter().any(|v| v.id == "tomato"),
             "Tomato must not appear in winter"
         );
     }
@@ -114,7 +111,7 @@ mod tests {
     fn test_filter_by_beginner_excludes_advanced() {
         let db = get_all_vegetables();
         let req = PlanRequest {
-            level: Some("Beginner".into()),
+            level: Some(Level::Beginner),
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);
@@ -131,12 +128,12 @@ mod tests {
     fn test_filter_preferences_boost() {
         let db = get_all_vegetables();
         let req = PlanRequest {
-            preferences: Some(vec!["basilic".into()]),
+            preferences: Some(vec!["basil".into()]),
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);
         if let Some(first) = result.first() {
-            assert_eq!(first.id, "basilic", "Basil (preferred) must be first");
+            assert_eq!(first.id, "basil", "Basil (preferred) must be first");
         }
     }
 
@@ -199,7 +196,7 @@ mod tests {
             sun: Some(SunExposure::Shade),
             soil: Some(SoilType::Chalky),
             region: Some(Region::Mountain),
-            level: Some("Beginner".into()),
+            level: Some(Level::Beginner),
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);

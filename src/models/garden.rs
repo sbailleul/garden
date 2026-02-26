@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::models::Matrix;
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlacedVegetable {
     pub id: String,
@@ -10,19 +12,21 @@ pub struct PlacedVegetable {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Cell {
     pub vegetable: Option<PlacedVegetable>,
+    /// True when the cell is a path, alley or other non-plantable zone.
+    pub blocked: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GardenGrid {
     pub rows: usize,
     pub cols: usize,
-    pub cells: Vec<Vec<Cell>>,
+    pub cells: Matrix<Cell>,
 }
 
 impl GardenGrid {
     pub fn new(rows: usize, cols: usize) -> Self {
         let cells = (0..rows)
-            .map(|_| (0..cols).map(|_| Cell { vegetable: None }).collect())
+            .map(|_| (0..cols).map(|_| Cell { vegetable: None, blocked: false }).collect())
             .collect();
         Self { rows, cols, cells }
     }

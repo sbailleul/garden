@@ -35,75 +35,75 @@ mod tests {
 
     #[test]
     fn test_good_companion_positive_score() {
-        let tomate = get("tomate");
+        let tomato = get("tomato");
         // basil is a good companion of tomato
-        let score = companion_score(&tomate, &["basilic"]);
+        let score = companion_score(&tomato, &["basil"]);
         assert_eq!(score, GOOD_COMPANION_SCORE, "Tomato + basil must give a positive score");
     }
 
     #[test]
     fn test_bad_companion_negative_score() {
-        let tomate = get("tomate");
+        let tomato = get("tomato");
         // fennel is a bad companion of tomato
-        let score = companion_score(&tomate, &["fenouil"]);
+        let score = companion_score(&tomato, &["fennel"]);
         assert_eq!(score, BAD_COMPANION_SCORE, "Tomato + fennel must give a negative score");
     }
 
     #[test]
     fn test_neutral_companion_score_zero() {
-        let salade = get("salade");
+        let lettuce = get("lettuce");
         // thyme is neither good nor bad for lettuce
-        let score = companion_score(&salade, &["thym"]);
+        let score = companion_score(&lettuce, &["thyme"]);
         assert_eq!(score, 0, "Neutral vegetables must give a score of 0");
     }
 
     #[test]
     fn test_multiple_neighbors_cumulative() {
-        let tomate = get("tomate");
+        let tomato = get("tomato");
         // basil (+2) + carrot (+2) + fennel (-3) = 1
-        let score = companion_score(&tomate, &["basilic", "carotte", "fenouil"]);
+        let score = companion_score(&tomato, &["basil", "carrot", "fennel"]);
         assert_eq!(score, 1);
     }
 
     #[test]
     fn test_no_neighbors_score_zero() {
-        let tomate = get("tomate");
-        let score = companion_score(&tomate, &[]);
+        let tomato = get("tomato");
+        let score = companion_score(&tomato, &[]);
         assert_eq!(score, 0);
     }
 
     #[test]
     fn test_is_compatible_good_pair() {
-        let tomate = get("tomate");
-        let basilic = get("basilic");
+        let tomato = get("tomato");
+        let basil = get("basil");
         // Tomato and basil are good companions → compatible
-        assert!(is_compatible(&tomate, &basilic));
+        assert!(is_compatible(&tomato, &basil));
     }
 
     #[test]
     fn test_is_compatible_bad_pair() {
-        let tomate = get("tomate");
-        let fenouil = get("fenouil");
+        let tomato = get("tomato");
+        let fennel = get("fennel");
         // Tomato + fennel → incompatible
-        assert!(!is_compatible(&tomate, &fenouil));
+        assert!(!is_compatible(&tomato, &fennel));
     }
 
     #[test]
     fn test_is_compatible_symmetric() {
-        let tomate = get("tomate");
-        let fenouil = get("fenouil");
+        let tomato = get("tomato");
+        let fennel = get("fennel");
         assert_eq!(
-            is_compatible(&tomate, &fenouil),
-            is_compatible(&fenouil, &tomate),
+            is_compatible(&tomato, &fennel),
+            is_compatible(&fennel, &tomato),
             "Compatibility must be symmetric"
         );
     }
 
     #[test]
     fn test_is_compatible_neutral_pair() {
-        let salade = get("salade");
-        let radis = get("radis");
+        let lettuce = get("lettuce");
+        let radish = get("radish");
         // Lettuce and radish → compatible (good companions)
-        assert!(is_compatible(&salade, &radis));
+        assert!(is_compatible(&lettuce, &radish));
     }
 }

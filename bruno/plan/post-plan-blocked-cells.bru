@@ -1,0 +1,56 @@
+meta {
+  name: POST Plan (blocked cells)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/plan
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "widthM": 0.9,
+    "lengthM": 0.9,
+    "season": "Summer",
+    "blockedCells": [
+      [false, false, false],
+      [true,  true,  true],
+      [false, false, false]
+    ]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload.grid: isArray
+  res.body.payload.rows: eq 3
+  res.body.payload.cols: eq 3
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("blocked row has no vegetable and blocked=true", function() {
+    var row = res.body.payload.grid[1];
+    row.forEach(function(cell) {
+      expect(cell.id).to.be.null;
+      expect(cell.blocked).to.be.true;
+    });
+  });
+
+  test("non-blocked cells are not flagged", function() {
+    [0, 2].forEach(function(r) {
+      res.body.payload.grid[r].forEach(function(cell) {
+        expect(cell.blocked).to.be.false;
+      });
+    });
+  });
+}
