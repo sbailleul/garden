@@ -97,8 +97,7 @@ jobs:
         run: npm install -g @usebruno/cli
 
       - name: Run Bruno collection
-        run: bru run bruno/ --env local --reporter-json bruno-results.json
-        continue-on-error: true
+        run: cd bruno && bru run . --env local --reporter-json ../bruno-results.json
 
       - name: Upload Bruno results
         if: always()

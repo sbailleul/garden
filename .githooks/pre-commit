@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
+
+# Pre-commit git hook that enforces strict error handling
+# - set -e: Exit immediately if any command exits with a non-zero status
+# - set -u: Exit if an undefined variable is referenced
+# - set -o pipefail: Exit if any command in a pipeline fails
 set -euo pipefail
-export LC_ALL=C.utf8
 
 echo "▶ cargo fmt --check"
 if ! cargo fmt -- --check; then
