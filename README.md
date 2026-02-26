@@ -236,16 +236,42 @@ Returns `400` with `{ "error": "..." }` for an empty `layout` or malformed JSON.
 
 ## Placement Algorithm
 
-1. Validate dimensions (must be strictly positive).
-2. Compute grid size: `ceil(metres × 100 / 30)` cells per axis.
-3. Mark blocked cells from `blocked_cells`.
-4. Pre-fill cells from `existing_layout`; conflicting cells (blocked + vegetable) emit a warning and the vegetable is skipped.
-5. For each candidate vegetable (preferences first, then alphabetical):
-   - Skip if already placed.
-   - Find the free, unblocked cell with the highest companion score against already-placed neighbours.
-   - `score = Σ(+2 per good neighbour) + Σ(−3 per bad neighbour)`
-6. Attach a human-readable reason to every placed cell.
-7. Return the grid, cumulative score, and any warnings.
+```mermaid
+flowchart TD
+    A([POST /api/plan]) --> B[Validate layout\nnon-empty rows & cols]
+    B -->|invalid| ERR([400 Bad Request])
+    B -->|valid| C[Pre-fill grid\nfrom layout cells]
+    C --> D{All free cells\nalready occupied?}
+    D -->|yes| WARN[Emit 'fully occupied'\nwarning]
+    WARN --> RESP([Return response])
+    D -->|no| E[Filter vegetable DB\nseason · sun · soil · region · level]
+    E --> F[Sort candidates\npreferences first in declared order\nthen by French consumption rank]
+    F --> G[compute_allocation\nPass 1: honour explicit quantities\nPass 2: split remainder evenly\nround-robin extras to top candidates]
+    G --> H[Expand candidate list\nrepeat each vegetable\nallocation times]
+    H --> I{More candidates\nto place?}
+    I -->|no| J{Empty cells\nremaining?}
+    I -->|yes| K[For each free cell\ncompute companion score\n+2 good neighbour · −3 bad neighbour]
+    K --> L[Place vegetable in\nbest-scoring free cell]
+    L --> M{Count reached\nallocation?}
+    M -->|no| I
+    M -->|yes| I
+    J -->|yes| N[Emit 'N empty cells'\nwarning]
+    J -->|no| RESP
+    N --> RESP
+    RESP --> O([200 OK\ngrid · score · warnings · _links])
+```
+
+1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
+2. **Pre-fill** — blocked cells (`true`) and pre-placed vegetables (`"id"`) are applied from the unified `layout` array. Unknown vegetable IDs emit a warning and are skipped.
+3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
+4. **Filter** — the vegetable catalogue is narrowed by `season`, `sun`, `soil`, `region`, and `level`.
+5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
+6. **Allocate** — `compute_allocation` distributes the available cells:
+   - *Pass 1*: explicit `quantity` preferences are honoured first (capped at remaining space).
+   - *Pass 2*: leftover cells are split evenly; extra cells (modulo remainder) go to the highest-ranked candidates first.
+7. **Place** — for each candidate slot, the free cell that maximises `Σ(+2 per good neighbour) + Σ(−3 per bad neighbour)` is selected. Placement stops when the grid is full.
+8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
+9. **Return** — the filled grid, cumulative companion score, warnings, and `_links`.
 
 ---
 
