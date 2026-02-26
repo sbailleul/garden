@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use log::{debug, info, trace, warn};
+
 use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::companion::companion_score;
 use crate::models::{
@@ -31,7 +33,8 @@ fn plants_per_cell(spacing_cm: u32) -> u32 {
 }
 
 /// Distributes `available` cells across the candidate pool.
-/// Pass 1: honour explicit `quantity` preferences (capped at remaining).
+/// Pass 1: honour explicit `quantity` preferences — `quantity` is the desired number of
+///         **plants** (placements), so it is multiplied by `span²` to get cell consumption.
 /// Pass 2: split leftover cells evenly (round-robin extra to earlier entries).
 fn compute_allocation(
     candidates: &[Vegetable],
@@ -41,11 +44,13 @@ fn compute_allocation(
     let mut allocation: HashMap<String, usize> = HashMap::new();
     let mut remaining = available;
 
-    // Pass 1: explicit quantities
+    // Pass 1: explicit quantities (quantity = number of plants, not cells)
     for pref in preferences {
         if let Some(qty) = pref.quantity {
-            if candidates.iter().any(|v| v.id == pref.id) {
-                let alloc = (qty as usize).min(remaining);
+            if let Some(v) = candidates.iter().find(|v| v.id == pref.id) {
+                let cells_per_plant = (cell_span(v.spacing_cm) as usize).pow(2);
+                let cells_needed = (qty as usize).saturating_mul(cells_per_plant);
+                let alloc = cells_needed.min(remaining);
                 allocation.insert(pref.id.clone(), alloc);
                 remaining = remaining.saturating_sub(alloc);
             }
@@ -73,12 +78,15 @@ fn compute_allocation(
 /// Returns `(rows, cols)` on success.
 fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<(usize, usize), String> {
     if layout.is_empty() {
+        warn!("validate_layout: rejected — layout has no rows");
         return Err("Layout must contain at least one row.".into());
     }
     let cols = layout[0].len();
     if cols == 0 {
+        warn!("validate_layout: rejected — first row is empty");
         return Err("Layout rows must not be empty.".into());
     }
+    debug!("validate_layout: {}×{} grid accepted", layout.len(), cols);
     Ok((layout.len(), cols))
 }
 
@@ -90,6 +98,7 @@ fn initialize_grid(
     cols: usize,
     layout: &[Vec<LayoutCell>],
 ) -> (GardenGrid, Vec<String>) {
+    debug!("initialize_grid: building {rows}×{cols} grid from layout");
     let mut grid = GardenGrid::new(rows, cols);
     let mut warnings: Vec<String> = Vec::new();
 
@@ -97,10 +106,12 @@ fn initialize_grid(
         for (c, cell) in row.iter().enumerate() {
             match cell {
                 LayoutCell::Blocked(true) => {
+                    trace!("initialize_grid: [{r},{c}] marked as blocked");
                     grid.cells[r][c].blocked = true;
                 }
                 LayoutCell::Planted(id) => {
                     if let Some(v) = get_vegetable_by_id(id) {
+                        debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -111,6 +122,7 @@ fn initialize_grid(
                             anchor_col: c,
                         });
                     } else {
+                        warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
                         warnings.push(format!(
                             "Vegetable '{id}' not found in the database, skipped."
                         ));
@@ -129,6 +141,7 @@ fn count_grid_occupancy(grid: &GardenGrid) -> (usize, usize) {
     let flat = || grid.cells.iter().flat_map(|r| r.iter());
     let occupied = flat().filter(|c| c.vegetable.is_some()).count();
     let blocked = flat().filter(|c| c.blocked).count();
+    debug!("count_grid_occupancy: {occupied} occupied, {blocked} blocked");
     (occupied, blocked)
 }
 
@@ -139,6 +152,11 @@ fn build_placement_queue<'a>(
     preferences: &[PreferenceEntry],
     free_cells: usize,
 ) -> (Vec<&'a Vegetable>, HashMap<String, usize>) {
+    debug!(
+        "build_placement_queue: {} candidates, {} free cells",
+        candidates.len(),
+        free_cells
+    );
     let allocation = compute_allocation(candidates, preferences, free_cells);
 
     // Convert cell allocations → placement counts (one placement = span² cells).
@@ -153,6 +171,13 @@ fn build_placement_queue<'a>(
             } else {
                 0
             };
+            debug!(
+                "build_placement_queue: '{}' → {} cell(s) → {} placement(s) (span {})",
+                v.id,
+                cells,
+                n,
+                cell_span(v.spacing_cm)
+            );
             (v.id.clone(), n)
         })
         .collect();
@@ -166,6 +191,7 @@ fn build_placement_queue<'a>(
         })
         .collect();
 
+    debug!("build_placement_queue: queue length = {}", queue.len());
     (queue, placements_map)
 }
 
@@ -191,10 +217,26 @@ fn find_best_block(
                 .map(|v| v.id.as_str())
                 .collect();
             let score = companion_score(vegetable, &neighbor_ids);
+            trace!(
+                "find_best_block: '{}' at [{r},{c}] span={span} score={score}",
+                vegetable.id
+            );
             if best.is_none_or(|(_, _, s)| score > s) {
                 best = Some((r, c, score));
             }
         }
+    }
+
+    if let Some((r, c, s)) = best {
+        debug!(
+            "find_best_block: best block for '{}' at [{r},{c}] score={s}",
+            vegetable.id
+        );
+    } else {
+        debug!(
+            "find_best_block: no free {span}×{span} block for '{}'",
+            vegetable.id
+        );
     }
 
     best
@@ -204,6 +246,10 @@ fn find_best_block(
 fn fill_block(grid: &mut GardenGrid, vegetable: &Vegetable, row: usize, col: usize, reason: &str) {
     let span = cell_span(vegetable.spacing_cm) as usize;
     let ppc = plants_per_cell(vegetable.spacing_cm);
+    debug!(
+        "fill_block: placing '{}' at [{row},{col}] span={span} plants_per_cell={ppc}",
+        vegetable.id
+    );
     for dr in 0..span {
         for dc in 0..span {
             grid.cells[row + dr][col + dc].vegetable =
@@ -245,14 +291,27 @@ fn place_candidates(
     'outer: for vegetable in queue {
         let max_count = placements_map.get(&vegetable.id).copied().unwrap_or(0);
         if placed_counts.get(&vegetable.id).copied().unwrap_or(0) >= max_count {
+            trace!(
+                "place_candidates: '{}' reached its cap of {max_count}, skipping",
+                vegetable.id
+            );
             continue;
         }
 
         let span = cell_span(vegetable.spacing_cm) as usize;
 
         match find_best_block(grid, vegetable, rows, cols) {
-            None if span == 1 => break 'outer, // no free single cell — grid is full
-            None => continue,                  // no span×span block; smaller plants may still fit
+            None if span == 1 => {
+                debug!("place_candidates: no free cells left — stopping early");
+                break 'outer; // no free single cell — grid is full
+            }
+            None => {
+                debug!(
+                    "place_candidates: no {span}×{span} block for '{}', skipping",
+                    vegetable.id
+                );
+                continue; // no span×span block; smaller plants may still fit
+            }
             Some((r, c, score)) => {
                 let neighbor_names: Vec<String> = grid
                     .get_block_neighbors(r, c, span)
@@ -270,6 +329,7 @@ fn place_candidates(
         }
     }
 
+    info!("place_candidates: finished — cumulative score = {global_score}");
     global_score
 }
 
@@ -281,6 +341,9 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
         .flat_map(|r| r.iter())
         .filter(|c| c.vegetable.is_none() && !c.blocked)
         .count();
+    if empty > 0 {
+        warn!("empty_cells_warning: {empty} cell(s) left unplanted");
+    }
     (empty > 0).then(|| {
         format!("{empty} empty cell(s): not enough compatible vegetables to fill the entire grid.")
     })
@@ -291,13 +354,23 @@ pub fn plan_garden(
     candidates: Vec<Vegetable>,
     request: &PlanRequest,
 ) -> Result<PlanResponse, String> {
+    info!(
+        "plan_garden: starting — {} candidate(s), season={:?}",
+        candidates.len(),
+        request.season
+    );
+
     let (rows, cols) = validate_layout(&request.layout)?;
     let (mut grid, mut warnings) = initialize_grid(rows, cols, &request.layout);
 
     let (occupied, blocked_count) = count_grid_occupancy(&grid);
     let available_cells = (rows * cols).saturating_sub(blocked_count);
+    info!(
+        "plan_garden: {rows}×{cols} grid — {available_cells} plantable, {occupied} pre-occupied, {blocked_count} blocked"
+    );
 
     if occupied >= available_cells {
+        warn!("plan_garden: grid is already fully occupied — returning early");
         warnings.push("The grid is already fully occupied by the existing layout.".into());
         return Ok(build_response(grid, rows, cols, 0, warnings));
     }
@@ -312,6 +385,10 @@ pub fn plan_garden(
         warnings.push(w);
     }
 
+    info!(
+        "plan_garden: done — score={score}, warnings={}",
+        warnings.len()
+    );
     Ok(build_response(grid, rows, cols, score, warnings))
 }
 
@@ -641,6 +718,33 @@ mod tests {
             .filter(|c| c.id() == Some("basil"))
             .count();
         assert_eq!(basil_count, 3, "Basil must be placed exactly 3 times");
+    }
+
+    #[test]
+    fn test_preference_quantity_is_plant_count_not_cell_count() {
+        use crate::models::request::PreferenceEntry;
+        // Tomato: spacing=60cm → span=2 → occupies 2×2=4 cells per plant.
+        // Requesting quantity=2 means 2 plants (8 cells), not 2 cells (which would yield 1 plant).
+        // Use a large grid (6×6) so there is plenty of room.
+        let req = PlanRequest {
+            preferences: Some(vec![PreferenceEntry {
+                id: "tomato".into(),
+                quantity: Some(2),
+            }]),
+            ..minimal_request(1.8, 1.8, Season::Summer)
+        };
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        let tomato_anchors = resp
+            .grid
+            .iter()
+            .flat_map(|r| r.iter())
+            .filter(|c| c.id() == Some("tomato"))
+            .count();
+        assert_eq!(
+            tomato_anchors, 2,
+            "quantity=2 for tomato (span=2) must yield 2 plant placements, got {tomato_anchors}"
+        );
     }
 
     #[test]

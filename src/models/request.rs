@@ -147,12 +147,13 @@ pub enum Level {
     Expert,
 }
 
-/// A single preference entry with an optional desired cell count.
+/// A single preference entry with an optional desired plant count.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferenceEntry {
     pub id: String,
-    /// Desired number of grid cells for this vegetable (defaults to 1 when omitted).
+    /// Desired number of **plants** (placements) for this vegetable.
+    /// Each plant may occupy more than one cell depending on its spacing.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quantity: Option<u32>,
 }
@@ -165,7 +166,7 @@ pub struct PlanRequest {
     pub soil: Option<SoilType>,
     pub region: Option<Region>,
     pub level: Option<Level>,
-    /// Preferred vegetables with optional per-vegetable cell count.
+    /// Preferred vegetables with optional per-vegetable plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,
     /// Combined grid layout — defines dimensions and pre-filled cells.
     /// Each cell is: `null` (free), `"id"` (pre-planted), or `true` (blocked).

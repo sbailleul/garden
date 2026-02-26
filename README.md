@@ -191,7 +191,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `soil` | `SoilType?` | Soil type filter |
 | `region` | `Region?` | Climate region filter |
 | `level` | `Level?` | Skill level filter |
-| `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of cells |
+| `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of **plants** (placements) — each plant may occupy more than one cell |
 
 **Enums:**
 
@@ -278,7 +278,7 @@ flowchart TD
 4. **Filter** — the vegetable catalogue is narrowed by `season`, `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
 6. **Allocate** — `compute_allocation` distributes the available cells:
-   - *Pass 1*: explicit `quantity` preferences are honoured first (capped at remaining space).
+   - *Pass 1*: explicit `quantity` preferences are honoured first — `quantity` is the number of **plants** (placements); multiplied by the plant's cell footprint (`span²`) to obtain cell consumption, then capped at remaining space.
    - *Pass 2*: leftover cells are split evenly; extra cells (modulo remainder) go to the highest-ranked candidates first.
 7. **Place** — for each candidate slot, the algorithm finds the free `span × span` block that maximises `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter. Every cell in the block is filled with the same vegetable, `widthCells = span`, `lengthCells = span`. If no valid block exists for a multi-cell plant the candidate is skipped (remaining single-cell candidates can still fill gaps). Placement stops when the grid is full.
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.

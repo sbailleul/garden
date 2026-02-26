@@ -2,14 +2,15 @@ use actix_web::{middleware, web, App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+
     let bind_addr = "0.0.0.0:8080";
-    println!("🌱 Garden API started at http://{bind_addr}");
-    println!("   GET  /api/vegetables");
-    println!("   GET  /api/vegetables/{{id}}/companions");
-    println!("   POST /api/plan");
-    println!("   ");
-    println!("   📖 Swagger UI → http://{bind_addr}/swagger-ui/");
-    println!("   📌 OpenAPI spec → http://{bind_addr}/api-docs/openapi.json");
+    log::info!("🌱 Garden API started at http://{bind_addr}");
+    log::info!("   GET  /api/vegetables");
+    log::info!("   GET  /api/vegetables/{{id}}/companions");
+    log::info!("   POST /api/plan");
+    log::info!("   📖 Swagger UI  → http://{bind_addr}/swagger-ui/");
+    log::info!("   📌 OpenAPI spec → http://{bind_addr}/api-docs/openapi.json");
     HttpServer::new(|| {
         App::new()
             .wrap(middleware::Logger::default())

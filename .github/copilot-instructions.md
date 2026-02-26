@@ -1,5 +1,9 @@
 # Copilot Instructions
 
+## Formatting
+
+Run `cargo fmt` after every code modification before considering the task complete. This keeps the codebase consistently formatted and avoids pre-commit hook failures.
+
 ## Tests
 
 Every feature must be covered by at least one automated test. This includes new endpoints, new fields, new business rules, and bug fixes. Tests live in `src/` (unit/integration via `#[cfg(test)]`) or in `tests/` (integration tests using `actix_web::test`).
@@ -25,3 +29,5 @@ Every API response must include a `_links` object following the HAL convention. 
 - `POST /api/plan` — `self` → `/api/plan`, `vegetables` → `/api/vegetables`
 
 The `_links` key is exempt from camelCase renaming and must be serialised literally as `_links` using `#[serde(rename = "_links")]`.
+
+
