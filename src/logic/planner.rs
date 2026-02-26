@@ -12,6 +12,24 @@ use crate::models::{
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
 
+/// How many grid cells a plant requires per axis: `ceil(spacing / 30)`, minimum 1.
+/// Examples: 10 cm → 1, 30 cm → 1, 40 cm → 2, 60 cm → 2, 90 cm → 3.
+pub fn cell_span(spacing_cm: u32) -> u32 {
+    spacing_cm.div_ceil(CELL_SIZE_CM).max(1)
+}
+
+/// Plants per cell:
+/// - span == 1 (spacing ≤ 30 cm): `floor(30 / spacing)^2`
+/// - span  > 1 (spacing  > 30 cm): 1 plant occupies the whole span×span block.
+fn plants_per_cell(spacing_cm: u32) -> u32 {
+    if cell_span(spacing_cm) > 1 {
+        1
+    } else {
+        let per_axis = (CELL_SIZE_CM / spacing_cm.max(1)).max(1);
+        per_axis * per_axis
+    }
+}
+
 /// Distributes `available` cells across the candidate pool.
 /// Pass 1: honour explicit `quantity` preferences (capped at remaining).
 /// Pass 2: split leftover cells evenly (round-robin extra to earlier entries).
@@ -85,6 +103,8 @@ pub fn plan_garden(
                             id: v.id.clone(),
                             name: v.name.clone(),
                             reason: "Present in the existing layout.".into(),
+                            plants_per_cell: plants_per_cell(v.spacing_cm),
+                            span: cell_span(v.spacing_cm),
                         });
                     } else {
                         warnings.push(format!(
@@ -123,11 +143,24 @@ pub fn plan_garden(
         available_cells.saturating_sub(occupied),
     );
 
-    // Expand the candidate list: repeat each vegetable according to its allocated count.
+    // Convert cell allocations to placement counts.
+    // A span×span plant uses span² cells per placement.
+    // Guarantee at least 1 placement for any candidate with a non-zero cell budget.
+    let placements_map: HashMap<String, usize> = candidates
+        .iter()
+        .map(|v| {
+            let cps = (cell_span(v.spacing_cm) as usize).pow(2);
+            let cells = allocation.get(&v.id).copied().unwrap_or(0);
+            let n = if cells > 0 { (cells / cps).max(1) } else { 0 };
+            (v.id.clone(), n)
+        })
+        .collect();
+
+    // Expand the candidate list: repeat each vegetable according to its placement count.
     let expanded_candidates: Vec<&Vegetable> = candidates
         .iter()
         .flat_map(|v| {
-            let n = allocation.get(&v.id).copied().unwrap_or(0);
+            let n = placements_map.get(&v.id).copied().unwrap_or(0);
             std::iter::repeat_n(v, n)
         })
         .collect();
@@ -143,24 +176,26 @@ pub fn plan_garden(
         });
 
     'outer: for vegetable in &expanded_candidates {
-        let max_count = allocation.get(&vegetable.id).copied().unwrap_or(0);
+        let max_count = placements_map.get(&vegetable.id).copied().unwrap_or(0);
         let current_count = placed_counts.get(&vegetable.id).copied().unwrap_or(0);
         if current_count >= max_count {
             continue;
         }
 
-        // Find the best free cell
+        let span = cell_span(vegetable.spacing_cm) as usize;
+
+        // Find the best free span×span block
         let mut best_row = None;
         let mut best_col = None;
         let mut best_score = i32::MIN;
 
-        for r in 0..rows {
-            for c in 0..cols {
-                if grid.cells[r][c].vegetable.is_some() || grid.cells[r][c].blocked {
+        for r in 0..=rows.saturating_sub(span) {
+            for c in 0..=cols.saturating_sub(span) {
+                if !grid.is_block_free(r, c, span) {
                     continue;
                 }
                 let neighbor_ids: Vec<&str> = grid
-                    .get_neighbors(r, c)
+                    .get_block_neighbors(r, c, span)
                     .iter()
                     .map(|v| v.id.as_str())
                     .collect();
@@ -175,26 +210,37 @@ pub fn plan_garden(
 
         if let (Some(r), Some(c)) = (best_row, best_col) {
             let neighbor_names: Vec<String> = grid
-                .get_neighbors(r, c)
+                .get_block_neighbors(r, c, span)
                 .iter()
                 .map(|v| v.name.clone())
                 .collect();
 
             let reason = build_reason(vegetable, &neighbor_names, best_score);
-            grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
-                id: vegetable.id.clone(),
-                name: vegetable.name.clone(),
-                reason,
-            });
+            let ppc = plants_per_cell(vegetable.spacing_cm);
+
+            // Fill every cell in the span×span block
+            for dr in 0..span {
+                for dc in 0..span {
+                    grid.cells[r + dr][c + dc].vegetable =
+                        Some(crate::models::garden::PlacedVegetable {
+                            id: vegetable.id.clone(),
+                            name: vegetable.name.clone(),
+                            reason: reason.clone(),
+                            plants_per_cell: ppc,
+                            span: span as u32,
+                        });
+                }
+            }
             placed_counts
                 .entry(vegetable.id.clone())
                 .and_modify(|n| *n += 1)
                 .or_insert(1);
             global_score += best_score;
-        } else {
-            // Grid is full
+        } else if span == 1 {
+            // No free single cell exists — grid is genuinely full.
             break 'outer;
         }
+        // For span > 1: no suitable block found — skip (grid may still have free single cells).
     }
 
     // Warn if plantable cells remain empty
@@ -263,12 +309,18 @@ fn build_response(
                         id: Some(v.id.clone()),
                         name: Some(v.name.clone()),
                         reason: Some(v.reason.clone()),
+                        plants_per_cell: Some(v.plants_per_cell),
+                        width_cells: Some(v.span),
+                        length_cells: Some(v.span),
                         blocked: false,
                     },
                     None => PlannedCell {
                         id: None,
                         name: None,
                         reason: None,
+                        plants_per_cell: None,
+                        width_cells: None,
+                        length_cells: None,
                         blocked: cell.blocked,
                     },
                 })
@@ -557,9 +609,65 @@ mod tests {
         let leek = get_vegetable_by_id("leek").unwrap();
         let candidates = vec![tomato, carrot, leek];
         let allocation = compute_allocation(&candidates, &[], 10);
-        // 10 / 3 = base 3, extra 1 → first gets 4, rest get 3
+        // compute_allocation distributes raw cells: 10 / 3 = base 3, extra 1
+        // → first candidate gets 4 cells, rest get 3 cells
         assert_eq!(allocation["tomato"], 4);
         assert_eq!(allocation["carrot"], 3);
         assert_eq!(allocation["leek"], 3);
     }
-}
+
+    #[test]
+    fn test_cell_span_values() {
+        assert_eq!(cell_span(10), 1, "10 cm fits in 1 cell");
+        assert_eq!(cell_span(30), 1, "30 cm fits in 1 cell");
+        assert_eq!(cell_span(31), 2, "31 cm needs 2 cells");
+        assert_eq!(cell_span(60), 2, "60 cm needs 2 cells");
+        assert_eq!(cell_span(90), 3, "90 cm needs 3 cells");
+    }
+
+    #[test]
+    fn test_multi_cell_plant_fills_block() {
+        use crate::data::vegetables::get_vegetable_by_id;
+        // Tomato: 60 cm spacing → span=2 → must occupy a 2×2 block in the grid.
+        let tomato = get_vegetable_by_id("tomato").unwrap();
+        // 2m × 2m → ceil(200/30)=7 × 7 grid — plenty of room for a 2×2 block.
+        let req = minimal_request(2.0, 2.0, Season::Summer);
+        let resp = plan_garden(vec![tomato], &req).unwrap();
+
+        let tomato_cells: Vec<(usize, usize)> = resp
+            .grid
+            .iter()
+            .enumerate()
+            .flat_map(|(r, row)| {
+                row.iter()
+                    .enumerate()
+                    .filter(|(_, c)| c.id.as_deref() == Some("tomato"))
+                    .map(move |(c, _)| (r, c))
+            })
+            .collect();
+
+        assert!(!tomato_cells.is_empty(), "Tomato must be placed at least once");
+
+        // All tomato cells must report widthCells=2 and lengthCells=2
+        for (r, c) in &tomato_cells {
+            let cell = &resp.grid[*r][*c];
+            assert_eq!(
+                cell.width_cells,
+                Some(2),
+                "Tomato cell [{r},{c}] must report widthCells=2"
+            );
+            assert_eq!(
+                cell.length_cells,
+                Some(2),
+                "Tomato cell [{r},{c}] must report lengthCells=2"
+            );
+        }
+
+        // Cell count must be a multiple of 4 (each placement = 2×2 block)
+        assert_eq!(
+            tomato_cells.len() % 4,
+            0,
+            "Tomato cell count ({}) must be a multiple of 4",
+            tomato_cells.len()
+        );
+    }}

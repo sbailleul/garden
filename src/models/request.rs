@@ -180,6 +180,13 @@ pub struct PlannedCell {
     pub id: Option<String>,
     pub name: Option<String>,
     pub reason: Option<String>,
+    /// Number of individual plants that fit in this 30 cm × 30 cm cell
+    /// (e.g. 9 for carrots at 10 cm spacing, 1 for tomatoes at 60 cm spacing).
+    pub plants_per_cell: Option<u32>,
+    /// Number of grid cells this plant occupies horizontally (1 for small plants, 2+ for large ones).
+    pub width_cells: Option<u32>,
+    /// Number of grid cells this plant occupies vertically (equals `widthCells` — spacing is symmetric).
+    pub length_cells: Option<u32>,
     /// True when the cell is a non-plantable zone (path, alley, etc.).
     pub blocked: bool,
 }

@@ -213,7 +213,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
     "warnings": [],
     "grid": [
       [
-        { "id": "tomato", "name": "Tomato", "reason": "First placed (fruit, beginner-friendly) ", "blocked": false },
+        { "id": "tomato", "name": "Tomato", "reason": "First placed (fruit, beginner-friendly) ", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
         { "id": null,     "name": null,     "reason": null, "blocked": true }
       ]
     ]
@@ -228,6 +228,8 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 
 Each `PlannedCell` carries:
 - `id` / `name` / `reason` — `null` when the cell is empty or blocked
+- `plantsPerCell` — number of individual plants that fit in the 30 cm × 30 cm cell (e.g. `9` for carrots at 10 cm spacing, `1` for tomatoes at 60 cm spacing); omitted when the cell is empty or blocked
+- `widthCells` / `lengthCells` — how many grid cells the plant occupies per axis (e.g. `2` for tomatoes at 60 cm spacing, `3` for zucchini at 90 cm). All cells of the same placement share the same id/name and identical `widthCells`/`lengthCells`, linking them into a block. Omitted when the cell is empty or blocked.
 - `blocked` — `true` when the cell is a non-plantable zone
 
 Returns `400` with `{ "error": "..." }` for an empty `layout` or malformed JSON.
@@ -250,8 +252,8 @@ flowchart TD
     G --> H[Expand candidate list<br/>repeat each vegetable<br/>allocation times]
     H --> I{More candidates<br/>to place?}
     I -->|no| J{Empty cells<br/>remaining?}
-    I -->|yes| K[For each free cell<br/>compute companion score<br/>+2 good neighbour · −3 bad neighbour]
-    K --> L[Place vegetable in<br/>best-scoring free cell]
+    I -->|yes| K[For each free span×span block<br/>compute companion score on perimeter<br/>+2 good neighbour · −3 bad neighbour]
+    K --> L[Fill all span×span cells<br/>with same vegetable<br/>widthCells = lengthCells = span]
     L --> M{Count reached<br/>allocation?}
     M -->|no| I
     M -->|yes| I
@@ -269,7 +271,7 @@ flowchart TD
 6. **Allocate** — `compute_allocation` distributes the available cells:
    - *Pass 1*: explicit `quantity` preferences are honoured first (capped at remaining space).
    - *Pass 2*: leftover cells are split evenly; extra cells (modulo remainder) go to the highest-ranked candidates first.
-7. **Place** — for each candidate slot, the free cell that maximises `Σ(+2 per good neighbour) + Σ(−3 per bad neighbour)` is selected. Placement stops when the grid is full.
+7. **Place** — for each candidate slot, the algorithm finds the free `span × span` block that maximises `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter. Every cell in the block is filled with the same vegetable, `widthCells = span`, `lengthCells = span`. If no valid block exists for a multi-cell plant the candidate is skipped (remaining single-cell candidates can still fill gaps). Placement stops when the grid is full.
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
 9. **Return** — the filled grid, cumulative companion score, warnings, and `_links`.
 

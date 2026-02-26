@@ -8,6 +8,10 @@ pub struct PlacedVegetable {
     pub id: String,
     pub name: String,
     pub reason: String,
+    /// Number of individual plants that fit in this 30 cm × 30 cm cell.
+    pub plants_per_cell: u32,
+    /// How many grid cells this plant occupies per axis (1 for small plants, 2+ for large ones).
+    pub span: u32,
 }
 
 #[skip_serializing_none]
@@ -51,6 +55,56 @@ impl GardenGrid {
                     neighbors.push(v);
                 }
             }
+        }
+        neighbors
+    }
+
+    /// Returns true when every cell in the `span × span` block starting at `(row, col)` is free.
+    pub fn is_block_free(&self, row: usize, col: usize, span: usize) -> bool {
+        if row + span > self.rows || col + span > self.cols {
+            return false;
+        }
+        for dr in 0..span {
+            for dc in 0..span {
+                let cell = &self.cells[row + dr][col + dc];
+                if cell.vegetable.is_some() || cell.blocked {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    /// Returns all distinct already-placed neighbours on the perimeter of a `span × span` block.
+    pub fn get_block_neighbors(
+        &self,
+        row: usize,
+        col: usize,
+        span: usize,
+    ) -> Vec<&PlacedVegetable> {
+        let mut seen: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
+        let mut neighbors: Vec<&PlacedVegetable> = Vec::new();
+        let s = span as i32;
+        let r0 = row as i32;
+        let c0 = col as i32;
+
+        let mut check = |r: i32, c: i32| {
+            if r < 0 || c < 0 || r >= self.rows as i32 || c >= self.cols as i32 {
+                return;
+            }
+            let key = (r as usize, c as usize);
+            if seen.insert(key) {
+                if let Some(ref v) = self.cells[r as usize][c as usize].vegetable {
+                    neighbors.push(v);
+                }
+            }
+        };
+
+        for d in 0..s {
+            check(r0 - 1, c0 + d); // top edge
+            check(r0 + s, c0 + d); // bottom edge
+            check(r0 + d, c0 - 1); // left edge
+            check(r0 + d, c0 + s); // right edge
         }
         neighbors
     }
