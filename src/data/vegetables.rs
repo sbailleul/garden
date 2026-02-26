@@ -1,4 +1,6 @@
-use crate::models::vegetable::{Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable};
+use crate::models::vegetable::{
+    Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable,
+};
 
 pub fn get_all_vegetables() -> Vec<Vegetable> {
     vec![

@@ -6,8 +6,9 @@
 # - set -o pipefail: Exit if any command in a pipeline fails
 set -euo pipefail
 
-echo "▶ cargo fmt"
-if ! cargo fmt; then
+echo "▶ cargo fmt --check"
+if ! cargo fmt -- --check; then
+  cargo fmt
   echo "❌ Formatting issues found. Run 'cargo fmt' then re-stage your changes."
   exit 1
 fi
