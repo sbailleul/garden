@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::models::Matrix;
 
@@ -9,6 +10,7 @@ pub struct PlacedVegetable {
     pub reason: String,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Cell {
     pub vegetable: Option<PlacedVegetable>,

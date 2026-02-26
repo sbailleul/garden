@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::models::{
     vegetable::{Region, Season, SoilType, SunExposure, Vegetable},
@@ -135,6 +136,7 @@ pub struct PlanRequest {
     pub layout: Matrix<LayoutCell>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlannedCell {
