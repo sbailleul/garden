@@ -69,29 +69,31 @@ fn compute_allocation(
     allocation
 }
 
-/// Greedy placement algorithm on the grid.
-/// For each candidate vegetable (sorted by priority), chooses the free cell
-/// that maximises the companion score against already-placed neighbours.
-pub fn plan_garden(
-    candidates: Vec<Vegetable>,
-    request: &PlanRequest,
-) -> Result<PlanResponse, String> {
-    if request.layout.is_empty() {
+/// Validates that the layout has at least one non-empty row.
+/// Returns `(rows, cols)` on success.
+fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<(usize, usize), String> {
+    if layout.is_empty() {
         return Err("Layout must contain at least one row.".into());
     }
-    let rows = request.layout.len();
-    let cols = request.layout[0].len();
+    let cols = layout[0].len();
     if cols == 0 {
         return Err("Layout rows must not be empty.".into());
     }
-    let total_cells = rows * cols;
+    Ok((layout.len(), cols))
+}
 
+/// Creates a blank grid and pre-fills it from the unified layout array:
+/// blocked zones (`true`) and pre-placed vegetables (`"id"`).
+/// Returns the grid and any warnings produced (e.g. unknown vegetable IDs).
+fn initialize_grid(
+    rows: usize,
+    cols: usize,
+    layout: &[Vec<LayoutCell>],
+) -> (GardenGrid, Vec<String>) {
     let mut grid = GardenGrid::new(rows, cols);
     let mut warnings: Vec<String> = Vec::new();
-    let mut global_score: i32 = 0;
 
-    // Pre-fill the grid from the unified layout (blocked zones and pre-planted vegetables).
-    for (r, row) in request.layout.iter().enumerate() {
+    for (r, row) in layout.iter().enumerate() {
         for (c, cell) in row.iter().enumerate() {
             match cell {
                 LayoutCell::Blocked(true) => {
@@ -119,47 +121,44 @@ pub fn plan_garden(
         }
     }
 
-    let occupied: usize = grid
-        .cells
-        .iter()
-        .flat_map(|r| r.iter())
-        .filter(|c| c.vegetable.is_some())
-        .count();
-    let blocked_count: usize = grid
-        .cells
-        .iter()
-        .flat_map(|r| r.iter())
-        .filter(|c| c.blocked)
-        .count();
-    let available_cells = total_cells.saturating_sub(blocked_count);
-    if occupied >= available_cells {
-        warnings.push("The grid is already fully occupied by the existing layout.".into());
-        return Ok(build_response(grid, rows, cols, global_score, warnings));
-    }
+    (grid, warnings)
+}
 
-    // Greedy placement of candidates
-    let preferences_slice = request.preferences.as_deref().unwrap_or(&[]);
-    let allocation = compute_allocation(
-        &candidates,
-        preferences_slice,
-        available_cells.saturating_sub(occupied),
-    );
+/// Returns `(occupied, blocked)` cell counts for the given grid.
+fn count_grid_occupancy(grid: &GardenGrid) -> (usize, usize) {
+    let flat = || grid.cells.iter().flat_map(|r| r.iter());
+    let occupied = flat().filter(|c| c.vegetable.is_some()).count();
+    let blocked = flat().filter(|c| c.blocked).count();
+    (occupied, blocked)
+}
 
-    // Convert cell allocations to placement counts.
-    // A span×span plant uses span² cells per placement.
+/// Converts the candidate pool and request preferences into an ordered placement queue
+/// (each vegetable repeated by its allocated count) and the per-vegetable placement cap.
+fn build_placement_queue<'a>(
+    candidates: &'a [Vegetable],
+    preferences: &[PreferenceEntry],
+    free_cells: usize,
+) -> (Vec<&'a Vegetable>, HashMap<String, usize>) {
+    let allocation = compute_allocation(candidates, preferences, free_cells);
+
+    // Convert cell allocations → placement counts (one placement = span² cells).
     // Guarantee at least 1 placement for any candidate with a non-zero cell budget.
     let placements_map: HashMap<String, usize> = candidates
         .iter()
         .map(|v| {
-            let cps = (cell_span(v.spacing_cm) as usize).pow(2);
+            let cells_per_slot = (cell_span(v.spacing_cm) as usize).pow(2);
             let cells = allocation.get(&v.id).copied().unwrap_or(0);
-            let n = if cells > 0 { (cells / cps).max(1) } else { 0 };
+            let n = if cells > 0 {
+                (cells / cells_per_slot).max(1)
+            } else {
+                0
+            };
             (v.id.clone(), n)
         })
         .collect();
 
-    // Expand the candidate list: repeat each vegetable according to its placement count.
-    let expanded_candidates: Vec<&Vegetable> = candidates
+    // Expand: repeat each vegetable by its placement count to form the ordered queue.
+    let queue: Vec<&Vegetable> = candidates
         .iter()
         .flat_map(|v| {
             let n = placements_map.get(&v.id).copied().unwrap_or(0);
@@ -167,6 +166,72 @@ pub fn plan_garden(
         })
         .collect();
 
+    (queue, placements_map)
+}
+
+/// Scans the grid for the free `span × span` block that maximises the companion score
+/// for `vegetable`. Returns `Some((row, col, score))` or `None` when no valid block exists.
+fn find_best_block(
+    grid: &GardenGrid,
+    vegetable: &Vegetable,
+    rows: usize,
+    cols: usize,
+) -> Option<(usize, usize, i32)> {
+    let span = cell_span(vegetable.spacing_cm) as usize;
+    let mut best: Option<(usize, usize, i32)> = None;
+
+    for r in 0..=rows.saturating_sub(span) {
+        for c in 0..=cols.saturating_sub(span) {
+            if !grid.is_block_free(r, c, span) {
+                continue;
+            }
+            let neighbor_ids: Vec<&str> = grid
+                .get_block_neighbors(r, c, span)
+                .iter()
+                .map(|v| v.id.as_str())
+                .collect();
+            let score = companion_score(vegetable, &neighbor_ids);
+            if best.is_none_or(|(_, _, s)| score > s) {
+                best = Some((r, c, score));
+            }
+        }
+    }
+
+    best
+}
+
+/// Fills a single `span × span` block starting at `(row, col)` with `vegetable`.
+fn fill_block(grid: &mut GardenGrid, vegetable: &Vegetable, row: usize, col: usize, reason: &str) {
+    let span = cell_span(vegetable.spacing_cm) as usize;
+    let ppc = plants_per_cell(vegetable.spacing_cm);
+    for dr in 0..span {
+        for dc in 0..span {
+            grid.cells[row + dr][col + dc].vegetable =
+                Some(crate::models::garden::PlacedVegetable {
+                    id: vegetable.id.clone(),
+                    name: vegetable.name.clone(),
+                    reason: reason.to_owned(),
+                    plants_per_cell: ppc,
+                    span: span as u32,
+                    anchor_row: row,
+                    anchor_col: col,
+                });
+        }
+    }
+}
+
+/// Iterates over the placement queue and greedily places each vegetable on the grid.
+/// Returns the cumulative companion score.
+fn place_candidates(
+    grid: &mut GardenGrid,
+    queue: &[&Vegetable],
+    placements_map: &HashMap<String, usize>,
+    rows: usize,
+    cols: usize,
+) -> i32 {
+    let mut global_score: i32 = 0;
+
+    // Seed placement counts from anything already in the grid (pre-filled cells).
     let mut placed_counts: HashMap<String, usize> = grid
         .cells
         .iter()
@@ -177,90 +242,77 @@ pub fn plan_garden(
             map
         });
 
-    'outer: for vegetable in &expanded_candidates {
+    'outer: for vegetable in queue {
         let max_count = placements_map.get(&vegetable.id).copied().unwrap_or(0);
-        let current_count = placed_counts.get(&vegetable.id).copied().unwrap_or(0);
-        if current_count >= max_count {
+        if placed_counts.get(&vegetable.id).copied().unwrap_or(0) >= max_count {
             continue;
         }
 
         let span = cell_span(vegetable.spacing_cm) as usize;
 
-        // Find the best free span×span block
-        let mut best_row = None;
-        let mut best_col = None;
-        let mut best_score = i32::MIN;
-
-        for r in 0..=rows.saturating_sub(span) {
-            for c in 0..=cols.saturating_sub(span) {
-                if !grid.is_block_free(r, c, span) {
-                    continue;
-                }
-                let neighbor_ids: Vec<&str> = grid
+        match find_best_block(grid, vegetable, rows, cols) {
+            None if span == 1 => break 'outer, // no free single cell — grid is full
+            None => continue,                  // no span×span block; smaller plants may still fit
+            Some((r, c, score)) => {
+                let neighbor_names: Vec<String> = grid
                     .get_block_neighbors(r, c, span)
                     .iter()
-                    .map(|v| v.id.as_str())
+                    .map(|v| v.name.clone())
                     .collect();
-                let score = companion_score(vegetable, &neighbor_ids);
-                if score > best_score {
-                    best_score = score;
-                    best_row = Some(r);
-                    best_col = Some(c);
-                }
+                let reason = build_reason(vegetable, &neighbor_names, score);
+                fill_block(grid, vegetable, r, c, &reason);
+                placed_counts
+                    .entry(vegetable.id.clone())
+                    .and_modify(|n| *n += 1)
+                    .or_insert(1);
+                global_score += score;
             }
         }
-
-        if let (Some(r), Some(c)) = (best_row, best_col) {
-            let neighbor_names: Vec<String> = grid
-                .get_block_neighbors(r, c, span)
-                .iter()
-                .map(|v| v.name.clone())
-                .collect();
-
-            let reason = build_reason(vegetable, &neighbor_names, best_score);
-            let ppc = plants_per_cell(vegetable.spacing_cm);
-
-            // Fill every cell in the span×span block
-            for dr in 0..span {
-                for dc in 0..span {
-                    grid.cells[r + dr][c + dc].vegetable =
-                        Some(crate::models::garden::PlacedVegetable {
-                            id: vegetable.id.clone(),
-                            name: vegetable.name.clone(),
-                            reason: reason.clone(),
-                            plants_per_cell: ppc,
-                            span: span as u32,
-                            anchor_row: r,
-                            anchor_col: c,
-                        });
-                }
-            }
-            placed_counts
-                .entry(vegetable.id.clone())
-                .and_modify(|n| *n += 1)
-                .or_insert(1);
-            global_score += best_score;
-        } else if span == 1 {
-            // No free single cell exists — grid is genuinely full.
-            break 'outer;
-        }
-        // For span > 1: no suitable block found — skip (grid may still have free single cells).
     }
 
-    // Warn if plantable cells remain empty
-    let empty: usize = grid
+    global_score
+}
+
+/// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
+fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
+    let empty = grid
         .cells
         .iter()
         .flat_map(|r| r.iter())
         .filter(|c| c.vegetable.is_none() && !c.blocked)
         .count();
-    if empty > 0 {
-        warnings.push(format!(
-            "{empty} empty cell(s): not enough compatible vegetables to fill the entire grid."
-        ));
+    (empty > 0).then(|| {
+        format!("{empty} empty cell(s): not enough compatible vegetables to fill the entire grid.")
+    })
+}
+
+/// Top-level orchestrator: validates the request, builds and fills the grid, returns the plan.
+pub fn plan_garden(
+    candidates: Vec<Vegetable>,
+    request: &PlanRequest,
+) -> Result<PlanResponse, String> {
+    let (rows, cols) = validate_layout(&request.layout)?;
+    let (mut grid, mut warnings) = initialize_grid(rows, cols, &request.layout);
+
+    let (occupied, blocked_count) = count_grid_occupancy(&grid);
+    let available_cells = (rows * cols).saturating_sub(blocked_count);
+
+    if occupied >= available_cells {
+        warnings.push("The grid is already fully occupied by the existing layout.".into());
+        return Ok(build_response(grid, rows, cols, 0, warnings));
     }
 
-    Ok(build_response(grid, rows, cols, global_score, warnings))
+    let preferences = request.preferences.as_deref().unwrap_or(&[]);
+    let free_cells = available_cells.saturating_sub(occupied);
+    let (queue, placements_map) = build_placement_queue(&candidates, preferences, free_cells);
+
+    let score = place_candidates(&mut grid, &queue, &placements_map, rows, cols);
+
+    if let Some(w) = empty_cells_warning(&grid) {
+        warnings.push(w);
+    }
+
+    Ok(build_response(grid, rows, cols, score, warnings))
 }
 
 fn build_reason(vegetable: &Vegetable, neighbor_names: &[String], score: i32) -> String {
