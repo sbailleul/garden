@@ -3,8 +3,50 @@ use crate::models::{
     vegetable::Vegetable,
 };
 
+/// Returns the French household consumption rank for a vegetable ID.
+/// Rank 1 = most consumed; unknown IDs get rank 999.
+pub fn french_rank(id: &str) -> usize {
+    match id {
+        "tomato" => 1,
+        "carrot" => 2,
+        "leek" => 3,
+        "lettuce" => 4,
+        "green-bean" => 5,
+        "zucchini" => 6,
+        "cucumber" => 7,
+        "onion" => 8,
+        "cabbage" => 9,
+        "spinach" => 10,
+        "pepper" => 11,
+        "red-pepper" => 12,
+        "broccoli" => 13,
+        "eggplant" => 14,
+        "cauliflower" => 15,
+        "pea" => 16,
+        "beet" => 17,
+        "radish" => 18,
+        "potato" => 19,
+        "garlic" => 20,
+        "pumpkin" => 21,
+        "celery" => 22,
+        "fennel" => 23,
+        "turnip" => 24,
+        "asparagus" => 25,
+        "artichoke" => 26,
+        "strawberry" => 27,
+        "basil" => 28,
+        "parsley" => 29,
+        "chive" => 30,
+        "mint" => 31,
+        "thyme" => 32,
+        "rosemary" => 33,
+        "maïs" => 34,
+        _ => 999,
+    }
+}
+
 /// Filters vegetables according to request constraints and sorts by priority.
-/// User preferences are moved to the top, followed by a stable alphabetical sort.
+/// User preferences are moved to the top (in preference order), followed by French consumption rank.
 pub fn filter_vegetables(db: &[Vegetable], request: &PlanRequest) -> Vec<Vegetable> {
     let preferences = request.preferences.clone().unwrap_or_default();
     let is_beginner = matches!(request.level, Some(Level::Beginner));
@@ -43,14 +85,15 @@ pub fn filter_vegetables(db: &[Vegetable], request: &PlanRequest) -> Vec<Vegetab
         .cloned()
         .collect();
 
-    // Sort: preferences first, then alphabetical
+    // Sort: preferences first (preserving preference order), then by French consumption rank
     filtered.sort_by(|a, b| {
-        let a_pref = preferences.iter().any(|p| p.id == a.id);
-        let b_pref = preferences.iter().any(|p| p.id == b.id);
-        match (a_pref, b_pref) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.name.cmp(&b.name),
+        let a_pos = preferences.iter().position(|p| p.id == a.id);
+        let b_pos = preferences.iter().position(|p| p.id == b.id);
+        match (a_pos, b_pos) {
+            (Some(ai), Some(bi)) => ai.cmp(&bi),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => french_rank(&a.id).cmp(&french_rank(&b.id)),
         }
     });
 
@@ -207,6 +250,34 @@ mod tests {
             assert!(v.soil_types.contains(&SoilType::Chalky));
             assert!(v.regions.contains(&Region::Mountain));
             assert!(v.beginner_friendly);
+        }
+    }
+
+    #[test]
+    fn test_french_rank_known() {
+        assert_eq!(super::french_rank("tomato"), 1);
+        assert_eq!(super::french_rank("maïs"), 34);
+    }
+
+    #[test]
+    fn test_french_rank_unknown() {
+        assert_eq!(super::french_rank("dragon"), 999);
+    }
+
+    #[test]
+    fn test_sort_uses_french_rank_for_non_preferences() {
+        let db = get_all_vegetables();
+        // No preferences — summer candidates should be ordered by French rank.
+        // Tomato (rank 1) must appear before carrot (rank 2).
+        let req = make_request(Season::Summer);
+        let result = filter_vegetables(&db, &req);
+        let tomato_pos = result.iter().position(|v| v.id == "tomato");
+        let carrot_pos = result.iter().position(|v| v.id == "carrot");
+        if let (Some(tp), Some(cp)) = (tomato_pos, carrot_pos) {
+            assert!(
+                tp < cp,
+                "Tomato (rank 1) must appear before carrot (rank 2); got positions {tp} vs {cp}"
+            );
         }
     }
 }

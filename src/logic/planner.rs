@@ -4,13 +4,52 @@ use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::companion::companion_score;
 use crate::models::{
     garden::GardenGrid,
-    request::{LayoutCell, PlanRequest, PlanResponse, PlannedCell},
+    request::{LayoutCell, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry},
     vegetable::Vegetable,
     Matrix,
 };
 
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
+
+/// Distributes `available` cells across the candidate pool.
+/// Pass 1: honour explicit `quantity` preferences (capped at remaining).
+/// Pass 2: split leftover cells evenly (round-robin extra to earlier entries).
+fn compute_allocation(
+    candidates: &[Vegetable],
+    preferences: &[PreferenceEntry],
+    available: usize,
+) -> HashMap<String, usize> {
+    let mut allocation: HashMap<String, usize> = HashMap::new();
+    let mut remaining = available;
+
+    // Pass 1: explicit quantities
+    for pref in preferences {
+        if let Some(qty) = pref.quantity {
+            if candidates.iter().any(|v| v.id == pref.id) {
+                let alloc = (qty as usize).min(remaining);
+                allocation.insert(pref.id.clone(), alloc);
+                remaining = remaining.saturating_sub(alloc);
+            }
+        }
+    }
+
+    // Pass 2: evenly distribute remainder
+    let pool: Vec<&Vegetable> = candidates
+        .iter()
+        .filter(|v| !allocation.contains_key(&v.id))
+        .collect();
+    if !pool.is_empty() {
+        let base = remaining / pool.len();
+        let extra = remaining % pool.len();
+        for (i, v) in pool.iter().enumerate() {
+            let count = if i < extra { base + 1 } else { base };
+            allocation.insert(v.id.clone(), count);
+        }
+    }
+
+    allocation
+}
 
 /// Greedy placement algorithm on the grid.
 /// For each candidate vegetable (sorted by priority), chooses the free cell
@@ -77,24 +116,19 @@ pub fn plan_garden(
     }
 
     // Greedy placement of candidates
-    // Build desired placement counts: explicit quantity from preferences, default 1.
-    let desired_counts: HashMap<String, usize> = request
-        .preferences
-        .as_ref()
-        .map(|prefs| {
-            prefs
-                .iter()
-                .filter_map(|p| p.quantity.map(|q| (p.id.clone(), q as usize)))
-                .collect()
-        })
-        .unwrap_or_default();
+    let preferences_slice = request.preferences.as_deref().unwrap_or(&[]);
+    let allocation = compute_allocation(
+        &candidates,
+        preferences_slice,
+        available_cells.saturating_sub(occupied),
+    );
 
-    // Expand the candidate list: repeat each vegetable according to its desired count.
+    // Expand the candidate list: repeat each vegetable according to its allocated count.
     let expanded_candidates: Vec<&Vegetable> = candidates
         .iter()
         .flat_map(|v| {
-            let n = desired_counts.get(&v.id).copied().unwrap_or(1);
-            std::iter::repeat(v).take(n)
+            let n = allocation.get(&v.id).copied().unwrap_or(0);
+            std::iter::repeat_n(v, n)
         })
         .collect();
 
@@ -109,7 +143,7 @@ pub fn plan_garden(
         });
 
     'outer: for vegetable in &expanded_candidates {
-        let max_count = desired_counts.get(&vegetable.id).copied().unwrap_or(1);
+        let max_count = allocation.get(&vegetable.id).copied().unwrap_or(0);
         let current_count = placed_counts.get(&vegetable.id).copied().unwrap_or(0);
         if current_count >= max_count {
             continue;
@@ -480,5 +514,53 @@ mod tests {
             .filter(|c| c.id.as_deref() == Some("basil"))
             .count();
         assert_eq!(basil_count, 3, "Basil must be placed exactly 3 times");
+    }
+
+    #[test]
+    fn test_grid_fully_filled_without_preferences() {
+        // 4×4 grid, no preferences → all 16 unblocked cells must be filled
+        let req = minimal_request(
+            (4.0 * 30.0) / 100.0,
+            (4.0 * 30.0) / 100.0,
+            Season::Summer,
+        );
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        let empty = resp
+            .grid
+            .iter()
+            .flat_map(|r| r.iter())
+            .filter(|c| c.id.is_none() && !c.blocked)
+            .count();
+        assert_eq!(empty, 0, "All cells must be filled: {empty} empty cells remain");
+    }
+
+    #[test]
+    fn test_french_rank_used_as_fallback() {
+        // Small grid, no preferences → tomato (rank 1) must be placed
+        let req = minimal_request(0.6, 0.6, Season::Summer);
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        assert!(
+            !candidates.is_empty(),
+            "Summer must yield at least one candidate"
+        );
+        assert_eq!(
+            candidates[0].id, "tomato",
+            "Tomato (french rank 1) must be the first candidate in summer with no preferences"
+        );
+    }
+
+    #[test]
+    fn test_compute_allocation_distributes_evenly() {
+        use crate::data::vegetables::get_vegetable_by_id;
+        let tomato = get_vegetable_by_id("tomato").unwrap();
+        let carrot = get_vegetable_by_id("carrot").unwrap();
+        let leek = get_vegetable_by_id("leek").unwrap();
+        let candidates = vec![tomato, carrot, leek];
+        let allocation = compute_allocation(&candidates, &[], 10);
+        // 10 / 3 = base 3, extra 1 → first gets 4, rest get 3
+        assert_eq!(allocation["tomato"], 4);
+        assert_eq!(allocation["carrot"], 3);
+        assert_eq!(allocation["leek"], 3);
     }
 }
