@@ -238,27 +238,27 @@ Returns `400` with `{ "error": "..." }` for an empty `layout` or malformed JSON.
 
 ```mermaid
 flowchart TD
-    A([POST /api/plan]) --> B[Validate layout\nnon-empty rows & cols]
+    A([POST /api/plan]) --> B[Validate layout<br/>non-empty rows & cols]
     B -->|invalid| ERR([400 Bad Request])
-    B -->|valid| C[Pre-fill grid\nfrom layout cells]
-    C --> D{All free cells\nalready occupied?}
-    D -->|yes| WARN[Emit 'fully occupied'\nwarning]
+    B -->|valid| C[Pre-fill grid<br/>from layout cells]
+    C --> D{All free cells<br/>already occupied?}
+    D -->|yes| WARN[Emit 'fully occupied'<br/>warning]
     WARN --> RESP([Return response])
-    D -->|no| E[Filter vegetable DB\nseason · sun · soil · region · level]
-    E --> F[Sort candidates\npreferences first in declared order\nthen by French consumption rank]
-    F --> G[compute_allocation\nPass 1: honour explicit quantities\nPass 2: split remainder evenly\nround-robin extras to top candidates]
-    G --> H[Expand candidate list\nrepeat each vegetable\nallocation times]
-    H --> I{More candidates\nto place?}
-    I -->|no| J{Empty cells\nremaining?}
-    I -->|yes| K[For each free cell\ncompute companion score\n+2 good neighbour · −3 bad neighbour]
-    K --> L[Place vegetable in\nbest-scoring free cell]
-    L --> M{Count reached\nallocation?}
+    D -->|no| E[Filter vegetable DB<br/>season · sun · soil · region · level]
+    E --> F[Sort candidates<br/>preferences first in declared order<br/>then by French consumption rank]
+    F --> G[compute_allocation<br/>Pass 1: honour explicit quantities<br/>Pass 2: split remainder evenly<br/>round-robin extras to top candidates]
+    G --> H[Expand candidate list<br/>repeat each vegetable<br/>allocation times]
+    H --> I{More candidates<br/>to place?}
+    I -->|no| J{Empty cells<br/>remaining?}
+    I -->|yes| K[For each free cell<br/>compute companion score<br/>+2 good neighbour · −3 bad neighbour]
+    K --> L[Place vegetable in<br/>best-scoring free cell]
+    L --> M{Count reached<br/>allocation?}
     M -->|no| I
     M -->|yes| I
-    J -->|yes| N[Emit 'N empty cells'\nwarning]
+    J -->|yes| N[Emit 'N empty cells'<br/>warning]
     J -->|no| RESP
     N --> RESP
-    RESP --> O([200 OK\ngrid · score · warnings · _links])
+    RESP --> O([200 OK<br/>grid · score · warnings · _links])
 ```
 
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
