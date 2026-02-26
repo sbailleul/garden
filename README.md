@@ -153,39 +153,42 @@ Computes the optimal garden layout.
 **Request body:**
 ```json
 {
-  "widthM": 3.0,
-  "lengthM": 2.0,
   "season": "Summer",
   "sun": "FullSun",
   "soil": "Loamy",
   "region": "Temperate",
   "level": "Beginner",
   "preferences": ["tomato", "basil"],
-  "existingLayout": [
-    ["tomato", null, null, null, null, null, null, null, null, null],
-    [null,     null, null, null, null, null, null, null, null, null]
-  ],
-  "blockedCells": [
-    [false, false, false, false, false, false, false, false, false, false],
-    [true,  true,  true,  true,  true,  true,  true,  true,  true,  true]
+  "layout": [
+    ["tomato", null,  null,  null,  null,  null,  null],
+    [null,     null,  null,  null,  null,  null,  null],
+    [true,     true,  true,  true,  true,  true,  true],
+    [null,     null,  null,  null,  null,  null,  null]
   ]
 }
 ```
 
-Required fields: `widthM`, `lengthM`, `season`. All others are optional.
+Required fields: `season`, `layout`. All others are optional.
+
+The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state:
+
+| Cell value | Meaning |
+|---|---|
+| `null` | Free cell — plantable and empty |
+| `"vegetable-id"` | Pre-placed vegetable (preserved in output) |
+| `true` | Blocked cell — non-plantable zone (path, alley, obstacle) |
+
+Grid dimensions are inferred directly from the array: `rows = layout.length`, `cols = layout[0].length`.
 
 | Field | Type | Description |
 |---|---|---|
-| `widthM` | `float` | Garden width in metres (> 0) |
-| `lengthM` | `float` | Garden length in metres (> 0) |
 | `season` | `Season` | Planting season |
+| `layout` | `(string\|boolean\|null)[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
 | `region` | `Region?` | Climate region filter |
 | `level` | `Level?` | Skill level filter |
 | `preferences` | `string[]?` | Vegetable ids to prioritise |
-| `existingLayout` | `(string\|null)[][]?` | Pre-placed vegetables (grid of ids or null) |
-| `blockedCells` | `bool[][]?` | Non-plantable cells — paths, alleys, obstacles |
 
 **Enums:**
 
@@ -224,7 +227,7 @@ Each `PlannedCell` carries:
 - `id` / `name` / `reason` — `null` when the cell is empty or blocked
 - `blocked` — `true` when the cell is a non-plantable zone
 
-Returns `400` with `{ "error": "..." }` for invalid dimensions or malformed JSON.
+Returns `400` with `{ "error": "..." }` for an empty `layout` or malformed JSON.
 
 ---
 

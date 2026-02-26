@@ -1,6 +1,14 @@
 use actix_web::{test, web, App};
 use garden::api::routes::configure;
 
+fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
+    let row: Vec<serde_json::Value> = vec![serde_json::Value::Null; cols];
+    let layout: Vec<serde_json::Value> = (0..rows)
+        .map(|_| serde_json::Value::Array(row.clone()))
+        .collect();
+    serde_json::Value::Array(layout)
+}
+
 fn build_app() -> actix_web::App<
     impl actix_web::dev::ServiceFactory<
         actix_web::dev::ServiceRequest,
@@ -39,13 +47,12 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 async fn scenario_small_summer_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "widthM": 2.0,
-        "lengthM": 3.0,
         "season": "Summer",
         "sun": "FullSun",
         "soil": "Loamy",
         "region": "Temperate",
-        "level": "Beginner"
+        "level": "Beginner",
+        "layout": null_layout(10, 7)
     });
     let req = test::TestRequest::post()
         .uri("/api/plan")
@@ -86,11 +93,10 @@ async fn scenario_small_summer_garden() {
 async fn scenario_spring_cool_climate() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "widthM": 1.0,
-        "lengthM": 2.0,
         "season": "Spring",
         "region": "Mountain",
-        "soil": "Clay"
+        "soil": "Clay",
+        "layout": null_layout(7, 4)
     });
     let req = test::TestRequest::post()
         .uri("/api/plan")
@@ -125,11 +131,9 @@ async fn scenario_existing_tomatoes_add_companions() {
     let app = test::init_service(build_app()).await;
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
-        "widthM": 0.9,
-        "lengthM": 0.9,
         "season": "Summer",
         "preferences": ["basil"],
-        "existingLayout": [
+        "layout": [
             ["tomato", null, null],
             [null, null, null],
             [null, null, null]
@@ -175,10 +179,9 @@ async fn scenario_existing_tomatoes_add_companions() {
 async fn scenario_winter_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "widthM": 1.5,
-        "lengthM": 1.5,
         "season": "Winter",
-        "region": "Oceanic"
+        "region": "Oceanic",
+        "layout": null_layout(5, 5)
     });
     let req = test::TestRequest::post()
         .uri("/api/plan")

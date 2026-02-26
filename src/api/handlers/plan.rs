@@ -12,12 +12,6 @@ use crate::{
 pub async fn post_plan(body: web::Json<PlanRequest>) -> impl Responder {
     let request = body.into_inner();
 
-    if request.width_m <= 0.0 || request.length_m <= 0.0 {
-        return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": "Garden dimensions (width_m, length_m) must be strictly positive."
-        }));
-    }
-
     let db = get_all_vegetables();
     let candidates = filter_vegetables(&db, &request);
 

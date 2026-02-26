@@ -1,5 +1,5 @@
 meta {
-  name: POST Plan (invalid dimensions)
+  name: POST Plan (empty layout)
   type: http
   seq: 3
 }
@@ -15,9 +15,8 @@ headers {
 
 body {
   {
-    "widthM": 0.0,
-    "lengthM": 3.0,
-    "season": "Summer"
+    "season": "Summer",
+    "layout": []
   }
 }
 
@@ -27,7 +26,7 @@ assert {
 }
 
 tests {
-  test("returns 400 for zero width", function() {
+  test("returns 400 for empty layout", function() {
     expect(res.status).to.equal(400);
   });
 

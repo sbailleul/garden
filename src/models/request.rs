@@ -101,6 +101,18 @@ pub struct VegetableResponse {
     pub vegetable: Vegetable,
 }
 
+/// A single cell in the request layout grid.
+/// - `null` JSON → `Free` — plantable, empty
+/// - `"tomato"` JSON → `Planted` — pre-placed vegetable
+/// - `true` JSON → `Blocked` — non-plantable zone; `false` is treated as free
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum LayoutCell {
+    Planted(String),
+    Blocked(bool),
+    Free(()),
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum Level {
@@ -111,10 +123,6 @@ pub enum Level {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
-    /// Garden width in metres
-    pub width_m: f32,
-    /// Garden length in metres
-    pub length_m: f32,
     pub season: Season,
     pub sun: Option<SunExposure>,
     pub soil: Option<SoilType>,
@@ -122,10 +130,9 @@ pub struct PlanRequest {
     pub level: Option<Level>,
     /// Preferred vegetables (ids) chosen by the user
     pub preferences: Option<Vec<String>>,
-    /// Existing layout: nullable string grid (vegetable ids or null)
-    pub existing_layout: Option<Matrix<Option<String>>>,
-    /// Blocked cells grid (paths, alleys, obstacles): true = not plantable
-    pub blocked_cells: Option<Matrix<bool>>,
+    /// Combined grid layout — defines dimensions and pre-filled cells.
+    /// Each cell is: `null` (free), `"id"` (pre-planted), or `true` (blocked).
+    pub layout: Matrix<LayoutCell>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

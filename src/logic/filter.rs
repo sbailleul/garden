@@ -62,22 +62,20 @@ mod tests {
     use super::*;
     use crate::data::vegetables::get_all_vegetables;
     use crate::models::{
-        request::{Level, PlanRequest},
+        request::{LayoutCell, Level, PlanRequest},
         vegetable::{Region, Season, SoilType, SunExposure},
     };
 
     fn make_request(season: Season) -> PlanRequest {
         PlanRequest {
-            width_m: 2.0,
-            length_m: 3.0,
+            // 2m × 3m → 7 cols × 10 rows
+            layout: vec![vec![LayoutCell::Free(()); 7]; 10],
             season,
             sun: None,
             soil: None,
             region: None,
             level: None,
             preferences: None,
-            existing_layout: None,
-            blocked_cells: None,
         }
     }
 

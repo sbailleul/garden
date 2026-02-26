@@ -2,17 +2,13 @@ use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::companion::companion_score;
 use crate::models::{
     garden::GardenGrid,
-    request::{PlanRequest, PlanResponse, PlannedCell},
+    request::{LayoutCell, PlanRequest, PlanResponse, PlannedCell},
     vegetable::Vegetable,
     Matrix,
 };
 
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
-
-fn meters_to_cells(meters: f32) -> usize {
-    ((meters * 100.0) / CELL_SIZE_CM as f32).ceil() as usize
-}
 
 /// Greedy placement algorithm on the grid.
 /// For each candidate vegetable (sorted by priority), chooses the free cell
@@ -21,51 +17,29 @@ pub fn plan_garden(
     candidates: Vec<Vegetable>,
     request: &PlanRequest,
 ) -> Result<PlanResponse, String> {
-    if request.width_m <= 0.0 || request.length_m <= 0.0 {
-        return Err("Garden dimensions (width_m, length_m) must be strictly positive.".into());
+    if request.layout.is_empty() {
+        return Err("Layout must contain at least one row.".into());
     }
-
-    let cols = meters_to_cells(request.width_m).max(1);
-    let rows = meters_to_cells(request.length_m).max(1);
+    let rows = request.layout.len();
+    let cols = request.layout[0].len();
+    if cols == 0 {
+        return Err("Layout rows must not be empty.".into());
+    }
     let total_cells = rows * cols;
 
     let mut grid = GardenGrid::new(rows, cols);
     let mut warnings: Vec<String> = Vec::new();
     let mut global_score: i32 = 0;
 
-    // Pre-fill blocked cells (paths, alleys, etc.)
-    if let Some(ref blocked_grid) = request.blocked_cells {
-        for (r, row) in blocked_grid.iter().enumerate() {
-            for (c, &is_blocked) in row.iter().enumerate() {
-                if r >= rows || c >= cols {
-                    warnings.push(format!(
-                        "Blocked cell [{r},{c}] is out of grid bounds ({rows}x{cols}), skipped."
-                    ));
-                    continue;
-                }
-                if is_blocked {
+    // Pre-fill the grid from the unified layout (blocked zones and pre-planted vegetables).
+    for (r, row) in request.layout.iter().enumerate() {
+        for (c, cell) in row.iter().enumerate() {
+            match cell {
+                LayoutCell::Blocked(true) => {
                     grid.cells[r][c].blocked = true;
                 }
-            }
-        }
-    }
-
-    // Pre-fill the grid from the existing layout
-    if let Some(ref existing) = request.existing_layout {
-        for (r, row) in existing.iter().enumerate() {
-            for (c, cell) in row.iter().enumerate() {
-                if r >= rows || c >= cols {
-                    warnings.push(format!(
-                        "Existing cell [{r},{c}] is out of grid bounds ({rows}x{cols}), skipped."
-                    ));
-                    continue;
-                }
-                if let Some(ref id) = cell {
-                    if grid.cells[r][c].blocked {
-                        warnings.push(format!(
-                            "Existing cell [{r},{c}] is in a blocked zone, vegetable '{id}' skipped."
-                        ));
-                    } else if let Some(v) = get_vegetable_by_id(id) {
+                LayoutCell::Planted(id) => {
+                    if let Some(v) = get_vegetable_by_id(id) {
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -77,6 +51,7 @@ pub fn plan_garden(
                         ));
                     }
                 }
+                _ => {} // Free(()) or Blocked(false) — nothing to do
             }
         }
     }
@@ -266,20 +241,26 @@ mod tests {
     use super::*;
     use crate::data::vegetables::{get_all_vegetables, get_vegetable_by_id};
     use crate::logic::filter::filter_vegetables;
-    use crate::models::{request::PlanRequest, vegetable::Season};
+    use crate::models::{
+        request::{LayoutCell, PlanRequest},
+        vegetable::Season,
+    };
+
+    fn meters_to_cells(meters: f32) -> usize {
+        ((meters * 100.0) / 30.0_f32).ceil() as usize
+    }
 
     fn minimal_request(width: f32, length: f32, season: Season) -> PlanRequest {
+        let cols = meters_to_cells(width);
+        let rows = meters_to_cells(length);
         PlanRequest {
-            width_m: width,
-            length_m: length,
             season,
             sun: None,
             soil: None,
             region: None,
             level: None,
             preferences: None,
-            existing_layout: None,
-            blocked_cells: None,
+            layout: vec![vec![LayoutCell::Free(()); cols]; rows],
         }
     }
 
@@ -340,7 +321,10 @@ mod tests {
     #[test]
     fn test_existing_layout_preserved() {
         let req = PlanRequest {
-            existing_layout: Some(vec![vec![Some("tomato".into()), None], vec![None, None]]),
+            layout: vec![
+                vec![LayoutCell::Planted("tomato".into()), LayoutCell::Free(())],
+                vec![LayoutCell::Free(()), LayoutCell::Free(())],
+            ],
             ..minimal_request(0.6, 0.6, Season::Summer)
         };
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
@@ -405,7 +389,10 @@ mod tests {
     fn test_blocked_cells_are_never_planted() {
         // 2x2 grid (0.6m x 0.6m) with [0][0] and [1][1] blocked
         let req = PlanRequest {
-            blocked_cells: Some(vec![vec![true, false], vec![false, true]]),
+            layout: vec![
+                vec![LayoutCell::Blocked(true), LayoutCell::Free(())],
+                vec![LayoutCell::Free(()), LayoutCell::Blocked(true)],
+            ],
             ..minimal_request(0.6, 0.6, Season::Summer)
         };
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
@@ -438,11 +425,11 @@ mod tests {
     fn test_fully_blocked_grid_returns_no_placements() {
         // 0.9m × 0.9m → 3×3 grid; mark every cell as blocked
         let req = PlanRequest {
-            blocked_cells: Some(vec![
-                vec![true, true, true],
-                vec![true, true, true],
-                vec![true, true, true],
-            ]),
+            layout: vec![
+                vec![LayoutCell::Blocked(true); 3],
+                vec![LayoutCell::Blocked(true); 3],
+                vec![LayoutCell::Blocked(true); 3],
+            ],
             ..minimal_request(0.9, 0.9, Season::Summer)
         };
         let candidates = filter_vegetables(&get_all_vegetables(), &req);
