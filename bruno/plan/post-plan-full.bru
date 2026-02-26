@@ -1,0 +1,67 @@
+meta {
+  name: POST Plan (full request)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/plan
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "width_m": 3.0,
+    "length_m": 4.0,
+    "season": "Summer",
+    "sun": "FullSun",
+    "soil": "Loamy",
+    "region": "Temperate",
+    "level": "Beginner",
+    "preferences": ["tomate", "basilic", "carotte"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.grid: isArray
+  res.body.score: gte 0
+  res.body.warnings: isArray
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("score is non-negative for compatible companions", function() {
+    expect(res.body.score).to.be.a("number").that.is.gte(0);
+  });
+
+  test("grid contains at least one preferred vegetable", function() {
+    var placed = [];
+    res.body.grid.forEach(function(row) {
+      row.forEach(function(cell) {
+        if (cell.id) placed.push(cell.id);
+      });
+    });
+    var preferences = ["tomate", "basilic", "carotte"];
+    var found = preferences.some(function(p) { return placed.indexOf(p) !== -1; });
+    expect(found).to.be.true;
+  });
+
+  test("only beginner-friendly vegetables are placed", function() {
+    var advanced = ["poivron", "fenouil", "aubergine", "celeri", "asperge", "artichaut", "chou-fleur", "brocoli", "chou"];
+    res.body.grid.forEach(function(row) {
+      row.forEach(function(cell) {
+        if (cell.id) {
+          expect(advanced).to.not.include(cell.id);
+        }
+      });
+    });
+  });
+}

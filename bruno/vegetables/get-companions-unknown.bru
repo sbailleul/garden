@@ -1,0 +1,28 @@
+meta {
+  name: Get Companions (unknown id)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables/unknown-vegetable/companions
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 404
+  res.body.error: isDefined
+}
+
+tests {
+  test("returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("error message is a non-empty string", function() {
+    expect(res.body.error).to.be.a("string").that.is.not.empty;
+  });
+}

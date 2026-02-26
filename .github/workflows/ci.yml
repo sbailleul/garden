@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Rust format, lint, build and tests
+  # ---------------------------------------------------------------------------
+  rust-tests:
+    name: Rust — fmt / clippy / build / test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo registry and build artefacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Clippy (no warnings allowed)
+        run: cargo clippy -- -D warnings
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Run all tests (unit + integration)
+        run: cargo test --all -- --nocapture
+
+      - name: Upload release binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: garden-api
+          path: target/release/garden
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Bruno end-to-end API tests
+  # ---------------------------------------------------------------------------
+  bruno-tests:
+    name: Bruno — API end-to-end tests
+    runs-on: ubuntu-latest
+    needs: rust-tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download release binary
+        uses: actions/download-artifact@v4
+        with:
+          name: garden-api
+          path: ./bin
+
+      - name: Make binary executable
+        run: chmod +x ./bin/garden
+
+      - name: Start Garden API in background
+        run: ./bin/garden &
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API on port 8080..."
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://localhost:8080/api/vegetables > /dev/null 2>&1; then
+              echo "API is ready."
+              break
+            fi
+            echo "Attempt $i/20 — retrying in 2s..."
+            sleep 2
+          done
+          curl --fail http://localhost:8080/api/vegetables > /dev/null
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Run Bruno collection
+        run: bru run bruno/ --env local --reporter-json bruno-results.json
+        continue-on-error: true
+
+      - name: Upload Bruno results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bruno-results
+          path: bruno-results.json
+          retention-days: 7
+
+      - name: Write Bruno summary to job summary
+        if: always()
+        run: |
+          echo "## Bruno Test Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f bruno-results.json ]; then
+            passed=$(jq '.summary.passedTests // 0' bruno-results.json 2>/dev/null || echo "?")
+            failed=$(jq '.summary.failedTests // 0' bruno-results.json 2>/dev/null || echo "?")
+            echo "| ✅ Passed | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "|-----------|-----------|" >> $GITHUB_STEP_SUMMARY
+            echo "| $passed   | $failed   |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No results file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail if Bruno tests failed
+        run: |
+          if [ -f bruno-results.json ]; then
+            failed=$(jq '.summary.failedTests // 0' bruno-results.json 2>/dev/null || echo "0")
+            if [ "$failed" -gt "0" ]; then
+              echo "$failed Bruno test(s) failed."
+              exit 1
+            fi
+          fi

@@ -1,0 +1,58 @@
+meta {
+  name: Get Companions (known id)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables/tomate/companions
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.name: isDefined
+  res.body.good: isArray
+  res.body.bad: isArray
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("response has id and name", function() {
+    expect(res.body).to.have.property("id", "tomate");
+    expect(res.body).to.have.property("name");
+  });
+
+  test("good companions is an array of objects", function() {
+    expect(res.body.good).to.be.an("array");
+    res.body.good.forEach(function(c) {
+      expect(c).to.have.property("id");
+      expect(c).to.have.property("name");
+    });
+  });
+
+  test("bad companions is an array of objects", function() {
+    expect(res.body.bad).to.be.an("array");
+    res.body.bad.forEach(function(c) {
+      expect(c).to.have.property("id");
+      expect(c).to.have.property("name");
+    });
+  });
+
+  test("basil is a good companion of tomato", function() {
+    var basilic = res.body.good.find(function(c) { return c.id === "basilic"; });
+    expect(basilic).to.not.be.undefined;
+  });
+
+  test("fennel is a bad companion of tomato", function() {
+    var fenouil = res.body.bad.find(function(c) { return c.id === "fenouil"; });
+    expect(fenouil).to.not.be.undefined;
+  });
+}

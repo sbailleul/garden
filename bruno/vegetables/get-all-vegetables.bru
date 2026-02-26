@@ -1,0 +1,43 @@
+meta {
+  name: Get All Vegetables
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body: isArray
+  res.body: isNotEmpty
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("body is a non-empty array", function() {
+    expect(res.body).to.be.an("array").that.is.not.empty;
+  });
+
+  test("each vegetable has required fields", function() {
+    res.body.forEach(function(v) {
+      expect(v).to.have.property("id");
+      expect(v).to.have.property("name");
+      expect(v).to.have.property("seasons");
+      expect(v).to.have.property("good_companions");
+      expect(v).to.have.property("bad_companions");
+      expect(v).to.have.property("beginner_friendly");
+      expect(v.seasons).to.be.an("array").that.is.not.empty;
+      expect(v.good_companions).to.be.an("array");
+      expect(v.bad_companions).to.be.an("array");
+    });
+  });
+}

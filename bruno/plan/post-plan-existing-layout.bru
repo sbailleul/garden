@@ -1,0 +1,64 @@
+meta {
+  name: POST Plan (existing layout)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/plan
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "width_m": 0.9,
+    "length_m": 0.9,
+    "season": "Summer",
+    "preferences": ["basilic"],
+    "existing_layout": [
+      ["tomate", null, null],
+      [null, null, null],
+      [null, null, null]
+    ]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.grid: isArray
+}
+
+script:post-response {
+  var firstCellId = res.body.grid[0][0].id;
+  bru.setVar("firstCellId", firstCellId);
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("existing cell [0][0] is preserved as tomate", function() {
+    expect(res.body.grid[0][0].id).to.equal("tomate");
+  });
+
+  test("basil is placed in the grid (preferred + good companion)", function() {
+    var placed = [];
+    res.body.grid.forEach(function(row) {
+      row.forEach(function(cell) {
+        if (cell.id) placed.push(cell.id);
+      });
+    });
+    expect(placed).to.include("basilic");
+  });
+
+  test("basil is adjacent to tomato at [0][0]", function() {
+    var r0c1 = res.body.grid[0][1] && res.body.grid[0][1].id === "basilic";
+    var r1c0 = res.body.grid[1][0] && res.body.grid[1][0].id === "basilic";
+    expect(r0c1 || r1c0).to.be.true;
+  });
+}

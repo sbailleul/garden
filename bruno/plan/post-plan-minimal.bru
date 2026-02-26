@@ -1,0 +1,71 @@
+meta {
+  name: POST Plan (minimal)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/plan
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "width_m": 2.0,
+    "length_m": 3.0,
+    "season": "Summer"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.grid: isArray
+  res.body.score: isDefined
+  res.body.warnings: isArray
+  res.body.rows: isDefined
+  res.body.cols: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("grid is a 2D array", function() {
+    expect(res.body.grid).to.be.an("array").that.is.not.empty;
+    res.body.grid.forEach(function(row) {
+      expect(row).to.be.an("array");
+    });
+  });
+
+  test("grid dimensions match rows/cols", function() {
+    expect(res.body.grid.length).to.equal(res.body.rows);
+    res.body.grid.forEach(function(row) {
+      expect(row.length).to.equal(res.body.cols);
+    });
+  });
+
+  test("score is a number", function() {
+    expect(res.body.score).to.be.a("number");
+  });
+
+  test("warnings is an array", function() {
+    expect(res.body.warnings).to.be.an("array");
+  });
+
+  test("placed cells have id, name and reason", function() {
+    res.body.grid.forEach(function(row) {
+      row.forEach(function(cell) {
+        if (cell.id !== null && cell.id !== undefined) {
+          expect(cell).to.have.property("name");
+          expect(cell).to.have.property("reason");
+          expect(cell.reason).to.be.a("string").that.is.not.empty;
+        }
+      });
+    });
+  });
+}
