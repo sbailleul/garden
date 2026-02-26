@@ -646,7 +646,10 @@ mod tests {
             })
             .collect();
 
-        assert!(!tomato_cells.is_empty(), "Tomato must be placed at least once");
+        assert!(
+            !tomato_cells.is_empty(),
+            "Tomato must be placed at least once"
+        );
 
         // All tomato cells must report widthCells=2 and lengthCells=2
         for (r, c) in &tomato_cells {
@@ -670,4 +673,5 @@ mod tests {
             "Tomato cell count ({}) must be a multiple of 4",
             tomato_cells.len()
         );
-    }}
+    }
+}
