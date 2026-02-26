@@ -246,6 +246,9 @@ Returns `400` with `{ "error": "..." }` for invalid dimensions or malformed JSON
 ## Running Locally
 
 ```bash
+# After cloning — activate the shared git hooks (one-time)
+git config core.hooksPath .githooks
+
 # Build & run
 cargo run
 # → server listening on http://localhost:8080
@@ -253,6 +256,8 @@ cargo run
 # Run all tests
 cargo test
 ```
+
+The pre-commit hook (`.githooks/pre-commit`) runs `cargo fmt --check`, `cargo build`, and `cargo test` before every commit and aborts on any failure.
 
 ---
 

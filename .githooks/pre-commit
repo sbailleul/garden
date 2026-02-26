@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export LC_ALL=C.utf8
+
+echo "▶ cargo fmt --check"
+if ! cargo fmt -- --check; then
+  echo "❌ Formatting issues found. Run 'cargo fmt' then re-stage your changes."
+  exit 1
+fi
+
+echo "▶ cargo build"
+if ! cargo build; then
+  echo "❌ Build failed."
+  exit 1
+fi
+
+echo "▶ cargo test"
+if ! cargo test; then
+  echo "❌ Tests failed."
+  exit 1
+fi
+
+echo "✅ All checks passed."
