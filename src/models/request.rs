@@ -212,9 +212,7 @@ pub enum PlannedCell {
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
     /// All plant data lives on the anchor cell; this cell only holds a back-reference.
-    Overflowed {
-        covered_by: CoveredBy,
-    },
+    Overflowed { covered_by: CoveredBy },
     /// A free, unoccupied, non-blocked cell.
     Empty,
     /// A non-plantable zone (path, alley, obstacle).

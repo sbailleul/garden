@@ -425,7 +425,10 @@ mod tests {
                 match cell {
                     PlannedCell::SelfContained { reason, .. }
                     | PlannedCell::Overflowing { reason, .. } => {
-                        assert!(!reason.is_empty(), "Anchor cell must have a non-empty reason");
+                        assert!(
+                            !reason.is_empty(),
+                            "Anchor cell must have a non-empty reason"
+                        );
                     }
                     _ => {}
                 }
@@ -532,8 +535,14 @@ mod tests {
         );
 
         // Non-blocked cells must not be flagged
-        assert!(!resp.grid[0][1].is_blocked(), "Cell [0][1] must not be blocked");
-        assert!(!resp.grid[1][0].is_blocked(), "Cell [1][0] must not be blocked");
+        assert!(
+            !resp.grid[0][1].is_blocked(),
+            "Cell [0][1] must not be blocked"
+        );
+        assert!(
+            !resp.grid[1][0].is_blocked(),
+            "Cell [1][0] must not be blocked"
+        );
     }
 
     #[test]
@@ -595,7 +604,10 @@ mod tests {
             .flat_map(|r| r.iter())
             .filter(|c| matches!(c, PlannedCell::Empty))
             .count();
-        assert_eq!(empty, 0, "All cells must be filled: {empty} empty cells remain");
+        assert_eq!(
+            empty, 0,
+            "All cells must be filled: {empty} empty cells remain"
+        );
     }
 
     #[test]
@@ -659,14 +671,28 @@ mod tests {
             })
             .collect();
 
-        assert!(!anchor_cells.is_empty(), "Tomato must be placed at least once");
+        assert!(
+            !anchor_cells.is_empty(),
+            "Tomato must be placed at least once"
+        );
 
         // Each anchor must be Overflowing with widthCells=2, lengthCells=2
         for (r, c) in &anchor_cells {
             let cell = &resp.grid[*r][*c];
-            assert_eq!(cell.width_cells(), Some(2), "Anchor [{r},{c}] must have widthCells=2");
-            assert_eq!(cell.length_cells(), Some(2), "Anchor [{r},{c}] must have lengthCells=2");
-            assert!(cell.covered_by().is_none(), "Anchor [{r},{c}] must not have coveredBy");
+            assert_eq!(
+                cell.width_cells(),
+                Some(2),
+                "Anchor [{r},{c}] must have widthCells=2"
+            );
+            assert_eq!(
+                cell.length_cells(),
+                Some(2),
+                "Anchor [{r},{c}] must have lengthCells=2"
+            );
+            assert!(
+                cell.covered_by().is_none(),
+                "Anchor [{r},{c}] must not have coveredBy"
+            );
         }
 
         // Continuation cells: those pointing back to a tomato anchor
