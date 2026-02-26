@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 
-use crate::models::{vegetable::{Region, Season, SoilType, SunExposure, Vegetable}, Matrix};
+use crate::models::{
+    vegetable::{Region, Season, SoilType, SunExposure, Vegetable},
+    Matrix,
+};
 
 /// Serde adapter for `actix_web::http::Method` (serialises as its uppercase string).
 mod method_serde {
@@ -33,7 +36,10 @@ pub type Links = HashMap<String, Link>;
 
 /// Helper to build a `Link` from an href and an HTTP method.
 pub fn link(href: impl Into<String>, method: Method) -> Link {
-    Link { href: href.into(), method }
+    Link {
+        href: href.into(),
+        method,
+    }
 }
 
 /// Pagination metadata included in responses that return lists.
@@ -50,6 +56,7 @@ pub struct Pagination {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     pub payload: T,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
     #[serde(rename = "_links")]
     pub links: Links,
@@ -57,7 +64,11 @@ pub struct ApiResponse<T> {
 
 impl<T> ApiResponse<T> {
     pub fn new(payload: T, links: Links) -> Self {
-        Self { payload, errors: vec![], links }
+        Self {
+            payload,
+            errors: vec![],
+            links,
+        }
     }
 }
 
@@ -65,6 +76,7 @@ impl<T> ApiResponse<T> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
     #[serde(rename = "_links")]
     pub links: Links,
@@ -73,7 +85,12 @@ pub struct PaginatedResponse<T> {
 
 impl<T> PaginatedResponse<T> {
     pub fn new(payload: Vec<T>, links: Links, pagination: Pagination) -> Self {
-        Self { payload, errors: vec![], links, pagination }
+        Self {
+            payload,
+            errors: vec![],
+            links,
+            pagination,
+        }
     }
 }
 

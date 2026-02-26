@@ -514,11 +514,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
                 Region::Oceanic,
             ],
             spacing_cm: 40,
-            good_companions: vec![
-                "green-bean".into(),
-                "zucchini".into(),
-                "potato".into(),
-            ],
+            good_companions: vec!["green-bean".into(), "zucchini".into(), "potato".into()],
             bad_companions: vec!["tomato".into(), "celery".into()],
             beginner_friendly: true,
             category: Category::Pod,
@@ -709,7 +705,10 @@ mod tests {
     #[test]
     fn test_all_vegetables_not_empty() {
         let vegetables = get_all_vegetables();
-        assert!(!vegetables.is_empty(), "The vegetable database must not be empty");
+        assert!(
+            !vegetables.is_empty(),
+            "The vegetable database must not be empty"
+        );
     }
 
     #[test]
@@ -737,7 +736,11 @@ mod tests {
     #[test]
     fn test_all_vegetables_have_nonempty_seasons() {
         for v in get_all_vegetables() {
-            assert!(!v.seasons.is_empty(), "Vegetable {} must have at least one season", v.id);
+            assert!(
+                !v.seasons.is_empty(),
+                "Vegetable {} must have at least one season",
+                v.id
+            );
         }
     }
 

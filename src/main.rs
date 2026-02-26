@@ -12,18 +12,15 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .configure(garden::api::routes::configure)
-            .app_data(
-                web::JsonConfig::default()
-                    .error_handler(|err, _req| {
-                        let message = format!("JSON deserialization error: {err}");
-                        actix_web::error::InternalError::from_response(
-                            err,
-                            actix_web::HttpResponse::BadRequest()
-                                .json(serde_json::json!({ "error": message })),
-                        )
-                        .into()
-                    }),
-            )
+            .app_data(web::JsonConfig::default().error_handler(|err, _req| {
+                let message = format!("JSON deserialization error: {err}");
+                actix_web::error::InternalError::from_response(
+                    err,
+                    actix_web::HttpResponse::BadRequest()
+                        .json(serde_json::json!({ "error": message })),
+                )
+                .into()
+            }))
     })
     .bind(bind_addr)?
     .run()

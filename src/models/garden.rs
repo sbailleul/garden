@@ -26,7 +26,14 @@ pub struct GardenGrid {
 impl GardenGrid {
     pub fn new(rows: usize, cols: usize) -> Self {
         let cells = (0..rows)
-            .map(|_| (0..cols).map(|_| Cell { vegetable: None, blocked: false }).collect())
+            .map(|_| {
+                (0..cols)
+                    .map(|_| Cell {
+                        vegetable: None,
+                        blocked: false,
+                    })
+                    .collect()
+            })
             .collect();
         Self { rows, cols, cells }
     }

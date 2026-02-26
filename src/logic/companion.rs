@@ -20,8 +20,7 @@ pub fn companion_score(vegetable: &Vegetable, neighbor_ids: &[&str]) -> i32 {
 
 /// Returns true if the two vegetables are compatible (neither appears in the other's bad_companions list).
 pub fn is_compatible(a: &Vegetable, b: &Vegetable) -> bool {
-    !a.bad_companions.iter().any(|c| c == &b.id)
-        && !b.bad_companions.iter().any(|c| c == &a.id)
+    !a.bad_companions.iter().any(|c| c == &b.id) && !b.bad_companions.iter().any(|c| c == &a.id)
 }
 
 #[cfg(test)]
@@ -38,7 +37,10 @@ mod tests {
         let tomato = get("tomato");
         // basil is a good companion of tomato
         let score = companion_score(&tomato, &["basil"]);
-        assert_eq!(score, GOOD_COMPANION_SCORE, "Tomato + basil must give a positive score");
+        assert_eq!(
+            score, GOOD_COMPANION_SCORE,
+            "Tomato + basil must give a positive score"
+        );
     }
 
     #[test]
@@ -46,7 +48,10 @@ mod tests {
         let tomato = get("tomato");
         // fennel is a bad companion of tomato
         let score = companion_score(&tomato, &["fennel"]);
-        assert_eq!(score, BAD_COMPANION_SCORE, "Tomato + fennel must give a negative score");
+        assert_eq!(
+            score, BAD_COMPANION_SCORE,
+            "Tomato + fennel must give a negative score"
+        );
     }
 
     #[test]

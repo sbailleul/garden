@@ -12,17 +12,14 @@ fn build_app() -> actix_web::App<
 > {
     App::new()
         .configure(configure)
-        .app_data(
-            web::JsonConfig::default().error_handler(|err, _req| {
-                let message = format!("{err}");
-                actix_web::error::InternalError::from_response(
-                    err,
-                    actix_web::HttpResponse::BadRequest()
-                        .json(serde_json::json!({ "error": message })),
-                )
-                .into()
-            }),
-        )
+        .app_data(web::JsonConfig::default().error_handler(|err, _req| {
+            let message = format!("{err}");
+            actix_web::error::InternalError::from_response(
+                err,
+                actix_web::HttpResponse::BadRequest().json(serde_json::json!({ "error": message })),
+            )
+            .into()
+        }))
 }
 
 fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
@@ -62,7 +59,9 @@ async fn scenario_small_summer_garden() {
     let placed = collect_placed_ids(&body);
     // A beginner summer garden must contain at least one typical summer vegetable
     let typical_summer = ["tomato", "zucchini", "cucumber", "green-bean", "radish"];
-    let found_typical = typical_summer.iter().any(|id| placed.contains(&id.to_string()));
+    let found_typical = typical_summer
+        .iter()
+        .any(|id| placed.contains(&id.to_string()));
     assert!(
         found_typical,
         "Summer garden must contain at least one typical vegetable: {:?}. Found: {:?}",
@@ -98,7 +97,13 @@ async fn scenario_spring_cool_climate() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    assert_eq!(body["payload"].get("grid").and_then(|g| g.as_array()).map(|a| !a.is_empty()), Some(true));
+    assert_eq!(
+        body["payload"]
+            .get("grid")
+            .and_then(|g| g.as_array())
+            .map(|a| !a.is_empty()),
+        Some(true)
+    );
 
     // Only spring vegetables must be placed
     let summer_only_vegs = ["tomato", "cucumber", "zucchini", "eggplant", "corn"];
@@ -184,13 +189,25 @@ async fn scenario_winter_garden() {
 
     let placed = collect_placed_ids(&body);
     // In winter, no tomatoes or zucchinis
-    assert!(!placed.contains(&"tomato".to_string()), "Tomato must not appear in winter");
-    assert!(!placed.contains(&"zucchini".to_string()), "Zucchini must not appear in winter");
+    assert!(
+        !placed.contains(&"tomato".to_string()),
+        "Tomato must not appear in winter"
+    );
+    assert!(
+        !placed.contains(&"zucchini".to_string()),
+        "Zucchini must not appear in winter"
+    );
 
     // Winter vegetables like garlic or leek must be present
     let winter_vegs = ["garlic", "leek", "spinach", "cabbage"];
-    let found_winter = winter_vegs.iter().any(|id| placed.contains(&id.to_string()));
-    assert!(found_winter, "Winter vegetables must be present: {:?}", winter_vegs);
+    let found_winter = winter_vegs
+        .iter()
+        .any(|id| placed.contains(&id.to_string()));
+    assert!(
+        found_winter,
+        "Winter vegetables must be present: {:?}",
+        winter_vegs
+    );
 }
 
 fn resp_status_from_body(body: &serde_json::Value) -> Option<&str> {

@@ -200,7 +200,7 @@ mod tests {
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);
-                for v in &result {
+        for v in &result {
             assert!(v.seasons.contains(&Season::Summer));
             assert!(v.sun_requirement.contains(&SunExposure::Shade));
             assert!(v.soil_types.contains(&SoilType::Chalky));

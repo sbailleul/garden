@@ -3,8 +3,8 @@ use actix_web::{get, http::Method, web, HttpResponse, Responder};
 use crate::{
     data::vegetables::{get_all_vegetables, get_vegetable_by_id},
     models::request::{
-        link, ApiResponse, CompanionInfo, CompanionsResponse,
-        Pagination, PaginatedResponse, VegetableResponse,
+        link, ApiResponse, CompanionInfo, CompanionsResponse, PaginatedResponse, Pagination,
+        VegetableResponse,
     },
 };
 
@@ -19,7 +19,10 @@ pub async fn list_vegetables() -> impl Responder {
         .map(|v| {
             let id = v.id.clone();
             let mut links = std::collections::HashMap::new();
-            links.insert("self".into(), link(format!("/api/vegetables/{id}"), Method::GET));
+            links.insert(
+                "self".into(),
+                link(format!("/api/vegetables/{id}"), Method::GET),
+            );
             links.insert(
                 "companions".into(),
                 link(format!("/api/vegetables/{id}/companions"), Method::GET),
@@ -32,7 +35,12 @@ pub async fn list_vegetables() -> impl Responder {
     HttpResponse::Ok().json(PaginatedResponse::new(
         items,
         collection_links,
-        Pagination { page: 1, per_page: total, total, total_pages: 1 },
+        Pagination {
+            page: 1,
+            per_page: total,
+            total,
+            total_pages: 1,
+        },
     ))
 }
 
@@ -47,7 +55,10 @@ pub async fn get_vegetable(path: web::Path<String>) -> impl Responder {
         })),
         Some(vegetable) => {
             let mut links = std::collections::HashMap::new();
-            links.insert("self".into(), link(format!("/api/vegetables/{id}"), Method::GET));
+            links.insert(
+                "self".into(),
+                link(format!("/api/vegetables/{id}"), Method::GET),
+            );
             links.insert(
                 "companions".into(),
                 link(format!("/api/vegetables/{id}/companions"), Method::GET),
@@ -102,7 +113,12 @@ pub async fn get_companions(path: web::Path<String>) -> impl Responder {
                 link(format!("/api/vegetables/{id}"), Method::GET),
             );
             HttpResponse::Ok().json(ApiResponse::new(
-                CompanionsResponse { id: vegetable.id, name: vegetable.name, good, bad },
+                CompanionsResponse {
+                    id: vegetable.id,
+                    name: vegetable.name,
+                    good,
+                    bad,
+                },
                 links,
             ))
         }
