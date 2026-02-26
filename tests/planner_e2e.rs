@@ -132,7 +132,7 @@ async fn scenario_existing_tomatoes_add_companions() {
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
         "season": "Summer",
-        "preferences": ["basil"],
+        "preferences": [{"id": "basil"}],
         "layout": [
             ["tomato", null, null],
             [null, null, null],

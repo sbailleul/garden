@@ -158,7 +158,10 @@ Computes the optimal garden layout.
   "soil": "Loamy",
   "region": "Temperate",
   "level": "Beginner",
-  "preferences": ["tomato", "basil"],
+  "preferences": [
+    { "id": "tomato", "quantity": 3 },
+    { "id": "basil" }
+  ],
   "layout": [
     ["tomato", null,  null,  null,  null,  null,  null],
     [null,     null,  null,  null,  null,  null,  null],
@@ -188,7 +191,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `soil` | `SoilType?` | Soil type filter |
 | `region` | `Region?` | Climate region filter |
 | `level` | `Level?` | Skill level filter |
-| `preferences` | `string[]?` | Vegetable ids to prioritise |
+| `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of cells |
 
 **Enums:**
 

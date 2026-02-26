@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::companion::companion_score;
 use crate::models::{
@@ -75,16 +77,41 @@ pub fn plan_garden(
     }
 
     // Greedy placement of candidates
-    let mut placed_ids: Vec<String> = grid
+    // Build desired placement counts: explicit quantity from preferences, default 1.
+    let desired_counts: HashMap<String, usize> = request
+        .preferences
+        .as_ref()
+        .map(|prefs| {
+            prefs
+                .iter()
+                .filter_map(|p| p.quantity.map(|q| (p.id.clone(), q as usize)))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Expand the candidate list: repeat each vegetable according to its desired count.
+    let expanded_candidates: Vec<&Vegetable> = candidates
+        .iter()
+        .flat_map(|v| {
+            let n = desired_counts.get(&v.id).copied().unwrap_or(1);
+            std::iter::repeat(v).take(n)
+        })
+        .collect();
+
+    let mut placed_counts: HashMap<String, usize> = grid
         .cells
         .iter()
         .flat_map(|r| r.iter())
         .filter_map(|c| c.vegetable.as_ref().map(|v| v.id.clone()))
-        .collect();
+        .fold(HashMap::new(), |mut map, id| {
+            *map.entry(id).or_insert(0) += 1;
+            map
+        });
 
-    'outer: for vegetable in &candidates {
-        // Each variety is placed at most once
-        if placed_ids.contains(&vegetable.id) {
+    'outer: for vegetable in &expanded_candidates {
+        let max_count = desired_counts.get(&vegetable.id).copied().unwrap_or(1);
+        let current_count = placed_counts.get(&vegetable.id).copied().unwrap_or(0);
+        if current_count >= max_count {
             continue;
         }
 
@@ -125,7 +152,10 @@ pub fn plan_garden(
                 name: vegetable.name.clone(),
                 reason,
             });
-            placed_ids.push(vegetable.id.clone());
+            placed_counts
+                .entry(vegetable.id.clone())
+                .and_modify(|n| *n += 1)
+                .or_insert(1);
             global_score += best_score;
         } else {
             // Grid is full
@@ -153,7 +183,7 @@ fn build_reason(vegetable: &Vegetable, neighbor_names: &[String], score: i32) ->
     if neighbor_names.is_empty() {
         return format!(
             "First placed ({}{}) ",
-            vegetable.category_label(),
+            vegetable.category,
             if vegetable.beginner_friendly {
                 ", beginner-friendly"
             } else {
@@ -218,21 +248,6 @@ fn build_response(
         cols,
         score,
         warnings,
-    }
-}
-
-impl Vegetable {
-    fn category_label(&self) -> &str {
-        use crate::models::vegetable::Category;
-        match self.category {
-            Category::Fruit => "fruit",
-            Category::Produce => "produce",
-            Category::Herb => "herb",
-            Category::Root => "root",
-            Category::Bulb => "bulb",
-            Category::Leafy => "leafy",
-            Category::Pod => "pod",
-        }
     }
 }
 
@@ -443,5 +458,27 @@ mod tests {
             !any_placed,
             "No vegetable must be placed on a fully blocked grid"
         );
+    }
+
+    #[test]
+    fn test_preference_quantity_places_multiple_instances() {
+        use crate::models::request::PreferenceEntry;
+        // 3×3 grid, request 3 basil plants
+        let req = PlanRequest {
+            preferences: Some(vec![PreferenceEntry {
+                id: "basil".into(),
+                quantity: Some(3),
+            }]),
+            ..minimal_request(0.9, 0.9, Season::Summer)
+        };
+        let candidates = filter_vegetables(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        let basil_count = resp
+            .grid
+            .iter()
+            .flat_map(|r| r.iter())
+            .filter(|c| c.id.as_deref() == Some("basil"))
+            .count();
+        assert_eq!(basil_count, 3, "Basil must be placed exactly 3 times");
     }
 }

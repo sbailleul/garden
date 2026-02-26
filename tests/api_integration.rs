@@ -211,7 +211,7 @@ async fn test_post_plan_full_request_returns_200() {
         "soil": "Loamy",
         "region": "Temperate",
         "level": "Beginner",
-        "preferences": ["tomato", "basil"],
+        "preferences": [{"id": "tomato"}, {"id": "basil"}],
         "layout": null_layout(10, 10)
     });
     let req = test::TestRequest::post()
@@ -227,7 +227,7 @@ async fn test_post_plan_score_is_non_negative_for_compatible_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
         "season": "Summer",
-        "preferences": ["tomato", "basil", "carrot"],
+        "preferences": [{"id": "tomato"}, {"id": "basil"}, {"id": "carrot"}],
         "layout": null_layout(7, 7)
     });
     let req = test::TestRequest::post()

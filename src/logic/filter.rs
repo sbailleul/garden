@@ -45,8 +45,8 @@ pub fn filter_vegetables(db: &[Vegetable], request: &PlanRequest) -> Vec<Vegetab
 
     // Sort: preferences first, then alphabetical
     filtered.sort_by(|a, b| {
-        let a_pref = preferences.contains(&a.id);
-        let b_pref = preferences.contains(&b.id);
+        let a_pref = preferences.iter().any(|p| p.id == a.id);
+        let b_pref = preferences.iter().any(|p| p.id == b.id);
         match (a_pref, b_pref) {
             (true, false) => std::cmp::Ordering::Less,
             (false, true) => std::cmp::Ordering::Greater,
@@ -62,7 +62,7 @@ mod tests {
     use super::*;
     use crate::data::vegetables::get_all_vegetables;
     use crate::models::{
-        request::{LayoutCell, Level, PlanRequest},
+        request::{LayoutCell, Level, PlanRequest, PreferenceEntry},
         vegetable::{Region, Season, SoilType, SunExposure},
     };
 
@@ -126,7 +126,7 @@ mod tests {
     fn test_filter_preferences_boost() {
         let db = get_all_vegetables();
         let req = PlanRequest {
-            preferences: Some(vec!["basil".into()]),
+            preferences: Some(vec![PreferenceEntry { id: "basil".into(), quantity: None }]),
             ..make_request(Season::Summer)
         };
         let result = filter_vegetables(&db, &req);

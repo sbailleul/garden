@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -47,6 +49,21 @@ pub enum Category {
     Bulb,
     Leafy,
     Pod,
+}
+
+impl fmt::Display for Category {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Category::Fruit => "fruit",
+            Category::Produce => "produce",
+            Category::Herb => "herb",
+            Category::Root => "root",
+            Category::Bulb => "bulb",
+            Category::Leafy => "leafy",
+            Category::Pod => "pod",
+        };
+        f.write_str(s)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
