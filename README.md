@@ -173,20 +173,22 @@ Computes the optimal garden layout.
 
 Required fields: `season`, `layout`. All others are optional.
 
-The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state:
+The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state.
+Each cell is a JSON object with a `type` discriminator:
 
 | Cell value | Meaning |
 |---|---|
-| `null` | Free cell — plantable and empty |
-| `"vegetable-id"` | Pre-placed vegetable (preserved in output) |
-| `true` | Blocked cell — non-plantable zone (path, alley, obstacle) |
+| `{"type": "empty"}` | Free cell — plantable and empty |
+| `{"type": "selfContained", "id": "vegetable-id"}` | Pre-placed vegetable that fits in one cell (preserved in output) |
+| `{"type": "overflowing", "id": "vegetable-id"}` | Pre-placed vegetable that spans multiple cells (anchor cell) |
+| `{"type": "blocked"}` | Blocked cell — non-plantable zone (path, alley, obstacle) |
 
 Grid dimensions are inferred directly from the array: `rows = layout.length`, `cols = layout[0].length`.
 
 | Field | Type | Description |
 |---|---|---|
 | `season` | `Season` | Planting season |
-| `layout` | `(string\|boolean\|null)[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
+| `layout` | `LayoutCell[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
 | `region` | `Region?` | Climate region filter |
@@ -273,7 +275,7 @@ flowchart TD
 ```
 
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
-2. **Pre-fill** — blocked cells (`true`) and pre-placed vegetables (`"id"`) are applied from the unified `layout` array. Unknown vegetable IDs emit a warning and are skipped.
+2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
 4. **Filter** — the vegetable catalogue is narrowed by `season`, `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.

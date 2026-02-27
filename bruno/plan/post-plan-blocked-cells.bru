@@ -17,9 +17,9 @@ body {
   {
     "season": "Summer",
     "layout": [
-      [null, null, null],
-      [true, true, true],
-      [null, null, null]
+      [{"type":"empty"}, {"type":"empty"}, {"type":"empty"}],
+      [{"type":"blocked"}, {"type":"blocked"}, {"type":"blocked"}],
+      [{"type":"empty"}, {"type":"empty"}, {"type":"empty"}]
     ]
   }
 }
@@ -36,18 +36,18 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("blocked row has no vegetable and blocked=true", function() {
+  test("blocked row has no vegetable and type is blocked", function() {
     var row = res.body.payload.grid[1];
     row.forEach(function(cell) {
-      expect(cell.id).to.be.null;
-      expect(cell.blocked).to.be.true;
+      expect(cell.id).to.be.undefined;
+      expect(cell.type).to.equal("blocked");
     });
   });
 
   test("non-blocked cells are not flagged", function() {
     [0, 2].forEach(function(r) {
       res.body.payload.grid[r].forEach(function(cell) {
-        expect(cell.blocked).to.be.false;
+        expect(cell.type).to.not.equal("blocked");
       });
     });
   });

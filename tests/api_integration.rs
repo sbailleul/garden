@@ -2,7 +2,8 @@ use actix_web::{test, web, App};
 use garden::api::routes::configure;
 
 fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
-    let row: Vec<serde_json::Value> = vec![serde_json::Value::Null; cols];
+    let empty_cell = serde_json::json!({"type": "empty"});
+    let row: Vec<serde_json::Value> = vec![empty_cell; cols];
     let layout: Vec<serde_json::Value> = (0..rows)
         .map(|_| serde_json::Value::Array(row.clone()))
         .collect();
@@ -286,8 +287,8 @@ async fn test_post_plan_with_existing_layout_preserved() {
     let payload = serde_json::json!({
         "season": "Summer",
         "layout": [
-            ["tomato", null],
-            [null, null]
+            [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}],
+            [{"type": "empty"}, {"type": "empty"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -325,9 +326,9 @@ async fn test_post_plan_blocked_cells_never_planted() {
     let payload = serde_json::json!({
         "season": "Summer",
         "layout": [
-            [null, null, null],
-            [true, true, true],
-            [null, null, null]
+            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
+            [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
+            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -352,9 +353,9 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     let payload = serde_json::json!({
         "season": "Summer",
         "layout": [
-            [null, null, null],
-            [true, true, true],
-            [null, null, null]
+            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
+            [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
+            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}]
         ]
     });
     let req = test::TestRequest::post()

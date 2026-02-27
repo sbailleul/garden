@@ -8,7 +8,7 @@ use crate::models::{
     garden::GardenGrid,
     request::{LayoutCell, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry},
     vegetable::Vegetable,
-    Matrix,
+    Coordinate, Matrix,
 };
 
 /// Size of one grid cell in centimetres
@@ -85,25 +85,30 @@ fn initialize_grid(
     debug!("initialize_grid: building {rows}×{cols} grid from layout");
     let mut grid = GardenGrid::new(rows, cols);
     let mut warnings: Vec<String> = Vec::new();
+    // Continuation cells are collected here and resolved after all anchors are placed.
+    let mut deferred: Vec<(Coordinate, Coordinate)> = Vec::new();
 
     for (r, row) in layout.iter().enumerate() {
         for (c, cell) in row.iter().enumerate() {
             match cell {
-                LayoutCell::Blocked(true) => {
+                LayoutCell::Blocked => {
                     trace!("initialize_grid: [{r},{c}] marked as blocked");
                     grid.cells[r][c].blocked = true;
                 }
-                LayoutCell::Planted(id) => {
+                LayoutCell::SelfContained {
+                    id,
+                    plants_per_cell: ppc_input,
+                } => {
                     if let Some(v) = get_vegetable_by_id(id) {
                         debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
+                        let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
                             reason: "Present in the existing layout.".into(),
-                            plants_per_cell: plants_per_cell(v.spacing_cm),
-                            span: 1, // pre-placed cells occupy exactly one cell
-                            anchor_row: r,
-                            anchor_col: c,
+                            plants_per_cell: ppc,
+                            span: 1,
+                            anchor: Coordinate { row: r, col: c },
                         });
                     } else {
                         warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
@@ -112,8 +117,69 @@ fn initialize_grid(
                         ));
                     }
                 }
-                _ => {} // Free(()) or Blocked(false) — nothing to do
+                LayoutCell::Overflowed { covered_by } => {
+                    deferred.push((Coordinate { row: r, col: c }, *covered_by));
+                }
+                LayoutCell::Overflowing {
+                    id,
+                    plants_per_cell: ppc_input,
+                    width_cells,
+                    length_cells,
+                } => {
+                    if let Some(v) = get_vegetable_by_id(id) {
+                        debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
+                        let span = cell_span(v.spacing_cm);
+                        let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
+                        let w = width_cells.unwrap_or(span);
+                        let l = length_cells.unwrap_or(span);
+                        grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
+                            id: v.id.clone(),
+                            name: v.name.clone(),
+                            reason: "Present in the existing layout.".into(),
+                            plants_per_cell: ppc,
+                            span: w.max(l),
+                            anchor: Coordinate { row: r, col: c },
+                        });
+                    } else {
+                        warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
+                        warnings.push(format!(
+                            "Vegetable '{id}' not found in the database, skipped."
+                        ));
+                    }
+                }
+                LayoutCell::Empty => {}
             }
+        }
+    }
+
+    // Resolve continuation cells now that all anchors are in the grid.
+    for (pos, covered_by) in deferred {
+        let r = pos.row;
+        let c = pos.col;
+        let ar = covered_by.row;
+        let ac = covered_by.col;
+        if ar < rows && ac < cols {
+            if let Some(anchor_veg) = grid.cells[ar][ac].vegetable.clone() {
+                trace!(
+                    "initialize_grid: [{r},{c}] continuation of anchor [{ar},{ac}] ('{}')",
+                    anchor_veg.id
+                );
+                grid.cells[r][c].vegetable = Some(anchor_veg);
+            } else {
+                warn!(
+                    "initialize_grid: [{r},{c}] Overflowed references [{ar},{ac}] which has no planted anchor, skipping"
+                );
+                warnings.push(format!(
+                    "Continuation cell [{r},{c}] references an unplanted anchor [{ar},{ac}], skipped."
+                ));
+            }
+        } else {
+            warn!(
+                "initialize_grid: [{r},{c}] Overflowed references out-of-bounds anchor [{ar},{ac}]"
+            );
+            warnings.push(format!(
+                "Continuation cell [{r},{c}] references out-of-bounds anchor [{ar},{ac}], skipped."
+            ));
         }
     }
 
@@ -246,8 +312,7 @@ fn fill_block(grid: &mut GardenGrid, vegetable: &Vegetable, row: usize, col: usi
                     reason: reason.to_owned(),
                     plants_per_cell: ppc,
                     span: span as u32,
-                    anchor_row: row,
-                    anchor_col: col,
+                    anchor: Coordinate { row, col },
                 });
         }
     }
@@ -477,8 +542,6 @@ fn build_response(
     score: i32,
     warnings: Vec<String>,
 ) -> PlanResponse {
-    use crate::models::request::CoveredBy;
-
     let planned_grid: Matrix<PlannedCell> = grid
         .cells
         .iter()
@@ -487,7 +550,7 @@ fn build_response(
             row.iter()
                 .enumerate()
                 .map(|(co, cell)| match &cell.vegetable {
-                    Some(v) if ro == v.anchor_row && co == v.anchor_col && v.span == 1 => {
+                    Some(v) if (ro, co) == (v.anchor.row, v.anchor.col) && v.span == 1 => {
                         PlannedCell::SelfContained {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -495,7 +558,7 @@ fn build_response(
                             plants_per_cell: v.plants_per_cell,
                         }
                     }
-                    Some(v) if ro == v.anchor_row && co == v.anchor_col => {
+                    Some(v) if (ro, co) == (v.anchor.row, v.anchor.col) => {
                         PlannedCell::Overflowing {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -506,10 +569,7 @@ fn build_response(
                         }
                     }
                     Some(v) => PlannedCell::Overflowed {
-                        covered_by: CoveredBy {
-                            row: v.anchor_row,
-                            col: v.anchor_col,
-                        },
+                        covered_by: v.anchor,
                     },
                     None if cell.blocked => PlannedCell::Blocked,
                     None => PlannedCell::Empty,
@@ -533,7 +593,7 @@ mod tests {
     use crate::data::vegetables::{get_all_vegetables, get_vegetable_by_id};
     use crate::logic::filter::filter_vegetables;
     use crate::models::{
-        request::{LayoutCell, PlanRequest},
+        request::{LayoutCell, PlanRequest, PlannedCell},
         vegetable::Season,
     };
 
@@ -551,7 +611,7 @@ mod tests {
             region: None,
             level: None,
             preferences: None,
-            layout: vec![vec![LayoutCell::Free(()); cols]; rows],
+            layout: vec![vec![LayoutCell::Empty; cols]; rows],
         }
     }
 
@@ -614,8 +674,14 @@ mod tests {
     fn test_existing_layout_preserved() {
         let req = PlanRequest {
             layout: vec![
-                vec![LayoutCell::Planted("tomato".into()), LayoutCell::Free(())],
-                vec![LayoutCell::Free(()), LayoutCell::Free(())],
+                vec![
+                    LayoutCell::SelfContained {
+                        id: "tomato".into(),
+                        plants_per_cell: None,
+                    },
+                    LayoutCell::Empty,
+                ],
+                vec![LayoutCell::Empty, LayoutCell::Empty],
             ],
             ..minimal_request(0.6, 0.6, Season::Summer)
         };
@@ -682,8 +748,8 @@ mod tests {
         // 2x2 grid (0.6m x 0.6m) with [0][0] and [1][1] blocked
         let req = PlanRequest {
             layout: vec![
-                vec![LayoutCell::Blocked(true), LayoutCell::Free(())],
-                vec![LayoutCell::Free(()), LayoutCell::Blocked(true)],
+                vec![LayoutCell::Blocked, LayoutCell::Empty],
+                vec![LayoutCell::Empty, LayoutCell::Blocked],
             ],
             ..minimal_request(0.6, 0.6, Season::Summer)
         };
@@ -724,9 +790,9 @@ mod tests {
         // 0.9m × 0.9m → 3×3 grid; mark every cell as blocked
         let req = PlanRequest {
             layout: vec![
-                vec![LayoutCell::Blocked(true); 3],
-                vec![LayoutCell::Blocked(true); 3],
-                vec![LayoutCell::Blocked(true); 3],
+                vec![LayoutCell::Blocked; 3],
+                vec![LayoutCell::Blocked; 3],
+                vec![LayoutCell::Blocked; 3],
             ],
             ..minimal_request(0.9, 0.9, Season::Summer)
         };

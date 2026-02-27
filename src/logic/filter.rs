@@ -112,7 +112,7 @@ mod tests {
     fn make_request(season: Season) -> PlanRequest {
         PlanRequest {
             // 2m × 3m → 7 cols × 10 rows
-            layout: vec![vec![LayoutCell::Free(()); 7]; 10],
+            layout: vec![vec![LayoutCell::Empty; 7]; 10],
             season,
             sun: None,
             soil: None,

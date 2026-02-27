@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::models::{
     vegetable::{Region, Season, SoilType, SunExposure, Vegetable},
-    Matrix,
+    Coordinate, Matrix,
 };
 
 /// Serde adapter for `actix_web::http::Method` (serialises as its uppercase string).
@@ -129,15 +129,34 @@ pub struct VegetableResponse {
     pub vegetable: Vegetable,
 }
 
-/// A single cell in the request layout grid.
-/// Cell values: `null` → free/plantable, `"vegetable-id"` → pre-planted, `true` → blocked non-plantable zone.
+/// A single cell in the **request** layout grid.
+/// Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
+/// relevant for input: `id` for pre-planted cells, nothing for `empty`/`blocked`.
 #[derive(Debug, Clone, Deserialize, ToSchema)]
-#[serde(untagged)]
-#[schema(example = json!(null))]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub enum LayoutCell {
-    Planted(String),
-    Blocked(bool),
-    Free(()),
+    /// A pre-planted cell that fits in one 30 cm × 30 cm grid cell.
+    SelfContained {
+        id: String,
+        /// Number of plants per cell. Computed from the vegetable's spacing if absent.
+        plants_per_cell: Option<u32>,
+    },
+    /// The top-left (anchor) cell of a pre-planted multi-cell block.
+    Overflowing {
+        id: String,
+        /// Number of plants per cell. Computed from the vegetable's spacing if absent.
+        plants_per_cell: Option<u32>,
+        /// Block width in grid cells. Computed from the vegetable's spacing if absent.
+        width_cells: Option<u32>,
+        /// Block length in grid cells. Computed from the vegetable's spacing if absent.
+        length_cells: Option<u32>,
+    },
+    /// A continuation cell of a multi-cell block (skipped — anchor handles placement).
+    Overflowed { covered_by: Coordinate },
+    /// Free, unoccupied, non-blocked cell.
+    Empty,
+    /// Non-plantable zone (path, alley, obstacle).
+    Blocked,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
@@ -169,21 +188,12 @@ pub struct PlanRequest {
     /// Preferred vegetables with optional per-vegetable plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,
     /// Combined grid layout — defines dimensions and pre-filled cells.
-    /// Each cell is: `null` (free), `"id"` (pre-planted), or `true` (blocked).
+    /// Each cell is a `LayoutCell` object: `{"type":"empty"}` (free),
+    /// `{"type":"selfContained","id":"..."}` (pre-planted), or `{"type":"blocked"}` (blocked).
     pub layout: Matrix<LayoutCell>,
 }
 
-/// Reference to the anchor (top-left) cell of a multi-cell plant block.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CoveredBy {
-    /// Row index of the anchor cell (0-based).
-    pub row: usize,
-    /// Column index of the anchor cell (0-based).
-    pub col: usize,
-}
-
-/// A cell in the planned garden grid.
+/// A cell in the planned garden grid (response output).
 ///
 /// Three occupied variants, plus `Empty` and `Blocked`:
 /// - `selfContained` — a plant whose spacing ≤ 30 cm; fits entirely in one cell.
@@ -213,7 +223,7 @@ pub enum PlannedCell {
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
     /// All plant data lives on the anchor cell; this cell only holds a back-reference.
-    Overflowed { covered_by: CoveredBy },
+    Overflowed { covered_by: Coordinate },
     /// A free, unoccupied, non-blocked cell.
     Empty,
     /// A non-plantable zone (path, alley, obstacle).
@@ -240,7 +250,7 @@ impl PlannedCell {
     }
 
     /// Returns the `coveredBy` reference for `Overflowed` cells, `None` otherwise.
-    pub fn covered_by(&self) -> Option<&CoveredBy> {
+    pub fn covered_by(&self) -> Option<&Coordinate> {
         match self {
             Self::Overflowed { covered_by } => Some(covered_by),
             _ => None,

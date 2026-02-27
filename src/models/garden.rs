@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::models::Matrix;
+use crate::models::{Coordinate, Matrix};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlacedVegetable {
@@ -12,10 +12,8 @@ pub struct PlacedVegetable {
     pub plants_per_cell: u32,
     /// How many grid cells this plant occupies per axis.
     pub span: u32,
-    /// Grid row of the anchor (top-left) cell of this plant’s block.
-    pub anchor_row: usize,
-    /// Grid column of the anchor (top-left) cell of this plant’s block.
-    pub anchor_col: usize,
+    /// Top-left cell of this plant's block.
+    pub anchor: Coordinate,
 }
 
 #[skip_serializing_none]
