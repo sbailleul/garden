@@ -5,7 +5,7 @@ use crate::models::request::{ErrorResponse, PlanApiResponse};
 
 use crate::{
     data::vegetables::get_all_vegetables,
-    logic::{filter::filter_vegetables, planner::plan_garden},
+    logic::{filter::filter_candidates_base, planner::plan_garden},
     models::request::{link, ApiResponse, PlanRequest},
 };
 
@@ -30,7 +30,7 @@ pub async fn post_plan(body: web::Json<PlanRequest>) -> impl Responder {
     let request = body.into_inner();
 
     let db = get_all_vegetables();
-    let candidates = filter_vegetables(&db, &request);
+    let candidates = filter_candidates_base(&db, &request);
 
     match plan_garden(candidates, &request) {
         Ok(response) => {

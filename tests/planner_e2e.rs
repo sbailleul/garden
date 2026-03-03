@@ -32,7 +32,7 @@ fn build_app() -> actix_web::App<
 }
 
 fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
-    body["payload"]["grid"]
+    body["payload"]["weeks"][0]["grid"]
         .as_array()
         .unwrap_or(&vec![])
         .iter()
@@ -48,7 +48,8 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 async fn scenario_small_summer_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "sun": "FullSun",
         "soil": "Loamy",
         "region": "Temperate",
@@ -94,7 +95,8 @@ async fn scenario_small_summer_garden() {
 async fn scenario_spring_cool_climate() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Spring",
+        "startDate": "2025-03-01",
+        "endDate": "2025-05-31",
         "region": "Mountain",
         "soil": "Clay",
         "layout": null_layout(7, 4)
@@ -106,7 +108,10 @@ async fn scenario_spring_cool_climate() {
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     assert_eq!(
         body["payload"]
-            .get("grid")
+            .get("weeks")
+            .and_then(|w| w.as_array())
+            .and_then(|a| a.first())
+            .and_then(|w| w.get("grid"))
             .and_then(|g| g.as_array())
             .map(|a| !a.is_empty()),
         Some(true)
@@ -132,7 +137,8 @@ async fn scenario_existing_tomatoes_add_companions() {
     let app = test::init_service(build_app()).await;
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "preferences": [{"id": "basil"}],
         "layout": [
             [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}, {"type": "empty"}],
@@ -148,7 +154,7 @@ async fn scenario_existing_tomatoes_add_companions() {
 
     // Cell [0][0] must remain "tomato"
     assert_eq!(
-        body["payload"]["grid"][0][0]["id"].as_str(),
+        body["payload"]["weeks"][0]["grid"][0][0]["id"].as_str(),
         Some("tomato"),
         "Existing tomato must be preserved"
     );
@@ -163,8 +169,8 @@ async fn scenario_existing_tomatoes_add_companions() {
     // Basil must be adjacent to tomato at [0][0]:
     // adjacent positions: [0][1] and [1][0]
     let basil_adjacent_to_tomato = {
-        let r0c1 = body["payload"]["grid"][0][1]["id"].as_str() == Some("basil");
-        let r1c0 = body["payload"]["grid"][1][0]["id"].as_str() == Some("basil");
+        let r0c1 = body["payload"]["weeks"][0]["grid"][0][1]["id"].as_str() == Some("basil");
+        let r1c0 = body["payload"]["weeks"][0]["grid"][1][0]["id"].as_str() == Some("basil");
         r0c1 || r1c0
     };
     assert!(
@@ -180,7 +186,8 @@ async fn scenario_existing_tomatoes_add_companions() {
 async fn scenario_winter_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Winter",
+        "startDate": "2024-12-01",
+        "endDate": "2025-02-28",
         "region": "Oceanic",
         "layout": null_layout(5, 5)
     });

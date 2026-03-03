@@ -15,7 +15,8 @@ headers {
 
 body {
   {
-    "season": "Summer",
+    "startDate": "2025-06-01",
+    "endDate": "2025-08-31",
     "sun": "FullSun",
     "soil": "Loamy",
     "region": "Temperate",
@@ -42,8 +43,8 @@ body {
 
 assert {
   res.status: eq 200
-  res.body.payload.grid: isArray
-  res.body.payload.score: gte 0
+  res.body.payload.weeks[0].grid: isArray
+  res.body.payload.weeks[0].score: gte 0
   res.body.payload.warnings: isArray
 }
 
@@ -53,12 +54,12 @@ tests {
   });
 
   test("score is non-negative for compatible companions", function() {
-    expect(res.body.payload.score).to.be.a("number").that.is.gte(0);
+    expect(res.body.payload.weeks[0].score).to.be.a("number").that.is.gte(0);
   });
 
   test("grid contains at least one preferred vegetable", function() {
     var placed = [];
-    res.body.payload.grid.forEach(function(row) {
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {
         if (cell.id) placed.push(cell.id);
       });
@@ -70,7 +71,7 @@ tests {
 
   test("only beginner-friendly vegetables are placed", function() {
     var advanced = ["pepper", "fennel", "eggplant", "celery", "asparagus", "artichoke", "cauliflower", "broccoli", "cabbage"];
-    res.body.payload.grid.forEach(function(row) {
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {
         if (cell.id) {
           expect(advanced).to.not.include(cell.id);

@@ -4,7 +4,7 @@ use crate::models::{
     request::{
         CompanionInfo, CompanionsApiResponse, CompanionsResponse, ErrorResponse, LayoutCell, Level,
         Link, Pagination, PlanApiResponse, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry,
-        VegetableApiResponse, VegetableListResponse, VegetableResponse,
+        VegetableApiResponse, VegetableListResponse, VegetableResponse, WeeklyPlan,
     },
     vegetable::{Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable},
     Coordinate,
@@ -33,7 +33,7 @@ use crate::models::{
             // Plan request
             LayoutCell, PreferenceEntry, PlanRequest,
             // Plan response
-            Coordinate, PlannedCell, PlanResponse,
+            Coordinate, PlannedCell, WeeklyPlan, PlanResponse,
             // Companions
             CompanionInfo, CompanionsResponse,
             // Shared

@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use actix_web::http::Method;
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::models::{
-    vegetable::{Region, Season, SoilType, SunExposure, Vegetable},
+    vegetable::{Region, SoilType, SunExposure, Vegetable},
     Coordinate, Matrix,
 };
 
@@ -180,7 +181,12 @@ pub struct PreferenceEntry {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
-    pub season: Season,
+    /// Start date of the planning period (ISO 8601, e.g. `"2025-06-01"`).
+    #[schema(value_type = String, format = Date, example = "2025-06-01")]
+    pub start_date: NaiveDate,
+    /// End date of the planning period (ISO 8601, e.g. `"2025-08-31"`).
+    #[schema(value_type = String, format = Date, example = "2025-08-31")]
+    pub end_date: NaiveDate,
     pub sun: Option<SunExposure>,
     pub soil: Option<SoilType>,
     pub region: Option<Region>,
@@ -274,13 +280,29 @@ impl PlannedCell {
     }
 }
 
+/// A snapshot of the garden layout for one week of the planning period.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WeeklyPlan {
+    /// Monday (inclusive) of this week (ISO 8601).
+    #[schema(value_type = String, format = Date, example = "2025-06-01")]
+    pub week_start: NaiveDate,
+    /// Sunday (inclusive) of this week, or the `endDate` if the period ends mid-week.
+    #[schema(value_type = String, format = Date, example = "2025-06-07")]
+    pub week_end: NaiveDate,
+    /// Full garden grid for this week (same dimensions as the request layout).
+    pub grid: Matrix<PlannedCell>,
+    /// Cumulative companion-planting score for plants placed **this week**.
+    pub score: i32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanResponse {
-    pub grid: Matrix<PlannedCell>,
     pub rows: usize,
     pub cols: usize,
-    pub score: i32,
+    /// One entry per week in the requested planning period.
+    pub weeks: Vec<WeeklyPlan>,
     pub warnings: Vec<String>,
 }
 

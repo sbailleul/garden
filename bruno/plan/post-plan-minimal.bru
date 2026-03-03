@@ -15,7 +15,8 @@ headers {
 
 body {
   {
-    "season": "Summer",
+    "startDate": "2025-06-01",
+    "endDate": "2025-08-31",
     "layout": [
       [{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"}],
       [{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"},{"type":"empty"}],
@@ -33,8 +34,8 @@ body {
 
 assert {
   res.status: eq 200
-  res.body.payload.grid: isArray
-  res.body.payload.score: isDefined
+  res.body.payload.weeks[0].grid: isArray
+  res.body.payload.weeks[0].score: isDefined
   res.body.payload.warnings: isArray
   res.body.payload.rows: isDefined
   res.body.payload.cols: isDefined
@@ -46,21 +47,21 @@ tests {
   });
 
   test("grid is a 2D array", function() {
-    expect(res.body.payload.grid).to.be.an("array").that.is.not.empty;
-    res.body.payload.grid.forEach(function(row) {
+    expect(res.body.payload.weeks[0].grid).to.be.an("array").that.is.not.empty;
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       expect(row).to.be.an("array");
     });
   });
 
   test("grid dimensions match rows/cols", function() {
-    expect(res.body.payload.grid.length).to.equal(res.body.payload.rows);
-    res.body.payload.grid.forEach(function(row) {
+    expect(res.body.payload.weeks[0].grid.length).to.equal(res.body.payload.rows);
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       expect(row.length).to.equal(res.body.payload.cols);
     });
   });
 
   test("score is a number", function() {
-    expect(res.body.payload.score).to.be.a("number");
+    expect(res.body.payload.weeks[0].score).to.be.a("number");
   });
 
   test("warnings is an array", function() {
@@ -68,7 +69,7 @@ tests {
   });
 
   test("placed cells have id, name and reason", function() {
-    res.body.payload.grid.forEach(function(row) {
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {
         if (cell.id !== null && cell.id !== undefined) {
           expect(cell).to.have.property("name");

@@ -160,7 +160,8 @@ async fn test_get_companions_unknown_id_returns_error_message() {
 async fn test_post_plan_minimal_request_returns_200() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": null_layout(10, 7)
     });
     let req = test::TestRequest::post()
@@ -175,7 +176,8 @@ async fn test_post_plan_minimal_request_returns_200() {
 async fn test_post_plan_minimal_has_grid_and_score() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": null_layout(10, 7)
     });
     let req = test::TestRequest::post()
@@ -184,15 +186,15 @@ async fn test_post_plan_minimal_has_grid_and_score() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     assert!(
-        body["payload"]
+        body["payload"]["weeks"][0]
             .get("grid")
             .map(|v| v.is_array())
             .unwrap_or(false),
-        "Response must contain a grid"
+        "Response must contain weeks[0].grid"
     );
     assert!(
-        body["payload"].get("score").is_some(),
-        "Response must contain a score"
+        body["payload"]["weeks"][0].get("score").is_some(),
+        "Response must contain weeks[0].score"
     );
     assert!(
         body["payload"]
@@ -207,7 +209,8 @@ async fn test_post_plan_minimal_has_grid_and_score() {
 async fn test_post_plan_full_request_returns_200() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Spring",
+        "startDate": "2025-03-01",
+        "endDate": "2025-05-31",
         "sun": "FullSun",
         "soil": "Loamy",
         "region": "Temperate",
@@ -227,7 +230,8 @@ async fn test_post_plan_full_request_returns_200() {
 async fn test_post_plan_score_is_non_negative_for_compatible_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "preferences": [{"id": "tomato"}, {"id": "basil"}, {"id": "carrot"}],
         "layout": null_layout(7, 7)
     });
@@ -236,7 +240,7 @@ async fn test_post_plan_score_is_non_negative_for_compatible_garden() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    let score = body["payload"]
+    let score = body["payload"]["weeks"][0]
         .get("score")
         .and_then(|s| s.as_i64())
         .unwrap_or(-999);
@@ -251,7 +255,8 @@ async fn test_post_plan_invalid_zero_dimensions_returns_400() {
     let app = test::init_service(build_app()).await;
     // Empty layout triggers validation error → 400
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": []
     });
     let req = test::TestRequest::post()
@@ -266,7 +271,8 @@ async fn test_post_plan_invalid_zero_dimensions_returns_400() {
 async fn test_post_plan_invalid_returns_error_message() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": []
     });
     let req = test::TestRequest::post()
@@ -285,7 +291,8 @@ async fn test_post_plan_invalid_returns_error_message() {
 async fn test_post_plan_with_existing_layout_preserved() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": [
             [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}],
             [{"type": "empty"}, {"type": "empty"}]
@@ -296,7 +303,9 @@ async fn test_post_plan_with_existing_layout_preserved() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    let first_cell_id = body["payload"]["grid"][0][0]["id"].as_str().unwrap_or("");
+    let first_cell_id = body["payload"]["weeks"][0]["grid"][0][0]["id"]
+        .as_str()
+        .unwrap_or("");
     assert_eq!(
         first_cell_id, "tomato",
         "Existing cell [0][0] must remain 'tomato'"
@@ -324,7 +333,8 @@ async fn test_post_plan_blocked_cells_never_planted() {
     let app = test::init_service(build_app()).await;
     // 3×3 grid; middle row fully blocked
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": [
             [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
             [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
@@ -337,7 +347,7 @@ async fn test_post_plan_blocked_cells_never_planted() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    let row1 = body["payload"]["grid"][1].as_array().unwrap();
+    let row1 = body["payload"]["weeks"][0]["grid"][1].as_array().unwrap();
     for cell in row1 {
         assert!(cell["id"].is_null(), "Blocked cell must have no vegetable");
         assert_eq!(
@@ -351,7 +361,8 @@ async fn test_post_plan_blocked_cells_never_planted() {
 async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "season": "Summer",
+        "startDate": "2025-06-01",
+        "endDate": "2025-08-31",
         "layout": [
             [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
             [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
@@ -365,7 +376,7 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
     for r in [0usize, 2usize] {
-        let row = body["payload"]["grid"][r].as_array().unwrap();
+        let row = body["payload"]["weeks"][0]["grid"][r].as_array().unwrap();
         for cell in row {
             assert_ne!(
                 cell["type"], "blocked",
@@ -470,7 +481,7 @@ async fn test_get_companions_returns_links() {
 #[actix_web::test]
 async fn test_post_plan_returns_links() {
     let app = test::init_service(build_app()).await;
-    let payload = serde_json::json!({ "season": "Summer", "layout": null_layout(4, 4) });
+    let payload = serde_json::json!({ "startDate": "2025-06-01", "endDate": "2025-08-31", "layout": null_layout(4, 4) });
     let req = test::TestRequest::post()
         .uri("/api/plan")
         .set_json(&payload)

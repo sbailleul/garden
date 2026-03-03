@@ -14,6 +14,10 @@ pub struct PlacedVegetable {
     pub span: u32,
     /// Top-left cell of this plant's block.
     pub anchor: Coordinate,
+    /// 0-based index of the week in which this plant was placed.
+    pub planted_week: usize,
+    /// Days until this plant is ready to harvest (copied from the vegetable catalogue).
+    pub days_to_harvest: u32,
 }
 
 #[skip_serializing_none]

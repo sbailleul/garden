@@ -12,6 +12,17 @@ pub enum Season {
     Winter,
 }
 
+/// Maps a calendar month (1–12) to the corresponding planting [`Season`].
+/// Spring: Mar–May, Summer: Jun–Aug, Autumn: Sep–Nov, Winter: Dec–Feb.
+pub fn season_for_month(month: u32) -> Season {
+    match month {
+        3..=5 => Season::Spring,
+        6..=8 => Season::Summer,
+        9..=11 => Season::Autumn,
+        _ => Season::Winter,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "PascalCase")]
 pub enum SoilType {

@@ -1,6 +1,6 @@
 # Garden Planner API
 
-A REST API written in Rust (Actix-web) that computes the optimal planting layout for a vegetable garden based on plot dimensions, season, sun exposure, soil type, region, skill level, companion planting rules, an existing layout, and non-plantable zones (paths, alleys, obstacles).
+A REST API written in Rust (Actix-web) that computes the optimal planting layout for a vegetable garden based on plot dimensions, a date range, sun exposure, soil type, region, skill level, companion planting rules, an existing layout, and non-plantable zones (paths, alleys, obstacles). The planner simulates the garden week by week: harvested plants free their cells for new plantings, and the API returns one layout snapshot per 7-day period.
 
 ---
 
@@ -12,7 +12,9 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
-- **Filtering** — by season, sun, soil, region and skill level (`Beginner` / `Expert`)
+- **Date-range planning** — provide a `startDate` and `endDate`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period
+- **Harvest simulation** — plants are removed when their `daysToHarvest` has elapsed, freeing cells for new plantings in subsequent weeks
+- **Filtering** — by season (derived from each week's start date), sun, soil, region and skill level (`Beginner` / `Expert`)
 - **Preference ordering** — preferred vegetables (by id) are placed first
 - **Warnings** — surfaced when constraints exclude all candidates or cells cannot be filled
 - **Pure in-memory** — no database required
@@ -153,7 +155,8 @@ Computes the optimal garden layout.
 **Request body:**
 ```json
 {
-  "season": "Summer",
+  "startDate": "2025-06-01",
+  "endDate": "2025-08-31",
   "sun": "FullSun",
   "soil": "Loamy",
   "region": "Temperate",
@@ -171,7 +174,7 @@ Computes the optimal garden layout.
 }
 ```
 
-Required fields: `season`, `layout`. All others are optional.
+Required fields: `startDate`, `endDate`, `layout`. All others are optional.
 
 The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state.
 Each cell is a JSON object with a `type` discriminator:
@@ -187,7 +190,8 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 
 | Field | Type | Description |
 |---|---|---|
-| `season` | `Season` | Planting season |
+| `startDate` | `string` (ISO 8601 date) | First day of the planning period, e.g. `"2025-06-01"` |
+| `endDate` | `string` (ISO 8601 date) | Last day of the planning period, e.g. `"2025-08-31"` |
 | `layout` | `LayoutCell[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
@@ -199,7 +203,6 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 
 | Type | Values |
 |---|---|
-| `Season` | `Spring` `Summer` `Autumn` `Winter` |
 | `SunExposure` | `FullSun` `PartialShade` `Shade` |
 | `SoilType` | `Clay` `Sandy` `Loamy` `Chalky` `Humus` |
 | `Region` | `Temperate` `Mediterranean` `Oceanic` `Continental` `Mountain` |
@@ -212,13 +215,19 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
   "payload": {
     "rows": 7,
     "cols": 10,
-    "score": 14,
     "warnings": [],
-    "grid": [
-      [
-        { "id": "tomato", "name": "Tomato", "reason": "...", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
-        { "coveredBy": { "row": 0, "col": 0 }, "blocked": false }
-      ]
+    "weeks": [
+      {
+        "weekStart": "2025-06-01",
+        "weekEnd": "2025-06-07",
+        "score": 14,
+        "grid": [
+          [
+            { "id": "tomato", "name": "Tomato", "reason": "...", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
+            { "coveredBy": { "row": 0, "col": 0 }, "blocked": false }
+          ]
+        ]
+      }
     ]
   },
   "errors": [],
@@ -228,6 +237,15 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
   }
 }
 ```
+
+The `weeks` array contains one entry per 7-day period between `startDate` and `endDate` (inclusive). Each `WeeklyPlan` has:
+
+| Field | Description |
+|---|---|
+| `weekStart` | ISO 8601 date — first day of the week |
+| `weekEnd` | ISO 8601 date — last day of the week (may be earlier than `weekStart + 6` for the final period) |
+| `score` | Cumulative companion-planting score for this week's grid |
+| `grid` | 2-D array of `PlannedCell` objects (same structure as before) |
 
 Each `PlannedCell` carries:
 - `id` / `name` / `reason` / `plantsPerCell` / `widthCells` / `lengthCells` — present **only on the anchor cell** (top-left of the block). `null` / omitted on continuation and empty cells.
@@ -271,13 +289,13 @@ flowchart TD
     J -->|yes| N[Emit 'N empty cells'<br/>warning]
     J -->|no| RESP
     N --> RESP
-    RESP --> O([200 OK<br/>grid · score · warnings · _links])
+    RESP --> O([200 OK<br/>weeks · rows · cols · warnings · _links])
 ```
 
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
 2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
-4. **Filter** — the vegetable catalogue is narrowed by `season`, `sun`, `soil`, `region`, and `level`.
+4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `weekStart` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
 6. **Phase 1 — Explicit placement** — vegetables with an explicit `quantity` preference are placed first, in preference order, each guaranteed a minimum of `quantity` plants.
    - `quantity` is a **plant count** (not a cell count); a tomato (`quantity: 2`) with 60 cm spacing (span 2 × 2 = 4 cells) reserves 8 cells.
@@ -287,7 +305,9 @@ flowchart TD
    - This ensures cells that were left vacant because a large-span plant could not find a free block are filled by smaller alternatives.
 8. **Score** — every placement adds `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter to the cumulative companion score.
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
-9. **Return** — the filled grid, cumulative companion score, warnings, and `_links`.
+9. **Harvest** — before each subsequent week, cells whose plant's harvest deadline (`plantedWeek + ⌈daysToHarvest / 7⌉`) has been reached are cleared, making them available for new plantings.
+10. **Repeat** — steps 4–8 are re-run for every week in the planning period; the season filter adapts to the new week's month.
+11. **Return** — the `weeks` array (one `WeeklyPlan` per 7-day period), grid dimensions, warnings, and `_links`.
 
 ---
 

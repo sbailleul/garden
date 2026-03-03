@@ -15,7 +15,8 @@ headers {
 
 body {
   {
-    "season": "Summer",
+    "startDate": "2025-06-01",
+    "endDate": "2025-08-31",
     "preferences": [{"id": "basil"}],
     "layout": [
       [{"type":"selfContained","id":"tomato"}, {"type":"empty"}, {"type":"empty"}],
@@ -27,11 +28,11 @@ body {
 
 assert {
   res.status: eq 200
-  res.body.payload.grid: isArray
+  res.body.payload.weeks[0].grid: isArray
 }
 
 script:post-response {
-  var firstCellId = res.body.payload.grid[0][0].id;
+  var firstCellId = res.body.payload.weeks[0].grid[0][0].id;
   bru.setVar("firstCellId", firstCellId);
 }
 
