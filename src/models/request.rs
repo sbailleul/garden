@@ -194,7 +194,9 @@ pub struct Period {
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
     /// Planning period (start and end dates).
-    pub period: Period,
+    /// When omitted, defaults to the current Monday-to-Sunday week.
+    #[serde(default)]
+    pub period: Option<Period>,
     pub sun: Option<SunExposure>,
     pub soil: Option<SoilType>,
     pub region: Option<Region>,

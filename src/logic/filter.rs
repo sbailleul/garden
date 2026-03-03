@@ -142,10 +142,10 @@ mod tests {
         PlanRequest {
             // 2m × 3m → 7 cols × 10 rows
             layout: vec![vec![LayoutCell::Empty; 7]; 10],
-            period: Period {
+            period: Some(Period {
                 start_date: start,
                 end_date: start + Duration::days(6),
-            },
+            }),
             sun: None,
             soil: None,
             region: None,

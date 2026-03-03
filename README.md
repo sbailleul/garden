@@ -12,7 +12,7 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
-- **Date-range planning** — provide a `period` with `startDate` and `endDate`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period
+- **Date-range planning** — optionally provide a `period` with `startDate` and `endDate`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period. When omitted, defaults to the current Monday-to-Sunday week
 - **Harvest simulation** — plants are removed when their `daysToHarvest` has elapsed, freeing cells for new plantings in subsequent weeks
 - **Filtering** — by season (derived from each week's start date), sun, soil, region and skill level (`Beginner` / `Expert`)
 - **Preference ordering** — preferred vegetables (by id) are placed first
@@ -173,7 +173,7 @@ Computes the optimal garden layout.
 }
 ```
 
-Required fields: `period`, `layout`. All others are optional.
+Required field: `layout`. All others are optional.
 
 The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state.
 Each cell is a JSON object with a `type` discriminator:
@@ -189,7 +189,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 
 | Field | Type | Description |
 |---|---|---|
-| `period` | `{ startDate: string, endDate: string }` | Planning period — both dates in ISO 8601 format, e.g. `{ "startDate": "2025-06-01", "endDate": "2025-08-31" }` |
+| `period` | `{ startDate: string, endDate: string }?` | Planning period — both dates in ISO 8601 format. When omitted, defaults to the current Monday-to-Sunday week. If the dates do not fall on Mon/Sun boundaries they are automatically snapped outward. |
 | `layout` | `LayoutCell[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
@@ -236,7 +236,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 }
 ```
 
-The `weeks` array contains one entry per 7-day period between `period.startDate` and `period.endDate` (inclusive). Each `WeeklyPlan` has:
+The `weeks` array contains one entry per 7-day period between `period.startDate` and `period.endDate` (inclusive); when `period` is omitted the current week is used. Each `WeeklyPlan` has:
 
 | Field | Description |
 |---|---|
