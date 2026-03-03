@@ -160,8 +160,7 @@ async fn test_get_companions_unknown_id_returns_error_message() {
 async fn test_post_plan_minimal_request_returns_200() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": null_layout(10, 7)
     });
     let req = test::TestRequest::post()
@@ -176,8 +175,7 @@ async fn test_post_plan_minimal_request_returns_200() {
 async fn test_post_plan_minimal_has_grid_and_score() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": null_layout(10, 7)
     });
     let req = test::TestRequest::post()
@@ -209,8 +207,7 @@ async fn test_post_plan_minimal_has_grid_and_score() {
 async fn test_post_plan_full_request_returns_200() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-03-01",
-        "endDate": "2025-05-31",
+        "period": {"startDate": "2025-03-01", "endDate": "2025-05-31"},
         "sun": "FullSun",
         "soil": "Loamy",
         "region": "Temperate",
@@ -230,8 +227,7 @@ async fn test_post_plan_full_request_returns_200() {
 async fn test_post_plan_score_is_non_negative_for_compatible_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "preferences": [{"id": "tomato"}, {"id": "basil"}, {"id": "carrot"}],
         "layout": null_layout(7, 7)
     });
@@ -255,8 +251,7 @@ async fn test_post_plan_invalid_zero_dimensions_returns_400() {
     let app = test::init_service(build_app()).await;
     // Empty layout triggers validation error → 400
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": []
     });
     let req = test::TestRequest::post()
@@ -271,8 +266,7 @@ async fn test_post_plan_invalid_zero_dimensions_returns_400() {
 async fn test_post_plan_invalid_returns_error_message() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": []
     });
     let req = test::TestRequest::post()
@@ -291,8 +285,7 @@ async fn test_post_plan_invalid_returns_error_message() {
 async fn test_post_plan_with_existing_layout_preserved() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": [
             [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}],
             [{"type": "empty"}, {"type": "empty"}]
@@ -333,8 +326,7 @@ async fn test_post_plan_blocked_cells_never_planted() {
     let app = test::init_service(build_app()).await;
     // 3×3 grid; middle row fully blocked
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": [
             [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
             [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
@@ -361,8 +353,7 @@ async fn test_post_plan_blocked_cells_never_planted() {
 async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "layout": [
             [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
             [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
@@ -481,7 +472,7 @@ async fn test_get_companions_returns_links() {
 #[actix_web::test]
 async fn test_post_plan_returns_links() {
     let app = test::init_service(build_app()).await;
-    let payload = serde_json::json!({ "startDate": "2025-06-01", "endDate": "2025-08-31", "layout": null_layout(4, 4) });
+    let payload = serde_json::json!({ "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"}, "layout": null_layout(4, 4) });
     let req = test::TestRequest::post()
         .uri("/api/plan")
         .set_json(&payload)

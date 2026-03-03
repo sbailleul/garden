@@ -48,8 +48,7 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 async fn scenario_small_summer_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "sun": "FullSun",
         "soil": "Loamy",
         "region": "Temperate",
@@ -95,8 +94,7 @@ async fn scenario_small_summer_garden() {
 async fn scenario_spring_cool_climate() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2025-03-01",
-        "endDate": "2025-05-31",
+        "period": {"startDate": "2025-03-01", "endDate": "2025-05-31"},
         "region": "Mountain",
         "soil": "Clay",
         "layout": null_layout(7, 4)
@@ -137,8 +135,7 @@ async fn scenario_existing_tomatoes_add_companions() {
     let app = test::init_service(build_app()).await;
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
-        "startDate": "2025-06-01",
-        "endDate": "2025-08-31",
+        "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
         "preferences": [{"id": "basil"}],
         "layout": [
             [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}, {"type": "empty"}],
@@ -186,8 +183,7 @@ async fn scenario_existing_tomatoes_add_companions() {
 async fn scenario_winter_garden() {
     let app = test::init_service(build_app()).await;
     let payload = serde_json::json!({
-        "startDate": "2024-12-01",
-        "endDate": "2025-02-28",
+        "period": {"startDate": "2024-12-01", "endDate": "2025-02-28"},
         "region": "Oceanic",
         "layout": null_layout(5, 5)
     });

@@ -12,6 +12,18 @@ use crate::models::{
     Coordinate, Matrix,
 };
 
+/// A 7-day planning interval: `(start, end)`.
+pub struct WeekRange(pub NaiveDate, pub NaiveDate);
+
+/// Grid dimensions returned by layout validation: `(rows, cols)`.
+struct GridSize(usize, usize);
+
+/// Grid occupancy counts returned by the occupancy check: `(occupied, blocked)`.
+struct GridOccupancy(usize, usize);
+
+/// A deferred continuation cell and its anchor coordinate: `(position, anchor)`.
+struct DeferredCell(Coordinate, Coordinate);
+
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
 
@@ -60,8 +72,8 @@ fn compute_explicit_allocation(
 }
 
 /// Validates that the layout has at least one non-empty row.
-/// Returns `(rows, cols)` on success.
-fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<(usize, usize), String> {
+/// Returns `GridSize(rows, cols)` on success.
+fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<GridSize, String> {
     if layout.is_empty() {
         warn!("validate_layout: rejected — layout has no rows");
         return Err("Layout must contain at least one row.".into());
@@ -72,7 +84,7 @@ fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<(usize, usize), String>
         return Err("Layout rows must not be empty.".into());
     }
     debug!("validate_layout: {}×{} grid accepted", layout.len(), cols);
-    Ok((layout.len(), cols))
+    Ok(GridSize(layout.len(), cols))
 }
 
 /// Creates a blank grid and pre-fills it from the unified layout array:
@@ -87,7 +99,7 @@ fn initialize_grid(
     let mut grid = GardenGrid::new(rows, cols);
     let mut warnings: Vec<String> = Vec::new();
     // Continuation cells are collected here and resolved after all anchors are placed.
-    let mut deferred: Vec<(Coordinate, Coordinate)> = Vec::new();
+    let mut deferred: Vec<DeferredCell> = Vec::new();
 
     for (r, row) in layout.iter().enumerate() {
         for (c, cell) in row.iter().enumerate() {
@@ -121,7 +133,7 @@ fn initialize_grid(
                     }
                 }
                 LayoutCell::Overflowed { covered_by } => {
-                    deferred.push((Coordinate { row: r, col: c }, *covered_by));
+                    deferred.push(DeferredCell(Coordinate { row: r, col: c }, *covered_by));
                 }
                 LayoutCell::Overflowing {
                     id,
@@ -158,7 +170,7 @@ fn initialize_grid(
     }
 
     // Resolve continuation cells now that all anchors are in the grid.
-    for (pos, covered_by) in deferred {
+    for DeferredCell(pos, covered_by) in deferred {
         let r = pos.row;
         let c = pos.col;
         let ar = covered_by.row;
@@ -191,13 +203,13 @@ fn initialize_grid(
     (grid, warnings)
 }
 
-/// Returns `(occupied, blocked)` cell counts for the given grid.
-fn count_grid_occupancy(grid: &GardenGrid) -> (usize, usize) {
+/// Returns `GridOccupancy(occupied, blocked)` cell counts for the given grid.
+fn count_grid_occupancy(grid: &GardenGrid) -> GridOccupancy {
     let flat = || grid.cells.iter().flat_map(|r| r.iter());
     let occupied = flat().filter(|c| c.vegetable.is_some()).count();
     let blocked = flat().filter(|c| c.blocked).count();
     debug!("count_grid_occupancy: {occupied} occupied, {blocked} blocked");
-    (occupied, blocked)
+    GridOccupancy(occupied, blocked)
 }
 
 /// Converts explicit-preference allocations into an ordered placement queue
@@ -476,18 +488,19 @@ pub fn plan_garden(
     info!(
         "plan_garden: starting — {} candidate(s), {} → {}",
         base_candidates.len(),
-        request.start_date,
-        request.end_date
+        request.period.start_date,
+        request.period.end_date
     );
 
-    let (rows, cols) = validate_layout(&request.layout)?;
+    let GridSize(rows, cols) = validate_layout(&request.layout)?;
     let (mut grid, mut warnings) = initialize_grid(rows, cols, &request.layout);
 
-    let weeks = generate_weeks(request.start_date, request.end_date);
+    let weeks = generate_weeks(request.period.start_date, request.period.end_date);
     let preferences = request.preferences.as_deref().unwrap_or(&[]);
     let mut weekly_plans: Vec<WeeklyPlan> = Vec::with_capacity(weeks.len());
 
-    for (week_idx, (week_start, week_end)) in weeks.iter().enumerate() {
+    for (week_idx, week) in weeks.iter().enumerate() {
+        let &WeekRange(week_start, week_end) = week;
         // Free cells occupied by plants that have matured by this week.
         harvest_plants(&mut grid, week_idx);
 
@@ -495,7 +508,7 @@ pub fn plan_garden(
         let week_season = season_for_month(week_start.month());
         let week_candidates = filter_vegetables(&base_candidates, request, &week_season);
 
-        let (occupied, blocked_count) = count_grid_occupancy(&grid);
+        let GridOccupancy(occupied, blocked_count) = count_grid_occupancy(&grid);
         let available_cells = (rows * cols).saturating_sub(blocked_count);
         let free_cells = available_cells.saturating_sub(occupied);
         info!(
@@ -518,7 +531,7 @@ pub fn plan_garden(
             0
         };
 
-        weekly_plans.push(build_weekly_plan(*week_start, *week_end, &grid, week_score));
+        weekly_plans.push(build_weekly_plan(week_start, week_end, &grid, week_score));
     }
 
     if weekly_plans.is_empty() {
@@ -543,12 +556,12 @@ pub fn plan_garden(
 
 /// Generates 7-day intervals from `start` to `end` (inclusive).
 /// The last interval may be shorter than 7 days if the period doesn't divide evenly.
-fn generate_weeks(start: NaiveDate, end: NaiveDate) -> Vec<(NaiveDate, NaiveDate)> {
+fn generate_weeks(start: NaiveDate, end: NaiveDate) -> Vec<WeekRange> {
     let mut weeks = Vec::new();
     let mut week_start = start;
     while week_start <= end {
         let week_end = (week_start + Duration::days(6)).min(end);
-        weeks.push((week_start, week_end));
+        weeks.push(WeekRange(week_start, week_end));
         week_start += Duration::days(7);
     }
     weeks
@@ -665,7 +678,7 @@ mod tests {
     use crate::data::vegetables::{get_all_vegetables, get_vegetable_by_id};
     use crate::logic::filter::{filter_candidates_base, filter_vegetables};
     use crate::models::{
-        request::{LayoutCell, PlanRequest, PlannedCell},
+        request::{LayoutCell, Period, PlanRequest, PlannedCell},
         vegetable::Season,
     };
     use chrono::NaiveDate;
@@ -674,7 +687,7 @@ mod tests {
         ((meters * 100.0) / 30.0_f32).ceil() as usize
     }
 
-    fn season_to_dates(season: &Season) -> (NaiveDate, NaiveDate) {
+    fn season_to_dates(season: &Season) -> WeekRange {
         let start = match season {
             Season::Spring => NaiveDate::from_ymd_opt(2025, 3, 1).unwrap(),
             Season::Summer => NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
@@ -682,7 +695,7 @@ mod tests {
             Season::Winter => NaiveDate::from_ymd_opt(2025, 12, 1).unwrap(),
         };
         let end = start + chrono::Duration::days(6);
-        (start, end)
+        WeekRange(start, end)
     }
 
     /// Returns a reference to the first week's grid in the response.
@@ -693,10 +706,12 @@ mod tests {
     fn minimal_request(width: f32, length: f32, season: Season) -> PlanRequest {
         let cols = meters_to_cells(width);
         let rows = meters_to_cells(length);
-        let (start_date, end_date) = season_to_dates(&season);
+        let WeekRange(start_date, end_date) = season_to_dates(&season);
         PlanRequest {
-            start_date,
-            end_date,
+            period: Period {
+                start_date,
+                end_date,
+            },
             sun: None,
             soil: None,
             region: None,
@@ -1043,8 +1058,10 @@ mod tests {
         let start = NaiveDate::from_ymd_opt(2025, 6, 1).unwrap();
         let end = NaiveDate::from_ymd_opt(2025, 7, 31).unwrap(); // ~9 weeks
         let req = PlanRequest {
-            start_date: start,
-            end_date: end,
+            period: Period {
+                start_date: start,
+                end_date: end,
+            },
             sun: None,
             soil: None,
             region: None,

@@ -178,15 +178,23 @@ pub struct PreferenceEntry {
     pub quantity: Option<u32>,
 }
 
+/// The date range of the planning period.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Period {
+    /// First day of the planning period (ISO 8601, e.g. `"2025-06-01"`).
+    #[schema(value_type = String, format = Date, example = "2025-06-01")]
+    pub start_date: NaiveDate,
+    /// Last day of the planning period (ISO 8601, e.g. `"2025-08-31"`).
+    #[schema(value_type = String, format = Date, example = "2025-08-31")]
+    pub end_date: NaiveDate,
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
-    /// Start date of the planning period (ISO 8601, e.g. `"2025-06-01"`).
-    #[schema(value_type = String, format = Date, example = "2025-06-01")]
-    pub start_date: NaiveDate,
-    /// End date of the planning period (ISO 8601, e.g. `"2025-08-31"`).
-    #[schema(value_type = String, format = Date, example = "2025-08-31")]
-    pub end_date: NaiveDate,
+    /// Planning period (start and end dates).
+    pub period: Period,
     pub sun: Option<SunExposure>,
     pub soil: Option<SoilType>,
     pub region: Option<Region>,

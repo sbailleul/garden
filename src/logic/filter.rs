@@ -127,7 +127,7 @@ mod tests {
     use super::*;
     use crate::data::vegetables::get_all_vegetables;
     use crate::models::{
-        request::{LayoutCell, Level, PlanRequest, PreferenceEntry},
+        request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry},
         vegetable::{Region, Season, SoilType, SunExposure},
     };
     use chrono::{Duration, NaiveDate};
@@ -142,8 +142,10 @@ mod tests {
         PlanRequest {
             // 2m × 3m → 7 cols × 10 rows
             layout: vec![vec![LayoutCell::Empty; 7]; 10],
-            start_date: start,
-            end_date: start + Duration::days(6),
+            period: Period {
+                start_date: start,
+                end_date: start + Duration::days(6),
+            },
             sun: None,
             soil: None,
             region: None,

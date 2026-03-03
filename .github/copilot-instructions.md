@@ -20,6 +20,10 @@ The Bruno collection in `bruno/` must always reflect the current state of the AP
 
 All JSON field names in API request and response payloads must use **camelCase** (e.g. `widthM`, `existingLayout`, `blockedCells`, `latinName`). This is enforced via `#[serde(rename_all = "camelCase")]` on every request/response struct. Enums keep their existing `PascalCase` serialisation.
 
+## Tuple structs over tuples
+
+Prefer named tuple structs over bare tuples when a pair or group of values has a specific meaning. For example, use `struct WeekRange(NaiveDate, NaiveDate)` rather than `(NaiveDate, NaiveDate)`. This improves readability, enables `impl` blocks, and makes function signatures self-documenting.
+
 ## HATEOAS
 
 Every API response must include a `_links` object following the HAL convention. Each link is an object with an `href` field and a `method` field indicating the HTTP method to use. Required links per endpoint:
