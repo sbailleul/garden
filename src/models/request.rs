@@ -179,7 +179,7 @@ pub struct PreferenceEntry {
 }
 
 /// The date range of the planning period.
-#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Period {
     /// First day of the planning period (ISO 8601, e.g. `"2025-06-01"`).
@@ -294,12 +294,8 @@ impl PlannedCell {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct WeeklyPlan {
-    /// Monday (inclusive) of this week (ISO 8601).
-    #[schema(value_type = String, format = Date, example = "2025-06-01")]
-    pub week_start: NaiveDate,
-    /// Sunday (inclusive) of this week, or the `endDate` if the period ends mid-week.
-    #[schema(value_type = String, format = Date, example = "2025-06-07")]
-    pub week_end: NaiveDate,
+    /// The Monday-to-Sunday date range this snapshot covers.
+    pub period: Period,
     /// Full garden grid for this week (same dimensions as the request layout).
     pub grid: Matrix<PlannedCell>,
     /// Cumulative companion-planting score for plants placed **this week**.

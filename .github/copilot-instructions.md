@@ -20,9 +20,9 @@ The Bruno collection in `bruno/` must always reflect the current state of the AP
 
 All JSON field names in API request and response payloads must use **camelCase** (e.g. `widthM`, `existingLayout`, `blockedCells`, `latinName`). This is enforced via `#[serde(rename_all = "camelCase")]` on every request/response struct. Enums keep their existing `PascalCase` serialisation.
 
-## Tuple structs over tuples
+## Named structs over tuples
 
-Prefer named tuple structs over bare tuples when a pair or group of values has a specific meaning. For example, use `struct WeekRange(NaiveDate, NaiveDate)` rather than `(NaiveDate, NaiveDate)`. This improves readability, enables `impl` blocks, and makes function signatures self-documenting.
+Prefer named structs over bare tuples and tuple structs when a pair or group of values has a specific meaning. For example, use `struct WeekRange { start: NaiveDate, end: NaiveDate }` rather than `(NaiveDate, NaiveDate)` or `struct WeekRange(NaiveDate, NaiveDate)`. This improves readability, enables `impl` blocks, and makes function signatures and field accesses self-documenting.
 
 ## HATEOAS
 

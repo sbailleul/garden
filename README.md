@@ -216,8 +216,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
     "warnings": [],
     "weeks": [
       {
-        "weekStart": "2025-06-01",
-        "weekEnd": "2025-06-07",
+        "period": { "startDate": "2025-06-01", "endDate": "2025-06-07" },
         "score": 14,
         "grid": [
           [
@@ -240,8 +239,7 @@ The `weeks` array contains one entry per 7-day period between `period.startDate`
 
 | Field | Description |
 |---|---|
-| `weekStart` | ISO 8601 date — first day of the week |
-| `weekEnd` | ISO 8601 date — last day of the week (may be earlier than `weekStart + 6` for the final period) |
+| `period` | Object with `startDate` and `endDate` (ISO 8601) — the Monday–Sunday range this snapshot covers |
 | `score` | Cumulative companion-planting score for this week's grid |
 | `grid` | 2-D array of `PlannedCell` objects (same structure as before) |
 
@@ -293,7 +291,7 @@ flowchart TD
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
 2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
-4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `weekStart` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
+4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `period.startDate` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
 6. **Phase 1 — Explicit placement** — vegetables with an explicit `quantity` preference are placed first, in preference order, each guaranteed a minimum of `quantity` plants.
    - `quantity` is a **plant count** (not a cell count); a tomato (`quantity: 2`) with 60 cm spacing (span 2 × 2 = 4 cells) reserves 8 cells.
