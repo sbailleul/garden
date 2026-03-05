@@ -4,9 +4,7 @@ use chrono::Datelike;
 use log::{debug, info, trace, warn};
 
 use crate::data::vegetables::get_vegetable_by_id;
-use crate::logic::schedule::{
-    current_week, generate_weeks, harvest_plants, normalize_period, WeekRange,
-};
+use crate::logic::schedule::{harvest_plants, weeks_for_period};
 use crate::logic::{companion::companion_score, filter::filter_vegetables};
 use crate::models::{
     garden::GardenGrid,
@@ -96,10 +94,10 @@ fn initialize_grid(
     rows: usize,
     cols: usize,
     layout: &[Vec<LayoutCell>],
-) -> (GardenGrid, Vec<String>) {
+    warnings: &mut Vec<String>,
+) -> GardenGrid {
     debug!("initialize_grid: building {rows}×{cols} grid from layout");
     let mut grid = GardenGrid::new(rows, cols);
-    let mut warnings: Vec<String> = Vec::new();
     // Continuation cells are collected here and resolved after all anchors are placed.
     let mut deferred: Vec<DeferredCell> = Vec::new();
 
@@ -202,7 +200,7 @@ fn initialize_grid(
         }
     }
 
-    (grid, warnings)
+    grid
 }
 
 /// Returns `GridOccupancy(occupied, blocked)` cell counts for the given grid.
@@ -487,43 +485,28 @@ pub fn plan_garden(
     base_candidates: Vec<Vegetable>,
     request: &PlanRequest,
 ) -> Result<PlanResponse, String> {
-    let (raw_start, raw_end) = request
-        .period
-        .as_ref()
-        .map(|p| (p.start_date, p.end_date))
-        .unwrap_or_else(current_week);
+    let mut warnings: Vec<String> = Vec::new();
+
+    let weeks = weeks_for_period(&request.period, &mut warnings);
+
     info!(
         "plan_garden: starting — {} candidate(s), {} → {}",
         base_candidates.len(),
-        raw_start,
-        raw_end
+        weeks
+            .first()
+            .map_or_else(|| "-".to_string(), |w| w.start.to_string()),
+        weeks
+            .last()
+            .map_or_else(|| "-".to_string(), |w| w.end.to_string()),
     );
 
     let GridSize(rows, cols) = validate_layout(&request.layout)?;
-    let (mut grid, mut warnings) = initialize_grid(rows, cols, &request.layout);
 
-    let (
-        WeekRange {
-            start: period_start,
-            end: period_end,
-        },
-        period_adjusted,
-    ) = normalize_period(raw_start, raw_end);
-    if period_adjusted {
-        warn!(
-            "plan_garden: period adjusted — {} → {} (was {} → {})",
-            period_start, period_end, raw_start, raw_end
-        );
-        warnings.push(format!(
-            "Planning period adjusted to full weeks: {period_start} (Monday) → {period_end} (Sunday)."
-        ));
-    }
-
-    let weeks = generate_weeks(period_start, period_end);
+    let mut grid = initialize_grid(rows, cols, &request.layout, &mut warnings);
     let preferences = request.preferences.as_deref().unwrap_or(&[]);
     let mut weekly_plans: Vec<WeeklyPlan> = Vec::with_capacity(weeks.len());
 
-    for (week_idx, week) in weeks.iter().enumerate() {
+    for (week_idx, week) in weeks.into_iter().enumerate() {
         // Free cells occupied by plants that have matured by this week.
         harvest_plants(&mut grid, week_idx);
 
@@ -579,12 +562,9 @@ pub fn plan_garden(
 }
 
 /// Converts the current garden grid into a [`WeeklyPlan`] snapshot.
-fn build_weekly_plan(week: &WeekRange, grid: &GardenGrid, score: i32) -> WeeklyPlan {
+fn build_weekly_plan(week: Period, grid: &GardenGrid, score: i32) -> WeeklyPlan {
     WeeklyPlan {
-        period: Period {
-            start_date: week.start,
-            end_date: week.end,
-        },
+        period: week,
         grid: build_grid_cells(grid),
         score,
     }
@@ -595,11 +575,13 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
     grid.cells
         .iter()
         .enumerate()
-        .map(|(ro, row)| {
+        .map(|(row_idx, row)| {
             row.iter()
                 .enumerate()
-                .map(|(co, cell)| match &cell.vegetable {
-                    Some(v) if (ro, co) == (v.anchor.row, v.anchor.col) && v.span == 1 => {
+                .map(|(col_idx, cell)| match &cell.vegetable {
+                    Some(v)
+                        if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) && v.span == 1 =>
+                    {
                         PlannedCell::SelfContained {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -607,7 +589,7 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
                             plants_per_cell: v.plants_per_cell,
                         }
                     }
-                    Some(v) if (ro, co) == (v.anchor.row, v.anchor.col) => {
+                    Some(v) if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) => {
                         PlannedCell::Overflowing {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -676,7 +658,7 @@ mod tests {
         ((meters * 100.0) / 30.0_f32).ceil() as usize
     }
 
-    fn season_to_dates(season: &Season) -> WeekRange {
+    fn season_to_dates(season: &Season) -> Period {
         // All dates are chosen to already fall on a Monday so that
         // normalize_period is a no-op and test behaviour stays deterministic.
         let start = match season {
@@ -686,7 +668,7 @@ mod tests {
             Season::Winter => NaiveDate::from_ymd_opt(2025, 12, 1).unwrap(), // Monday
         };
         let end = start + chrono::Duration::days(6); // Sunday
-        WeekRange { start, end }
+        Period { start, end }
     }
 
     /// Returns a reference to the first week's grid in the response.
@@ -697,14 +679,14 @@ mod tests {
     fn minimal_request(width: f32, length: f32, season: Season) -> PlanRequest {
         let cols = meters_to_cells(width);
         let rows = meters_to_cells(length);
-        let WeekRange {
+        let Period {
             start: start_date,
             end: end_date,
         } = season_to_dates(&season);
         PlanRequest {
             period: Some(Period {
-                start_date,
-                end_date,
+                start: start_date,
+                end: end_date,
             }),
             sun: None,
             soil: None,
@@ -1052,10 +1034,7 @@ mod tests {
         let start = NaiveDate::from_ymd_opt(2025, 6, 1).unwrap();
         let end = NaiveDate::from_ymd_opt(2025, 7, 31).unwrap(); // ~9 weeks
         let req = PlanRequest {
-            period: Some(Period {
-                start_date: start,
-                end_date: end,
-            }),
+            period: Some(Period { start, end }),
             sun: None,
             soil: None,
             region: None,
@@ -1084,69 +1063,6 @@ mod tests {
         assert_eq!(cell_span(31), 2, "31 cm needs 2 cells");
         assert_eq!(cell_span(60), 2, "60 cm needs 2 cells");
         assert_eq!(cell_span(90), 3, "90 cm needs 3 cells");
-    }
-
-    #[test]
-    fn test_normalize_period_already_aligned() {
-        // Monday start, Sunday end → no change
-        let start = NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(); // Monday
-        let end = NaiveDate::from_ymd_opt(2025, 8, 31).unwrap(); // Sunday
-        let (WeekRange { start: ns, end: ne }, changed) = normalize_period(start, end);
-        assert!(
-            !changed,
-            "Already-aligned period must not be flagged as changed"
-        );
-        assert_eq!(ns, start);
-        assert_eq!(ne, end);
-    }
-
-    #[test]
-    fn test_normalize_period_start_snapped_to_monday() {
-        // Wednesday start → snap back to Monday
-        let start = NaiveDate::from_ymd_opt(2025, 6, 4).unwrap(); // Wednesday
-        let end = NaiveDate::from_ymd_opt(2025, 8, 31).unwrap(); // Sunday
-        let (WeekRange { start: ns, end: ne }, changed) = normalize_period(start, end);
-        assert!(changed);
-        assert_eq!(
-            ns,
-            NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(),
-            "Start snapped to Monday"
-        );
-        assert_eq!(ne, end, "End unchanged when already Sunday");
-    }
-
-    #[test]
-    fn test_normalize_period_end_snapped_to_sunday() {
-        // Thursday end → snap forward to Sunday
-        let start = NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(); // Monday
-        let end = NaiveDate::from_ymd_opt(2025, 7, 31).unwrap(); // Thursday
-        let (WeekRange { start: ns, end: ne }, changed) = normalize_period(start, end);
-        assert!(changed);
-        assert_eq!(ns, start, "Start unchanged when already Monday");
-        assert_eq!(
-            ne,
-            NaiveDate::from_ymd_opt(2025, 8, 3).unwrap(),
-            "End snapped to Sunday"
-        );
-    }
-
-    #[test]
-    fn test_normalize_period_both_adjusted() {
-        // Sunday start, Thursday end → both adjusted
-        let start = NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(); // Sunday
-        let end = NaiveDate::from_ymd_opt(2025, 7, 31).unwrap(); // Thursday
-        let (WeekRange { start: ns, end: ne }, changed) = normalize_period(start, end);
-        assert!(changed);
-        assert_eq!(
-            ns,
-            NaiveDate::from_ymd_opt(2025, 5, 26).unwrap(),
-            "Start snapped to Monday"
-        );
-        assert_eq!(
-            ne,
-            NaiveDate::from_ymd_opt(2025, 8, 3).unwrap(),
-            "End snapped to Sunday"
-        );
     }
 
     #[test]
@@ -1187,12 +1103,12 @@ mod tests {
         // The week must start on a Monday (weekday index 0).
         use chrono::Datelike;
         assert_eq!(
-            resp.weeks[0].period.start_date.weekday(),
+            resp.weeks[0].period.start.weekday(),
             chrono::Weekday::Mon,
             "Default period must start on Monday"
         );
         assert_eq!(
-            resp.weeks[0].period.end_date.weekday(),
+            resp.weeks[0].period.end.weekday(),
             chrono::Weekday::Sun,
             "Default period must end on Sunday"
         );
@@ -1211,8 +1127,8 @@ mod tests {
         use crate::models::request::Period;
         let req = PlanRequest {
             period: Some(Period {
-                start_date: NaiveDate::from_ymd_opt(2025, 6, 4).unwrap(), // Wednesday
-                end_date: NaiveDate::from_ymd_opt(2025, 8, 28).unwrap(),  // Thursday
+                start: NaiveDate::from_ymd_opt(2025, 6, 4).unwrap(), // Wednesday
+                end: NaiveDate::from_ymd_opt(2025, 8, 28).unwrap(),  // Thursday
             }),
             sun: None,
             soil: None,

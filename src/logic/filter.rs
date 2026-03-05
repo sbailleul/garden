@@ -143,8 +143,8 @@ mod tests {
             // 2m × 3m → 7 cols × 10 rows
             layout: vec![vec![LayoutCell::Empty; 7]; 10],
             period: Some(Period {
-                start_date: start,
-                end_date: start + Duration::days(6),
+                start,
+                end: start + Duration::days(6),
             }),
             sun: None,
             soil: None,

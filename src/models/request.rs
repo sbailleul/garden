@@ -184,10 +184,10 @@ pub struct PreferenceEntry {
 pub struct Period {
     /// First day of the planning period (ISO 8601, e.g. `"2025-06-01"`).
     #[schema(value_type = String, format = Date, example = "2025-06-01")]
-    pub start_date: NaiveDate,
+    pub start: NaiveDate,
     /// Last day of the planning period (ISO 8601, e.g. `"2025-08-31"`).
     #[schema(value_type = String, format = Date, example = "2025-08-31")]
-    pub end_date: NaiveDate,
+    pub end: NaiveDate,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
