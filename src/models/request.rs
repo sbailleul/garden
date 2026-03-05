@@ -218,7 +218,7 @@ pub struct PlanRequest {
 ///   back-reference so clients can look up the full data from the anchor.
 /// - `empty`         — free, unoccupied, non-blocked cell.
 /// - `blocked`       — non-plantable zone (path, alley, obstacle).
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum PlannedCell {
     /// A plant that fits entirely within one 30 cm × 30 cm cell.

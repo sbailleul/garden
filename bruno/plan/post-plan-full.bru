@@ -44,6 +44,7 @@ assert {
   res.status: eq 200
   res.body.payload.weeks[0].grid: isArray
   res.body.payload.weeks[0].score: gte 0
+  res.body.payload.weeks[0].weekCount: gte 1
   res.body.payload.warnings: isArray
 }
 

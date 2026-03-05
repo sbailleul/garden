@@ -550,6 +550,8 @@ pub fn plan_garden(
         warnings.push(w);
     }
 
+    let weekly_plans = merge_consecutive_plans(weekly_plans);
+
     info!(
         "plan_garden: done — {} week(s), warnings={}",
         weekly_plans.len(),
@@ -562,6 +564,27 @@ pub fn plan_garden(
         weeks: weekly_plans,
         warnings,
     })
+}
+
+/// Merges consecutive [`WeeklyPlan`]s that have identical grids.
+///
+/// When two or more adjacent weeks produce the same garden layout the function
+/// collapses them into a single entry: `period.start` is kept from the first
+/// entry, `period.end` is taken from the last, `week_count` is incremented by
+/// the number of weeks merged, and `score` is accumulated.
+fn merge_consecutive_plans(plans: Vec<WeeklyPlan>) -> Vec<WeeklyPlan> {
+    let mut merged: Vec<WeeklyPlan> = Vec::new();
+    for plan in plans {
+        match merged.last_mut() {
+            Some(last) if last.grid == plan.grid => {
+                last.period.end = plan.period.end;
+                last.week_count += plan.week_count;
+                last.score += plan.score;
+            }
+            _ => merged.push(plan),
+        }
+    }
+    merged
 }
 
 /// Converts the current garden grid into a [`WeeklyPlan`] snapshot.
@@ -1041,10 +1064,12 @@ mod tests {
         };
         let candidates = filter_candidates_base(&get_all_vegetables(), &req);
         let resp = plan_garden(candidates, &req).unwrap();
-        // Must produce multiple weeks
+        // After merging identical grids the total number of original weeks
+        // (sum of week_count) must still reflect that multiple weeks were processed.
+        let total_weeks: usize = resp.weeks.iter().map(|w| w.week_count as usize).sum();
         assert!(
-            resp.weeks.len() > 1,
-            "Multi-week request must yield multiple WeeklyPlans"
+            total_weeks > 1,
+            "Multi-week request must process multiple WeeklyPlans (got {total_weeks})"
         );
         // Each week must have the correct grid dimensions
         for w in &resp.weeks {
@@ -1060,6 +1085,42 @@ mod tests {
         assert_eq!(cell_span(31), 2, "31 cm needs 2 cells");
         assert_eq!(cell_span(60), 2, "60 cm needs 2 cells");
         assert_eq!(cell_span(90), 3, "90 cm needs 3 cells");
+    }
+
+    #[test]
+    fn test_merge_consecutive_identical_plans() {
+        // An all-blocked layout produces the same grid every week, so all weeks
+        // must be merged into a single WeeklyPlan with week_count = 3.
+        let start = NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(); // Monday
+        let end = NaiveDate::from_ymd_opt(2025, 6, 22).unwrap(); // Sunday after 3 weeks
+        let req = PlanRequest {
+            period: Some(Period { start, end }),
+            sun: None,
+            soil: None,
+            region: None,
+            level: None,
+            preferences: None,
+            layout: vec![vec![LayoutCell::Blocked]],
+        };
+        let candidates = filter_candidates_base(&get_all_vegetables(), &req);
+        let resp = plan_garden(candidates, &req).unwrap();
+        assert_eq!(
+            resp.weeks.len(),
+            1,
+            "Three identical blocked-grid weeks must merge into one WeeklyPlan"
+        );
+        assert_eq!(
+            resp.weeks[0].week_count, 3,
+            "Merged WeeklyPlan must count all 3 original weeks"
+        );
+        assert_eq!(
+            resp.weeks[0].period.start, start,
+            "Merged period must retain the earliest start date"
+        );
+        assert_eq!(
+            resp.weeks[0].period.end, end,
+            "Merged period must retain the latest end date"
+        );
     }
 
     #[test]

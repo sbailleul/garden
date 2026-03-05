@@ -12,7 +12,7 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
-- **Date-range planning** — optionally provide a `period` with `start` and `end`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period. When omitted, defaults to the current Monday-to-Sunday week
+- **Date-range planning** — optionally provide a `period` with `start` and `end`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period (consecutive identical layouts are merged, with `weekCount` tracking how many weeks were combined). When omitted, defaults to the current Monday-to-Sunday week
 - **Harvest simulation** — plants are removed when their `daysToHarvest` has elapsed, freeing cells for new plantings in subsequent weeks
 - **Filtering** — by season (derived from each week's start date), sun, soil, region and skill level (`Beginner` / `Expert`)
 - **Preference ordering** — preferred vegetables (by id) are placed first
@@ -217,6 +217,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
     "weeks": [
       {
         "period": { "start": "2025-06-01", "end": "2025-06-07" },
+        "weekCount": 1,
         "score": 14,
         "grid": [
           [
@@ -235,12 +236,13 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 }
 ```
 
-The `weeks` array contains one entry per 7-day period between `period.start` and `period.end` (inclusive); when `period` is omitted the current week is used. Each `WeeklyPlan` has:
+The `weeks` array contains one entry per run of consecutive 7-day periods that produced the same garden layout. Adjacent weeks with identical grids are merged into a single `WeeklyPlan`; `weekCount` tracks how many original 7-day periods were combined. When `period` is omitted the current week is used. Each `WeeklyPlan` has:
 
 | Field | Description |
 |---|---|
-| `period` | Object with `start` and `end` (ISO 8601) — the Monday–Sunday range this snapshot covers |
-| `score` | Cumulative companion-planting score for this week's grid |
+| `period` | Object with `start` and `end` (ISO 8601) — the Monday–Sunday range this snapshot covers (spans multiple weeks when entries are merged) |
+| `weekCount` | Number of consecutive 7-day periods that produced this identical layout |
+| `score` | Cumulative companion-planting score across all merged weeks |
 | `grid` | 2-D array of `PlannedCell` objects (same structure as before) |
 
 Each `PlannedCell` carries:
@@ -303,7 +305,7 @@ flowchart TD
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
 9. **Harvest** — before each subsequent week, cells whose plant's harvest deadline (`plantedWeek + ⌈daysToHarvest / 7⌉`) has been reached are cleared, making them available for new plantings.
 10. **Repeat** — steps 4–8 are re-run for every week in the planning period; the season filter adapts to the new week's month.
-11. **Return** — the `weeks` array (one `WeeklyPlan` per 7-day period), grid dimensions, warnings, and `_links`.
+11. **Return** — the `weeks` array (consecutive identical layouts merged, one `WeeklyPlan` per unique layout run), grid dimensions, warnings, and `_links`.
 
 ---
 
