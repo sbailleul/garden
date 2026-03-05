@@ -12,7 +12,7 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
-- **Date-range planning** — optionally provide a `period` with `startDate` and `endDate`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period. When omitted, defaults to the current Monday-to-Sunday week
+- **Date-range planning** — optionally provide a `period` with `start` and `end`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period. When omitted, defaults to the current Monday-to-Sunday week
 - **Harvest simulation** — plants are removed when their `daysToHarvest` has elapsed, freeing cells for new plantings in subsequent weeks
 - **Filtering** — by season (derived from each week's start date), sun, soil, region and skill level (`Beginner` / `Expert`)
 - **Preference ordering** — preferred vegetables (by id) are placed first
@@ -155,7 +155,7 @@ Computes the optimal garden layout.
 **Request body:**
 ```json
 {
-  "period": {"startDate": "2025-06-01", "endDate": "2025-08-31"},
+  "period": {"start": "2025-06-01", "end": "2025-08-31"},
   "sun": "FullSun",
   "soil": "Loamy",
   "region": "Temperate",
@@ -189,7 +189,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 
 | Field | Type | Description |
 |---|---|---|
-| `period` | `{ startDate: string, endDate: string }?` | Planning period — both dates in ISO 8601 format. When omitted, defaults to the current Monday-to-Sunday week. If the dates do not fall on Mon/Sun boundaries they are automatically snapped outward. |
+| `period` | `{ start: string, end: string }?` | Planning period — both dates in ISO 8601 format. When omitted, defaults to the current Monday-to-Sunday week. If the dates do not fall on Mon/Sun boundaries they are automatically snapped outward. |
 | `layout` | `LayoutCell[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
@@ -216,7 +216,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
     "warnings": [],
     "weeks": [
       {
-        "period": { "startDate": "2025-06-01", "endDate": "2025-06-07" },
+        "period": { "start": "2025-06-01", "end": "2025-06-07" },
         "score": 14,
         "grid": [
           [
@@ -235,11 +235,11 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 }
 ```
 
-The `weeks` array contains one entry per 7-day period between `period.startDate` and `period.endDate` (inclusive); when `period` is omitted the current week is used. Each `WeeklyPlan` has:
+The `weeks` array contains one entry per 7-day period between `period.start` and `period.end` (inclusive); when `period` is omitted the current week is used. Each `WeeklyPlan` has:
 
 | Field | Description |
 |---|---|
-| `period` | Object with `startDate` and `endDate` (ISO 8601) — the Monday–Sunday range this snapshot covers |
+| `period` | Object with `start` and `end` (ISO 8601) — the Monday–Sunday range this snapshot covers |
 | `score` | Cumulative companion-planting score for this week's grid |
 | `grid` | 2-D array of `PlannedCell` objects (same structure as before) |
 
@@ -291,7 +291,7 @@ flowchart TD
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
 2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
-4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `period.startDate` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
+4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `period.start` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
 6. **Phase 1 — Explicit placement** — vegetables with an explicit `quantity` preference are placed first, in preference order, each guaranteed a minimum of `quantity` plants.
    - `quantity` is a **plant count** (not a cell count); a tomato (`quantity: 2`) with 60 cm spacing (span 2 × 2 = 4 cells) reserves 8 cells.

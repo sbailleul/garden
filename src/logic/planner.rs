@@ -679,15 +679,8 @@ mod tests {
     fn minimal_request(width: f32, length: f32, season: Season) -> PlanRequest {
         let cols = meters_to_cells(width);
         let rows = meters_to_cells(length);
-        let Period {
-            start: start_date,
-            end: end_date,
-        } = season_to_dates(&season);
         PlanRequest {
-            period: Some(Period {
-                start: start_date,
-                end: end_date,
-            }),
+            period: Some(season_to_dates(&season)),
             sun: None,
             soil: None,
             region: None,
