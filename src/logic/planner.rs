@@ -171,31 +171,35 @@ fn initialize_grid(
 
     // Resolve continuation cells now that all anchors are in the grid.
     for DeferredCell(pos, covered_by) in deferred {
-        let r = pos.row;
-        let c = pos.col;
-        let ar = covered_by.row;
-        let ac = covered_by.col;
-        if ar < rows && ac < cols {
-            if let Some(anchor_veg) = grid.cells[ar][ac].vegetable.clone() {
+        let Coordinate {
+            row: position_row,
+            col: position_col,
+        } = pos;
+        let Coordinate {
+            row: covered_by_row,
+            col: covered_by_col,
+        } = covered_by;
+        if covered_by_row < rows && covered_by_col < cols {
+            if let Some(anchor_veg) = grid.cells[covered_by_row][covered_by_col].vegetable.clone() {
                 trace!(
-                    "initialize_grid: [{r},{c}] continuation of anchor [{ar},{ac}] ('{}')",
+                    "initialize_grid: [{position_row},{position_col}] continuation of anchor [{covered_by_row},{covered_by_col}] ('{}')",
                     anchor_veg.id
                 );
-                grid.cells[r][c].vegetable = Some(anchor_veg);
+                grid.cells[position_row][position_col].vegetable = Some(anchor_veg);
             } else {
                 warn!(
-                    "initialize_grid: [{r},{c}] Overflowed references [{ar},{ac}] which has no planted anchor, skipping"
+                    "initialize_grid: [{position_row},{position_col}] Overflowed references [{covered_by_row},{covered_by_col}] which has no planted anchor, skipping"
                 );
                 warnings.push(format!(
-                    "Continuation cell [{r},{c}] references an unplanted anchor [{ar},{ac}], skipped."
+                    "Continuation cell [{position_row},{position_col}] references an unplanted anchor [{covered_by_row},{covered_by_col}], skipped."
                 ));
             }
         } else {
             warn!(
-                "initialize_grid: [{r},{c}] Overflowed references out-of-bounds anchor [{ar},{ac}]"
+                "initialize_grid: [{position_row},{position_col}] Overflowed references out-of-bounds anchor [{covered_by_row},{covered_by_col}]"
             );
             warnings.push(format!(
-                "Continuation cell [{r},{c}] references out-of-bounds anchor [{ar},{ac}], skipped."
+                "Continuation cell [{position_row},{position_col}] references out-of-bounds anchor [{covered_by_row},{covered_by_col}], skipped."
             ));
         }
     }
@@ -272,9 +276,9 @@ fn find_best_block(
     vegetable: &Vegetable,
     rows: usize,
     cols: usize,
-) -> Option<(usize, usize, i32)> {
+) -> Option<(Coordinate, i32)> {
     let span = cell_span(vegetable.spacing_cm) as usize;
-    let mut best: Option<(usize, usize, i32)> = None;
+    let mut best: Option<(Coordinate, i32)> = None;
 
     for r in 0..=rows.saturating_sub(span) {
         for c in 0..=cols.saturating_sub(span) {
@@ -282,7 +286,7 @@ fn find_best_block(
                 continue;
             }
             let neighbor_ids: Vec<&str> = grid
-                .get_block_neighbors(r, c, span)
+                .get_block_neighbors(Coordinate { row: r, col: c }, span)
                 .iter()
                 .map(|v| v.id.as_str())
                 .collect();
@@ -291,15 +295,15 @@ fn find_best_block(
                 "find_best_block: '{}' at [{r},{c}] span={span} score={score}",
                 vegetable.id
             );
-            if best.is_none_or(|(_, _, s)| score > s) {
-                best = Some((r, c, score));
+            if best.is_none_or(|(_, s)| score > s) {
+                best = Some((Coordinate { row: r, col: c }, score));
             }
         }
     }
 
-    if let Some((r, c, s)) = best {
+    if let Some((Coordinate { row, col }, s)) = best {
         debug!(
-            "find_best_block: best block for '{}' at [{r},{c}] score={s}",
+            "find_best_block: best block for '{}' at [{row},{col}] score={s}",
             vegetable.id
         );
     } else {
@@ -316,27 +320,26 @@ fn find_best_block(
 fn fill_block(
     grid: &mut GardenGrid,
     vegetable: &Vegetable,
-    row: usize,
-    col: usize,
+    coordinate: Coordinate,
     reason: &str,
     week_idx: usize,
 ) {
     let span = cell_span(vegetable.spacing_cm) as usize;
     let ppc = plants_per_cell(vegetable.spacing_cm);
     debug!(
-        "fill_block: placing '{}' at [{row},{col}] span={span} plants_per_cell={ppc} week={week_idx}",
-        vegetable.id
+        "fill_block: placing '{}' at [{},{}] span={span} plants_per_cell={ppc} week={week_idx}",
+        vegetable.id, coordinate.row, coordinate.col
     );
     for dr in 0..span {
         for dc in 0..span {
-            grid.cells[row + dr][col + dc].vegetable =
+            grid.cells[coordinate.row + dr][coordinate.col + dc].vegetable =
                 Some(crate::models::garden::PlacedVegetable {
                     id: vegetable.id.clone(),
                     name: vegetable.name.clone(),
                     reason: reason.to_owned(),
                     plants_per_cell: ppc,
                     span: span as u32,
-                    anchor: Coordinate { row, col },
+                    anchor: coordinate,
                     planted_week: week_idx,
                     days_to_harvest: vegetable.days_to_harvest,
                 });
@@ -391,14 +394,14 @@ fn place_candidates(
                 );
                 continue; // no span×span block; smaller plants may still fit
             }
-            Some((r, c, score)) => {
+            Some((coordinate, score)) => {
                 let neighbor_names: Vec<String> = grid
-                    .get_block_neighbors(r, c, span)
+                    .get_block_neighbors(coordinate, span)
                     .iter()
                     .map(|v| v.name.clone())
                     .collect();
                 let reason = build_reason(vegetable, &neighbor_names, score);
-                fill_block(grid, vegetable, r, c, &reason, week_idx);
+                fill_block(grid, vegetable, coordinate, &reason, week_idx);
                 placed_counts
                     .entry(vegetable.id.clone())
                     .and_modify(|n| *n += 1)
@@ -436,19 +439,19 @@ fn fill_remaining_cells(
         for vegetable in candidates {
             match find_best_block(grid, vegetable, rows, cols) {
                 None => continue,
-                Some((r, c, score)) => {
+                Some((coordinate, score)) => {
                     let span = cell_span(vegetable.spacing_cm) as usize;
                     let neighbor_names: Vec<String> = grid
-                        .get_block_neighbors(r, c, span)
+                        .get_block_neighbors(coordinate, span)
                         .iter()
                         .map(|v| v.name.clone())
                         .collect();
                     let reason = build_reason(vegetable, &neighbor_names, score);
                     debug!(
-                        "fill_remaining_cells pass {pass}: placing '{}' at [{r},{c}] score={score}",
-                        vegetable.id
+                        "fill_remaining_cells pass {pass}: placing '{}' at [{},{}] score={score}",
+                        vegetable.id, coordinate.row, coordinate.col
                     );
-                    fill_block(grid, vegetable, r, c, &reason, week_idx);
+                    fill_block(grid, vegetable, coordinate, &reason, week_idx);
                     total_score += score;
                     placements_this_pass += 1;
                 }
@@ -567,6 +570,7 @@ fn build_weekly_plan(week: Period, grid: &GardenGrid, score: i32) -> WeeklyPlan 
         period: week,
         grid: build_grid_cells(grid),
         score,
+        week_count: 1,
     }
 }
 

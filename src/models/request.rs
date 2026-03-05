@@ -296,6 +296,8 @@ impl PlannedCell {
 pub struct WeeklyPlan {
     /// The Monday-to-Sunday date range this snapshot covers.
     pub period: Period,
+
+    pub week_count: u16,
     /// Full garden grid for this week (same dimensions as the request layout).
     pub grid: Matrix<PlannedCell>,
     /// Cumulative companion-planting score for plants placed **this week**.

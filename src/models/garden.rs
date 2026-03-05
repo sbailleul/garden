@@ -84,15 +84,14 @@ impl GardenGrid {
     /// Returns all distinct already-placed neighbours on the perimeter of a `span × span` block.
     pub fn get_block_neighbors(
         &self,
-        row: usize,
-        col: usize,
+        coordinate: Coordinate,
         span: usize,
     ) -> Vec<&PlacedVegetable> {
         let mut seen: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
         let mut neighbors: Vec<&PlacedVegetable> = Vec::new();
         let s = span as i32;
-        let r0 = row as i32;
-        let c0 = col as i32;
+        let r0 = coordinate.row as i32;
+        let c0 = coordinate.col as i32;
 
         let mut check = |r: i32, c: i32| {
             if r < 0 || c < 0 || r >= self.rows as i32 || c >= self.cols as i32 {
