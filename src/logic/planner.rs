@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
-use chrono::Datelike;
+use chrono::{Datelike, Duration, NaiveDate};
 use log::{debug, info, trace, warn};
 
 use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::schedule::{harvest_plants, weeks_for_period};
 use crate::logic::{companion::companion_score, filter::filter_vegetables};
 use crate::models::{
-    garden::GardenGrid,
+    garden::{GardenGrid, PlantedAt},
     request::{
         LayoutCell, Period, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry, WeeklyPlan,
     },
-    vegetable::{season_for_month, Vegetable},
+    vegetable::{Month, Vegetable},
     Coordinate, Matrix,
 };
 
@@ -122,7 +122,10 @@ fn initialize_grid(
                             plants_per_cell: ppc,
                             span: 1,
                             anchor: Coordinate { row: r, col: c },
-                            planted_week: 0,
+                            planted_at: PlantedAt {
+                                week: 0,
+                                date: None,
+                            },
                             days_to_harvest: v.days_to_harvest,
                         });
                     } else {
@@ -154,7 +157,10 @@ fn initialize_grid(
                             plants_per_cell: ppc,
                             span: w.max(l),
                             anchor: Coordinate { row: r, col: c },
-                            planted_week: 0,
+                            planted_at: PlantedAt {
+                                week: 0,
+                                date: None,
+                            },
                             days_to_harvest: v.days_to_harvest,
                         });
                     } else {
@@ -323,6 +329,7 @@ fn fill_block(
     coordinate: Coordinate,
     reason: &str,
     week_idx: usize,
+    week_start: NaiveDate,
 ) {
     let span = cell_span(vegetable.spacing_cm) as usize;
     let ppc = plants_per_cell(vegetable.spacing_cm);
@@ -340,7 +347,10 @@ fn fill_block(
                     plants_per_cell: ppc,
                     span: span as u32,
                     anchor: coordinate,
-                    planted_week: week_idx,
+                    planted_at: PlantedAt {
+                        week: week_idx,
+                        date: Some(week_start),
+                    },
                     days_to_harvest: vegetable.days_to_harvest,
                 });
         }
@@ -356,6 +366,7 @@ fn place_candidates(
     rows: usize,
     cols: usize,
     week_idx: usize,
+    week_start: NaiveDate,
 ) -> i32 {
     let mut global_score: i32 = 0;
 
@@ -401,7 +412,7 @@ fn place_candidates(
                     .map(|v| v.name.clone())
                     .collect();
                 let reason = build_reason(vegetable, &neighbor_names, score);
-                fill_block(grid, vegetable, coordinate, &reason, week_idx);
+                fill_block(grid, vegetable, coordinate, &reason, week_idx, week_start);
                 placed_counts
                     .entry(vegetable.id.clone())
                     .and_modify(|n| *n += 1)
@@ -428,6 +439,7 @@ fn fill_remaining_cells(
     rows: usize,
     cols: usize,
     week_idx: usize,
+    week_start: NaiveDate,
 ) -> i32 {
     let mut total_score: i32 = 0;
     let mut pass = 0usize;
@@ -451,7 +463,7 @@ fn fill_remaining_cells(
                         "fill_remaining_cells pass {pass}: placing '{}' at [{},{}] score={score}",
                         vegetable.id, coordinate.row, coordinate.col
                     );
-                    fill_block(grid, vegetable, coordinate, &reason, week_idx);
+                    fill_block(grid, vegetable, coordinate, &reason, week_idx, week_start);
                     total_score += score;
                     placements_this_pass += 1;
                 }
@@ -513,16 +525,20 @@ pub fn plan_garden(
         // Free cells occupied by plants that have matured by this week.
         harvest_plants(&mut grid, week_idx);
 
-        // Determine which season this week falls in and filter candidates accordingly.
-        let week_season = season_for_month(week.start.month());
-        let week_candidates = filter_vegetables(&base_candidates, request, &week_season);
+        // Filter candidates for the current week's month.
+        let week_candidates = filter_vegetables(
+            &base_candidates,
+            request,
+            Month::from_u32(week.start.month()),
+        );
 
         let GridOccupancy(occupied, blocked_count) = count_grid_occupancy(&grid);
         let available_cells = (rows * cols).saturating_sub(blocked_count);
         let free_cells = available_cells.saturating_sub(occupied);
         info!(
-            "plan_garden week {week_idx} ({}): {free_cells} free, season={week_season:?}, {} candidate(s)",
+            "plan_garden week {week_idx} ({}): {free_cells} free, month={}, {} candidate(s)",
             week.start,
+            week.start.month(),
             week_candidates.len()
         );
 
@@ -530,11 +546,25 @@ pub fn plan_garden(
             // Phase 1: place vegetables with an explicit quantity (in preference order).
             let (queue, placements_map) =
                 build_placement_queue(&week_candidates, preferences, free_cells);
-            let score_p1 =
-                place_candidates(&mut grid, &queue, &placements_map, rows, cols, week_idx);
+            let score_p1 = place_candidates(
+                &mut grid,
+                &queue,
+                &placements_map,
+                rows,
+                cols,
+                week_idx,
+                week.start,
+            );
 
             // Phase 2: iteratively fill every remaining free cell.
-            let score_p2 = fill_remaining_cells(&mut grid, &week_candidates, rows, cols, week_idx);
+            let score_p2 = fill_remaining_cells(
+                &mut grid,
+                &week_candidates,
+                rows,
+                cols,
+                week_idx,
+                week.start,
+            );
 
             score_p1 + score_p2
         } else {
@@ -614,6 +644,10 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
                             name: v.name.clone(),
                             reason: v.reason.clone(),
                             plants_per_cell: v.plants_per_cell,
+                            estimated_harvest_date: v
+                                .planted_at
+                                .date
+                                .map(|d| d + Duration::days(v.days_to_harvest as i64)),
                         }
                     }
                     Some(v) if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) => {
@@ -624,6 +658,10 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
                             plants_per_cell: v.plants_per_cell,
                             width_cells: v.span,
                             length_cells: v.span,
+                            estimated_harvest_date: v
+                                .planted_at
+                                .date
+                                .map(|d| d + Duration::days(v.days_to_harvest as i64)),
                         }
                     }
                     Some(v) => PlannedCell::Overflowed {
@@ -677,7 +715,7 @@ mod tests {
     use crate::logic::filter::{filter_candidates_base, filter_vegetables};
     use crate::models::{
         request::{LayoutCell, Period, PlanRequest, PlannedCell},
-        vegetable::Season,
+        vegetable::{Month, Season},
     };
     use chrono::NaiveDate;
 
@@ -981,7 +1019,7 @@ mod tests {
     fn test_french_rank_used_as_fallback() {
         // Small grid, no preferences → tomato (rank 1) must be placed
         let req = minimal_request(0.6, 0.6, Season::Summer);
-        let candidates = filter_vegetables(&get_all_vegetables(), &req, &Season::Summer);
+        let candidates = filter_vegetables(&get_all_vegetables(), &req, Month::June);
         assert!(
             !candidates.is_empty(),
             "Summer must yield at least one candidate"

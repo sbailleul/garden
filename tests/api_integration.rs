@@ -77,8 +77,8 @@ async fn test_get_vegetables_items_have_required_fields() {
             "Each vegetable must have a 'name' field"
         );
         assert!(
-            item["payload"].get("seasons").is_some(),
-            "Each vegetable must have a 'seasons' field"
+            item["payload"].get("calendars").is_some(),
+            "Each vegetable must have a 'calendars' field"
         );
         assert!(
             item["payload"].get("goodCompanions").is_some(),

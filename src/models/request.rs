@@ -227,6 +227,10 @@ pub enum PlannedCell {
         name: String,
         reason: String,
         plants_per_cell: u32,
+        /// Estimated date the plant will be ready to harvest.
+        /// `None` when the plant was pre-placed in the request layout.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        estimated_harvest_date: Option<NaiveDate>,
     },
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
     Overflowing {
@@ -236,6 +240,10 @@ pub enum PlannedCell {
         plants_per_cell: u32,
         width_cells: u32,
         length_cells: u32,
+        /// Estimated date the plant will be ready to harvest.
+        /// `None` when the plant was pre-placed in the request layout.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        estimated_harvest_date: Option<NaiveDate>,
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
     /// All plant data lives on the anchor cell; this cell only holds a back-reference.

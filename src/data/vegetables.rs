@@ -1,5 +1,7 @@
+use crate::models::vegetable::Month::*;
 use crate::models::vegetable::{
-    Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable,
+    CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
+    Vegetable,
 };
 
 pub fn get_all_vegetables() -> Vec<Vegetable> {
@@ -8,15 +10,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "tomato".into(),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Oceanic,
-                Region::Continental,
-            ],
             spacing_cm: 60,
             days_to_harvest: 75,
             lifecycle: Lifecycle::Annual,
@@ -35,15 +76,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "zucchini".into(),
             name: "Zucchini".into(),
             latin_name: "Cucurbita pepo".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Oceanic,
-                Region::Continental,
-            ],
             spacing_cm: 90,
             days_to_harvest: 55,
             lifecycle: Lifecycle::Annual,
@@ -61,15 +141,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "carrot".into(),
             name: "Carrot".into(),
             latin_name: "Daucus carota".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, June, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Sandy, SoilType::Loamy],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-            ],
             spacing_cm: 10,
             days_to_harvest: 75,
             lifecycle: Lifecycle::Annual,
@@ -88,10 +207,43 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "basil".into(),
             name: "Basil".into(),
             latin_name: "Ocimum basilicum".into(),
-            seasons: vec![Season::Spring, Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![Region::Mediterranean, Region::Temperate, Region::Oceanic],
             spacing_cm: 20,
             days_to_harvest: 30,
             lifecycle: Lifecycle::Annual,
@@ -104,16 +256,65 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "lettuce".into(),
             name: "Lettuce".into(),
             latin_name: "Lactuca sativa".into(),
-            seasons: vec![Season::Spring, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July, August],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::PartialShade, SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-                Region::Mountain,
-            ],
             spacing_cm: 30,
             days_to_harvest: 45,
             lifecycle: Lifecycle::Annual,
@@ -131,16 +332,65 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "radish".into(),
             name: "Radish".into(),
             latin_name: "Raphanus sativus".into(),
-            seasons: vec![Season::Spring, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Sandy, SoilType::Loamy],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-                Region::Mountain,
-            ],
             spacing_cm: 5,
             days_to_harvest: 25,
             lifecycle: Lifecycle::Annual,
@@ -158,15 +408,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "onion".into(),
             name: "Onion".into(),
             latin_name: "Allium cepa".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, July, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy],
-            regions: vec![
-                Region::Temperate,
-                Region::Continental,
-                Region::Oceanic,
-                Region::Mediterranean,
-            ],
             spacing_cm: 10,
             days_to_harvest: 100,
             lifecycle: Lifecycle::Annual,
@@ -184,15 +473,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "garlic".into(),
             name: "Garlic".into(),
             latin_name: "Allium sativum".into(),
-            seasons: vec![Season::Autumn, Season::Winter, Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![October, November, March],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![September, October, November, February, March],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![October, November, March, April],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![October, November, December, March],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Continental,
-                Region::Oceanic,
-            ],
             spacing_cm: 10,
             days_to_harvest: 240,
             lifecycle: Lifecycle::Annual,
@@ -210,15 +538,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "leek".into(),
             name: "Leek".into(),
             latin_name: "Allium porrum".into(),
-            seasons: vec![Season::Autumn, Season::Winter, Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April],
+                        indoor: vec![January, November, December],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 15,
             days_to_harvest: 120,
             lifecycle: Lifecycle::Biennial,
@@ -231,15 +598,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "green-bean".into(),
             name: "Green Bean".into(),
             latin_name: "Phaseolus vulgaris".into(),
-            seasons: vec![Season::Spring, Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-            ],
             spacing_cm: 15,
             days_to_harvest: 55,
             lifecycle: Lifecycle::Annual,
@@ -262,15 +668,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "cucumber".into(),
             name: "Cucumber".into(),
             latin_name: "Cucumis sativus".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Oceanic,
-                Region::Continental,
-            ],
             spacing_cm: 60,
             days_to_harvest: 55,
             lifecycle: Lifecycle::Annual,
@@ -288,10 +733,43 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "pepper".into(),
             name: "Pepper".into(),
             latin_name: "Capsicum annuum".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![January, February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![Region::Mediterranean, Region::Temperate, Region::Oceanic],
             spacing_cm: 50,
             days_to_harvest: 70,
             lifecycle: Lifecycle::Annual,
@@ -304,15 +782,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "pea".into(),
             name: "Pea".into(),
             latin_name: "Pisum sativum".into(),
-            seasons: vec![Season::Spring, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, September, October, November],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Chalky],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 10,
             days_to_harvest: 60,
             lifecycle: Lifecycle::Annual,
@@ -330,15 +847,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "cabbage".into(),
             name: "Cabbage".into(),
             latin_name: "Brassica oleracea".into(),
-            seasons: vec![Season::Autumn, Season::Winter, Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, July, August],
+                        indoor: vec![January, February, November, December],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, July, August],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June],
+                        indoor: vec![February, March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![June, July, August],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Chalky],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 50,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Annual,
@@ -351,15 +907,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "broccoli".into(),
             name: "Broccoli".into(),
             latin_name: "Brassica oleracea var. italica".into(),
-            seasons: vec![Season::Autumn, Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, July, August],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![February, March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Chalky],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 50,
             days_to_harvest: 80,
             lifecycle: Lifecycle::Annual,
@@ -372,15 +967,56 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "parsley".into(),
             name: "Parsley".into(),
             latin_name: "Petroselinum crispum".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, June, July, August, September],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![
+                            February, March, April, May, June, July, August, September, October,
+                        ],
+                        indoor: vec![January],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-            ],
             spacing_cm: 20,
             days_to_harvest: 75,
             lifecycle: Lifecycle::Biennial,
@@ -393,15 +1029,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "thyme".into(),
             name: "Thyme".into(),
             latin_name: "Thymus vulgaris".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Sandy, SoilType::Chalky, SoilType::Loamy],
-            regions: vec![
-                Region::Mediterranean,
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-            ],
             spacing_cm: 30,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Perennial,
@@ -414,15 +1089,45 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "rosemary".into(),
             name: "Rosemary".into(),
             latin_name: "Salvia rosmarinus".into(),
-            seasons: vec![
-                Season::Spring,
-                Season::Summer,
-                Season::Autumn,
-                Season::Winter,
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![
+                            March, April, May, June, July, August, September, October, November,
+                        ],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, September, October, November],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September, October],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, September, October, November],
+                        indoor: vec![],
+                    },
+                },
             ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Sandy, SoilType::Chalky],
-            regions: vec![Region::Mediterranean, Region::Temperate, Region::Oceanic],
             spacing_cm: 40,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Perennial,
@@ -435,15 +1140,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "beet".into(),
             name: "Beet".into(),
             latin_name: "Beta vulgaris".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 15,
             days_to_harvest: 60,
             lifecycle: Lifecycle::Annual,
@@ -456,15 +1200,56 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "spinach".into(),
             name: "Spinach".into(),
             latin_name: "Spinacia oleracea".into(),
-            seasons: vec![Season::Spring, Season::Autumn, Season::Winter],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September, October],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![
+                            February, March, April, May, August, September, October, November,
+                        ],
+                        indoor: vec![January, February, November, December],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September],
+                        indoor: vec![February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::PartialShade, SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 15,
             days_to_harvest: 40,
             lifecycle: Lifecycle::Annual,
@@ -477,10 +1262,43 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "fennel".into(),
             name: "Fennel".into(),
             latin_name: "Foeniculum vulgare".into(),
-            seasons: vec![Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy],
-            regions: vec![Region::Mediterranean, Region::Temperate, Region::Oceanic],
             spacing_cm: 30,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Perennial,
@@ -501,10 +1319,32 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "eggplant".into(),
             name: "Eggplant".into(),
             latin_name: "Solanum melongena".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![Region::Mediterranean, Region::Temperate],
             spacing_cm: 60,
             days_to_harvest: 75,
             lifecycle: Lifecycle::Annual,
@@ -517,10 +1357,43 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "celery".into(),
             name: "Celery".into(),
             latin_name: "Apium graveolens".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![Region::Temperate, Region::Oceanic, Region::Continental],
             spacing_cm: 30,
             days_to_harvest: 100,
             lifecycle: Lifecycle::Biennial,
@@ -533,15 +1406,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "potato".into(),
             name: "Potato".into(),
             latin_name: "Solanum tuberosum".into(),
-            seasons: vec![Season::Spring, Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 35,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Annual,
@@ -554,15 +1466,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "maïs".into(),
             name: "Corn".into(),
             latin_name: "Zea mays".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Continental,
-                Region::Oceanic,
-            ],
             spacing_cm: 40,
             days_to_harvest: 80,
             lifecycle: Lifecycle::Annual,
@@ -575,15 +1526,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "pumpkin".into(),
             name: "Pumpkin".into(),
             latin_name: "Cucurbita maxima".into(),
-            seasons: vec![Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Mediterranean,
-                Region::Oceanic,
-                Region::Continental,
-            ],
             spacing_cm: 120,
             days_to_harvest: 100,
             lifecycle: Lifecycle::Annual,
@@ -596,16 +1586,65 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "chive".into(),
             name: "Chive".into(),
             latin_name: "Allium schoenoprasum".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March, April, May, June, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-                Region::Mediterranean,
-            ],
             spacing_cm: 20,
             days_to_harvest: 60,
             lifecycle: Lifecycle::Perennial,
@@ -623,15 +1662,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "mint".into(),
             name: "Mint".into(),
             latin_name: "Mentha".into(),
-            seasons: vec![Season::Spring, Season::Summer, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, June, July, August],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::PartialShade, SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus, SoilType::Clay],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-            ],
             spacing_cm: 30,
             days_to_harvest: 60,
             lifecycle: Lifecycle::Perennial,
@@ -644,15 +1722,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "strawberry".into(),
             name: "Strawberry".into(),
             latin_name: "Fragaria × ananassa".into(),
-            seasons: vec![Season::Spring, Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May, August, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Sandy, SoilType::Humus],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 30,
             days_to_harvest: 90,
             lifecycle: Lifecycle::Perennial,
@@ -670,15 +1787,56 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "turnip".into(),
             name: "Turnip".into(),
             latin_name: "Brassica rapa".into(),
-            seasons: vec![Season::Spring, Season::Autumn],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, July, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![
+                            February, March, April, May, July, August, September, October,
+                        ],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, August, September],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun, SunExposure::PartialShade],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Chalky],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 20,
             days_to_harvest: 40,
             lifecycle: Lifecycle::Annual,
@@ -691,15 +1849,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "cauliflower".into(),
             name: "Cauliflower".into(),
             latin_name: "Brassica oleracea var. botrytis".into(),
-            seasons: vec![Season::Autumn, Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September, October],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, July, August],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, September, October, November],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May, July, August],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, September],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mountain,
+                    sowing: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Clay, SoilType::Chalky],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mountain,
-            ],
             spacing_cm: 60,
             days_to_harvest: 80,
             lifecycle: Lifecycle::Annual,
@@ -712,10 +1909,32 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "red-pepper".into(),
             name: "Red Pepper".into(),
             latin_name: "Capsicum annuum".into(),
-            seasons: vec![Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![January, February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![Region::Mediterranean, Region::Temperate],
             spacing_cm: 50,
             days_to_harvest: 70,
             lifecycle: Lifecycle::Annual,
@@ -728,15 +1947,54 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "asparagus".into(),
             name: "Asparagus".into(),
             latin_name: "Asparagus officinalis".into(),
-            seasons: vec![Season::Spring],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Temperate,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Continental,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![February, March],
+                        indoor: vec![January, February],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Sandy, SoilType::Loamy],
-            regions: vec![
-                Region::Temperate,
-                Region::Oceanic,
-                Region::Continental,
-                Region::Mediterranean,
-            ],
             spacing_cm: 45,
             days_to_harvest: 730,
             lifecycle: Lifecycle::Perennial,
@@ -749,10 +2007,32 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             id: "artichoke".into(),
             name: "Artichoke".into(),
             latin_name: "Cynara cardunculus var. scolymus".into(),
-            seasons: vec![Season::Spring, Season::Summer],
+            calendars: vec![
+                RegionCalendar {
+                    region: Region::Mediterranean,
+                    sowing: CalendarWindow {
+                        outdoor: vec![March, April, May],
+                        indoor: vec![February, March],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![April, May, June],
+                        indoor: vec![],
+                    },
+                },
+                RegionCalendar {
+                    region: Region::Oceanic,
+                    sowing: CalendarWindow {
+                        outdoor: vec![April, May],
+                        indoor: vec![March, April],
+                    },
+                    planting: CalendarWindow {
+                        outdoor: vec![May, June, July],
+                        indoor: vec![],
+                    },
+                },
+            ],
             sun_requirement: vec![SunExposure::FullSun],
             soil_types: vec![SoilType::Loamy, SoilType::Humus],
-            regions: vec![Region::Mediterranean, Region::Oceanic],
             spacing_cm: 80,
             days_to_harvest: 365,
             lifecycle: Lifecycle::Perennial,
@@ -804,11 +2084,11 @@ mod tests {
     }
 
     #[test]
-    fn test_all_vegetables_have_nonempty_seasons() {
+    fn test_all_vegetables_have_nonempty_calendars() {
         for v in get_all_vegetables() {
             assert!(
-                !v.seasons.is_empty(),
-                "Vegetable {} must have at least one season",
+                !v.calendars.is_empty(),
+                "Vegetable {} must have at least one calendar entry",
                 v.id
             );
         }

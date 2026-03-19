@@ -9,12 +9,12 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 - **HATEOAS** — every response includes a `_links` object (HAL convention) with hyperlinks to related resources
 - **Grid-based layout optimisation** — greedy placement algorithm that maximises companion planting scores (30 cm per cell)
 - **Companion planting** — `+2` per good-companion neighbour, `−3` per bad-companion neighbour
-- **~40 vegetables** in an in-memory catalogue with full metadata (seasons, soil types, sun exposure, region, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
+- **~40 vegetables** in an in-memory catalogue with full metadata (per-region sowing/planting calendars, soil types, sun exposure, spacing, days to harvest, lifecycle, companions, beginner-friendliness)
 - **Blocked cells** — mark paths, alleys or obstacles as non-plantable; they are preserved in the response
 - **Existing layout support** — pre-place vegetables before optimisation; conflicts with blocked zones emit warnings
 - **Date-range planning** — optionally provide a `period` with `start` and `end`; the planner simulates the garden week by week, returning one `WeeklyPlan` snapshot per 7-day period (consecutive identical layouts are merged, with `weekCount` tracking how many weeks were combined). When omitted, defaults to the current Monday-to-Sunday week
 - **Harvest simulation** — plants are removed when their `daysToHarvest` has elapsed, freeing cells for new plantings in subsequent weeks
-- **Filtering** — by season (derived from each week's start date), sun, soil, region and skill level (`Beginner` / `Expert`)
+- **Filtering** — by calendar month (checked against each vegetable's per-region sowing/planting windows), sun, soil, region and skill level (`Beginner` / `Expert`)
 - **Preference ordering** — preferred vegetables (by id) are placed first
 - **Warnings** — surfaced when constraints exclude all candidates or cells cannot be filled
 - **Pure in-memory** — no database required
@@ -28,13 +28,13 @@ src/
   lib.rs              # library crate root
   main.rs             # binary entry point — binds to 0.0.0.0:8080
   models/
-    vegetable.rs      # Vegetable struct + enums: Season, SoilType, SunExposure, Region, Category, Lifecycle
+    vegetable.rs      # Vegetable struct + enums: CalendarWindow, RegionCalendar, SoilType, SunExposure, Region, Category, Lifecycle
     garden.rs         # GardenGrid, Cell (vegetable + blocked flag), PlacedVegetable
     request.rs        # PlanRequest, PlanResponse, PlannedCell, Level, CompanionsResponse, Link DTOs
   data/
     vegetables.rs     # in-memory vegetable database (~40 entries)
   logic/
-    filter.rs         # filter by season / sun / soil / region / level, sort by preference
+    filter.rs         # filter by calendar month / sun / soil / region / level, sort by preference
     companion.rs      # companion_score(), is_compatible()
     planner.rs        # plan_garden() — greedy grid placement
   api/
@@ -293,7 +293,7 @@ flowchart TD
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
 2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
-4. **Filter** — the vegetable catalogue is narrowed by season (derived from the week's `period.start` month: Mar–May→Spring, Jun–Aug→Summer, Sep–Nov→Autumn, Dec–Feb→Winter), `sun`, `soil`, `region`, and `level`.
+4. **Filter** — the vegetable catalogue is narrowed by the week's `period.start` month, checked against each vegetable's per-region `sowing` and `planting` windows (`CalendarWindow.outdoor` / `CalendarWindow.indoor`), along with `sun`, `soil`, `region`, and `level`. Only vegetables that have an active month in the matching region are considered.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.
 6. **Phase 1 — Explicit placement** — vegetables with an explicit `quantity` preference are placed first, in preference order, each guaranteed a minimum of `quantity` plants.
    - `quantity` is a **plant count** (not a cell count); a tomato (`quantity: 2`) with 60 cm spacing (span 2 × 2 = 4 cells) reserves 8 cells.
@@ -304,7 +304,7 @@ flowchart TD
 8. **Score** — every placement adds `Σ(+2 per good neighbour) + Σ(-3 per bad neighbour)` on the block perimeter to the cumulative companion score.
 8. **Warn** — any remaining empty (non-blocked) cells produce an `"N empty cell(s)"` warning.
 9. **Harvest** — before each subsequent week, cells whose plant's harvest deadline (`plantedWeek + ⌈daysToHarvest / 7⌉`) has been reached are cleared, making them available for new plantings.
-10. **Repeat** — steps 4–8 are re-run for every week in the planning period; the season filter adapts to the new week's month.
+10. **Repeat** — steps 4–8 are re-run for every week in the planning period; the calendar filter adapts to the new week's month.
 11. **Return** — the `weeks` array (consecutive identical layouts merged, one `WeeklyPlan` per unique layout run), grid dimensions, warnings, and `_links`.
 
 ---

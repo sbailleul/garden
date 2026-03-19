@@ -1,4 +1,4 @@
-use chrono::{Datelike, Duration, Local, NaiveDate};
+use chrono::{Datelike, Duration, Local};
 use log::{trace, warn};
 
 use crate::models::{garden::GardenGrid, request::Period};
@@ -81,11 +81,11 @@ pub fn harvest_plants(grid: &mut GardenGrid, current_week_idx: usize) {
     for row in &mut grid.cells {
         for cell in row.iter_mut() {
             if let Some(ref v) = cell.vegetable {
-                let harvest_week = v.planted_week + (v.days_to_harvest as usize).div_ceil(7);
+                let harvest_week = v.planted_at.week + (v.days_to_harvest as usize).div_ceil(7);
                 if harvest_week <= current_week_idx {
                     trace!(
                         "harvest_plants: harvesting '{}' planted week {} (harvest_week={harvest_week})",
-                        v.id, v.planted_week
+                        v.id, v.planted_at.week
                     );
                     cell.vegetable = None;
                 }
@@ -97,7 +97,7 @@ pub fn harvest_plants(grid: &mut GardenGrid, current_week_idx: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Weekday;
+    use chrono::{NaiveDate, Weekday};
 
     #[test]
     fn test_current_week_is_monday_to_sunday() {

@@ -1,6 +1,6 @@
 use crate::models::{
     request::{Level, PlanRequest},
-    vegetable::{Season, Vegetable},
+    vegetable::{Month, RegionCalendar, Vegetable},
 };
 
 /// Returns the French household consumption rank for a vegetable ID.
@@ -45,11 +45,20 @@ pub fn french_rank(id: &str) -> usize {
     }
 }
 
-/// Internal helper: filters and sorts candidates, optionally restricting to a given season.
+/// Returns `true` when `month` is an active sowing or planting month
+/// (outdoor or indoor) for the given [`RegionCalendar`].
+pub(crate) fn is_active_month(cal: &RegionCalendar, month: Month) -> bool {
+    cal.sowing.outdoor.contains(&month)
+        || cal.sowing.indoor.contains(&month)
+        || cal.planting.outdoor.contains(&month)
+        || cal.planting.indoor.contains(&month)
+}
+
+/// Internal helper: filters and sorts candidates, optionally restricting to a given month.
 fn filter_and_sort_internal(
     db: &[Vegetable],
     request: &PlanRequest,
-    season_filter: Option<&Season>,
+    month_filter: Option<Month>,
 ) -> Vec<Vegetable> {
     let preferences = request.preferences.clone().unwrap_or_default();
     let is_beginner = matches!(request.level, Some(Level::Beginner));
@@ -57,11 +66,18 @@ fn filter_and_sort_internal(
     let mut filtered: Vec<Vegetable> = db
         .iter()
         .filter(|v| {
-            // Optional season filter — skipped when None
-            if let Some(season) = season_filter {
-                if !v.seasons.contains(season) {
-                    return false;
-                }
+            // Filter by region and/or month via calendars
+            let region_match = match (&request.region, month_filter) {
+                (Some(region), Some(month)) => v
+                    .calendars
+                    .iter()
+                    .any(|c| c.region == *region && is_active_month(c, month)),
+                (Some(region), None) => v.calendars.iter().any(|c| c.region == *region),
+                (None, Some(month)) => v.calendars.iter().any(|c| is_active_month(c, month)),
+                (None, None) => true,
+            };
+            if !region_match {
+                return false;
             }
             // Filter by sun exposure
             if let Some(ref sun) = request.sun {
@@ -72,12 +88,6 @@ fn filter_and_sort_internal(
             // Filter by soil type
             if let Some(ref soil) = request.soil {
                 if !v.soil_types.contains(soil) {
-                    return false;
-                }
-            }
-            // Filter by region
-            if let Some(ref region) = request.region {
-                if !v.regions.contains(region) {
                     return false;
                 }
             }
@@ -105,18 +115,15 @@ fn filter_and_sort_internal(
     filtered
 }
 
-/// Filters vegetables by all request constraints **including** an explicit `season`,
-/// then sorts by priority (preferences first, then French consumption rank).
-pub fn filter_vegetables(
-    db: &[Vegetable],
-    request: &PlanRequest,
-    season: &Season,
-) -> Vec<Vegetable> {
-    filter_and_sort_internal(db, request, Some(season))
+/// Filters vegetables by all request constraints **including** the calendar month
+/// (used to check against per-region sowing/planting windows), then sorts by
+/// priority (preferences first, then French consumption rank).
+pub fn filter_vegetables(db: &[Vegetable], request: &PlanRequest, month: Month) -> Vec<Vegetable> {
+    filter_and_sort_internal(db, request, Some(month))
 }
 
-/// Filters vegetables by all request constraints **except** season,
-/// then sorts by priority. Used by the planner when season is applied
+/// Filters vegetables by all request constraints **except** month,
+/// then sorts by priority. Used by the planner when month is applied
 /// per-week internally.
 pub fn filter_candidates_base(db: &[Vegetable], request: &PlanRequest) -> Vec<Vegetable> {
     filter_and_sort_internal(db, request, None)
@@ -128,17 +135,12 @@ mod tests {
     use crate::data::vegetables::get_all_vegetables;
     use crate::models::{
         request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry},
-        vegetable::{Region, Season, SoilType, SunExposure},
+        vegetable::{Month, Region, SoilType, SunExposure},
     };
     use chrono::{Duration, NaiveDate};
 
-    fn make_request(season: &Season) -> PlanRequest {
-        let start = match season {
-            Season::Spring => NaiveDate::from_ymd_opt(2025, 3, 1).unwrap(),
-            Season::Summer => NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
-            Season::Autumn => NaiveDate::from_ymd_opt(2025, 9, 1).unwrap(),
-            Season::Winter => NaiveDate::from_ymd_opt(2025, 12, 1).unwrap(),
-        };
+    fn make_request_for_month(month: u32) -> PlanRequest {
+        let start = NaiveDate::from_ymd_opt(2025, month, 1).unwrap();
         PlanRequest {
             // 2m × 3m → 7 cols × 10 rows
             layout: vec![vec![LayoutCell::Empty; 7]; 10],
@@ -155,14 +157,14 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_by_season_summer() {
+    fn test_filter_by_month_june() {
         let db = get_all_vegetables();
-        let req = make_request(&Season::Summer);
-        let result = filter_vegetables(&db, &req, &Season::Summer);
+        let req = make_request_for_month(6);
+        let result = filter_vegetables(&db, &req, Month::June);
         for v in &result {
             assert!(
-                v.seasons.contains(&Season::Summer),
-                "Vegetable {} does not grow in summer",
+                v.calendars.iter().any(|c| is_active_month(c, Month::June)),
+                "Vegetable {} has no June calendar entry",
                 v.id
             );
         }
@@ -171,12 +173,12 @@ mod tests {
     #[test]
     fn test_filter_by_season_excludes_wrong_season() {
         let db = get_all_vegetables();
-        // Tomato only grows in summer → must be excluded in winter
-        let req = make_request(&Season::Winter);
-        let result = filter_vegetables(&db, &req, &Season::Winter);
+        // Tomato is a summer crop: must be excluded when filtering for December
+        let req = make_request_for_month(12);
+        let result = filter_vegetables(&db, &req, Month::December);
         assert!(
             !result.iter().any(|v| v.id == "tomato"),
-            "Tomato must not appear in winter"
+            "Tomato must not appear in December"
         );
     }
 
@@ -185,9 +187,9 @@ mod tests {
         let db = get_all_vegetables();
         let req = PlanRequest {
             level: Some(Level::Beginner),
-            ..make_request(&Season::Summer)
+            ..make_request_for_month(6)
         };
-        let result = filter_vegetables(&db, &req, &Season::Summer);
+        let result = filter_vegetables(&db, &req, Month::June);
         for v in &result {
             assert!(
                 v.beginner_friendly,
@@ -205,9 +207,9 @@ mod tests {
                 id: "basil".into(),
                 quantity: None,
             }]),
-            ..make_request(&Season::Summer)
+            ..make_request_for_month(6)
         };
-        let result = filter_vegetables(&db, &req, &Season::Summer);
+        let result = filter_vegetables(&db, &req, Month::June);
         if let Some(first) = result.first() {
             assert_eq!(first.id, "basil", "Basil (preferred) must be first");
         }
@@ -218,9 +220,9 @@ mod tests {
         let db = get_all_vegetables();
         let req = PlanRequest {
             soil: Some(SoilType::Sandy),
-            ..make_request(&Season::Spring)
+            ..make_request_for_month(4)
         };
-        let result = filter_vegetables(&db, &req, &Season::Spring);
+        let result = filter_vegetables(&db, &req, Month::April);
         for v in &result {
             assert!(
                 v.soil_types.contains(&SoilType::Sandy),
@@ -235,9 +237,9 @@ mod tests {
         let db = get_all_vegetables();
         let req = PlanRequest {
             sun: Some(SunExposure::Shade),
-            ..make_request(&Season::Spring)
+            ..make_request_for_month(4)
         };
-        let result = filter_vegetables(&db, &req, &Season::Spring);
+        let result = filter_vegetables(&db, &req, Month::April);
         for v in &result {
             assert!(
                 v.sun_requirement.contains(&SunExposure::Shade),
@@ -252,13 +254,13 @@ mod tests {
         let db = get_all_vegetables();
         let req = PlanRequest {
             region: Some(Region::Mountain),
-            ..make_request(&Season::Spring)
+            ..make_request_for_month(5)
         };
-        let result = filter_vegetables(&db, &req, &Season::Spring);
+        let result = filter_vegetables(&db, &req, Month::May);
         for v in &result {
             assert!(
-                v.regions.contains(&Region::Mountain),
-                "Vegetable {} is not suited for mountain region",
+                v.calendars.iter().any(|c| c.region == Region::Mountain),
+                "Vegetable {} has no Mountain calendar entry",
                 v.id
             );
         }
@@ -267,20 +269,22 @@ mod tests {
     #[test]
     fn test_filter_empty_result_incompatible_constraints() {
         let db = get_all_vegetables();
-        // Shade + summer + chalky soil + mountain + beginner → very few vegetables
+        // Shade + June + chalky soil + Mountain + beginner → very few vegetables
         let req = PlanRequest {
             sun: Some(SunExposure::Shade),
             soil: Some(SoilType::Chalky),
             region: Some(Region::Mountain),
             level: Some(Level::Beginner),
-            ..make_request(&Season::Summer)
+            ..make_request_for_month(6)
         };
-        let result = filter_vegetables(&db, &req, &Season::Summer);
+        let result = filter_vegetables(&db, &req, Month::June);
         for v in &result {
-            assert!(v.seasons.contains(&Season::Summer));
+            assert!(v
+                .calendars
+                .iter()
+                .any(|c| c.region == Region::Mountain && is_active_month(c, Month::June)));
             assert!(v.sun_requirement.contains(&SunExposure::Shade));
             assert!(v.soil_types.contains(&SoilType::Chalky));
-            assert!(v.regions.contains(&Region::Mountain));
             assert!(v.beginner_friendly);
         }
     }
@@ -299,10 +303,10 @@ mod tests {
     #[test]
     fn test_sort_uses_french_rank_for_non_preferences() {
         let db = get_all_vegetables();
-        // No preferences — summer candidates should be ordered by French rank.
+        // No preferences — June candidates should be ordered by French rank.
         // Tomato (rank 1) must appear before carrot (rank 2).
-        let req = make_request(&Season::Summer);
-        let result = filter_vegetables(&db, &req, &Season::Summer);
+        let req = make_request_for_month(6);
+        let result = filter_vegetables(&db, &req, Month::June);
         let tomato_pos = result.iter().position(|v| v.id == "tomato");
         let carrot_pos = result.iter().position(|v| v.id == "carrot");
         if let (Some(tp), Some(cp)) = (tomato_pos, carrot_pos) {

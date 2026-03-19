@@ -6,7 +6,10 @@ use crate::models::{
         Link, Pagination, PlanApiResponse, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry,
         VegetableApiResponse, VegetableListResponse, VegetableResponse, WeeklyPlan,
     },
-    vegetable::{Category, Lifecycle, Region, Season, SoilType, SunExposure, Vegetable},
+    vegetable::{
+        CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
+        Vegetable,
+    },
     Coordinate,
 };
 
@@ -27,7 +30,9 @@ use crate::models::{
     components(
         schemas(
             // Enums
-            Season, SoilType, SunExposure, Region, Category, Lifecycle, Level,
+            SoilType, SunExposure, Region, Category, Lifecycle, Level, Month,
+            // Vegetable calendar
+            CalendarWindow, RegionCalendar,
             // Vegetable
             Vegetable, VegetableResponse,
             // Plan request

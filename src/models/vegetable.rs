@@ -51,6 +51,64 @@ pub enum Region {
     Mountain,
 }
 
+/// Calendar month — used in sowing and planting windows.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "PascalCase")]
+pub enum Month {
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December,
+}
+
+impl Month {
+    pub fn from_u32(m: u32) -> Self {
+        match m {
+            1 => Month::January,
+            2 => Month::February,
+            3 => Month::March,
+            4 => Month::April,
+            5 => Month::May,
+            6 => Month::June,
+            7 => Month::July,
+            8 => Month::August,
+            9 => Month::September,
+            10 => Month::October,
+            11 => Month::November,
+            _ => Month::December,
+        }
+    }
+}
+
+/// Sowing or planting window — distinguishes direct outdoor from under-cover months.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarWindow {
+    /// Months for sowing / planting directly in open ground.
+    pub outdoor: Vec<Month>,
+    /// Months for sowing / planting under cover or in a greenhouse.
+    pub indoor: Vec<Month>,
+}
+
+/// Per-region sowing and planting calendar for a vegetable.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RegionCalendar {
+    pub region: Region,
+    /// Recommended months for sowing seeds.
+    pub sowing: CalendarWindow,
+    /// Recommended months for planting seedlings / transplanting.
+    pub planting: CalendarWindow,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "PascalCase")]
 pub enum Category {
@@ -87,10 +145,12 @@ pub struct Vegetable {
     pub id: String,
     pub name: String,
     pub latin_name: String,
-    pub seasons: Vec<Season>,
+    /// Per-region sowing and planting calendars.
+    /// The presence of a [`RegionCalendar`] entry for a given region implies
+    /// the vegetable can be grown there.
+    pub calendars: Vec<RegionCalendar>,
     pub sun_requirement: Vec<SunExposure>,
     pub soil_types: Vec<SoilType>,
-    pub regions: Vec<Region>,
     pub spacing_cm: u32,
     /// Approximate number of days from planting/transplanting to first harvest.
     pub days_to_harvest: u32,
