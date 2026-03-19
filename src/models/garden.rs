@@ -4,6 +4,7 @@ use serde_with::skip_serializing_none;
 use crate::models::{Coordinate, Matrix};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlacedVegetable {
     pub id: String,
     pub name: String,
@@ -24,6 +25,7 @@ pub struct PlacedVegetable {
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Cell {
     pub vegetable: Option<PlacedVegetable>,
     /// True when the cell is a path, alley or other non-plantable zone.
@@ -31,6 +33,7 @@ pub struct Cell {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GardenGrid {
     pub rows: usize,
     pub cols: usize,

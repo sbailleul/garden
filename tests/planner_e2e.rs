@@ -2,7 +2,7 @@ use actix_web::{test, web, App};
 use garden::api::routes::configure;
 
 fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
-    let empty_cell = serde_json::json!({"type": "empty"});
+    let empty_cell = serde_json::json!({"type": "Empty"});
     let row: Vec<serde_json::Value> = vec![empty_cell; cols];
     let layout: Vec<serde_json::Value> = (0..rows)
         .map(|_| serde_json::Value::Array(row.clone()))
@@ -139,9 +139,9 @@ async fn scenario_existing_tomatoes_add_companions() {
         "region": "Temperate",
         "preferences": [{"id": "basil"}],
         "layout": [
-            [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}, {"type": "empty"}],
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}]
+            [{"type": "SelfContained", "id": "tomato"}, {"type": "Empty"}, {"type": "Empty"}],
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}],
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}]
         ]
     });
     let req = test::TestRequest::post()

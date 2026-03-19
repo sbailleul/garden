@@ -166,14 +166,14 @@ Computes the optimal garden layout.
   ],
   "layout": [
     [
-      { "type": "selfContained", "id": "tomato", "plantedDate": "2025-05-01" },
-      { "type": "empty" },
-      { "type": "empty" }
+      { "type": "SelfContained", "id": "tomato", "plantedDate": "2025-05-01" },
+      { "type": "Empty" },
+      { "type": "Empty" }
     ],
     [
-      { "type": "empty" },
-      { "type": "blocked" },
-      { "type": "empty" }
+      { "type": "Empty" },
+      { "type": "Blocked" },
+      { "type": "Empty" }
     ]
   ]
 }
@@ -186,12 +186,12 @@ Each cell is a JSON object with a `type` discriminator:
 
 | Cell value | Meaning |
 |---|---|
-| `{"type": "empty"}` | Free cell — plantable and empty |
-| `{"type": "selfContained", "id": "vegetable-id"}` | Pre-placed vegetable that fits in one cell (preserved in output) |
-| `{"type": "selfContained", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
-| `{"type": "overflowing", "id": "vegetable-id"}` | Pre-placed vegetable that spans multiple cells (anchor cell) |
-| `{"type": "overflowing", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
-| `{"type": "blocked"}` | Blocked cell — non-plantable zone (path, alley, obstacle) |
+| `{"type": "Empty"}` | Free cell — plantable and empty |
+| `{"type": "SelfContained", "id": "vegetable-id"}` | Pre-placed vegetable that fits in one cell (preserved in output) |
+| `{"type": "SelfContained", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
+| `{"type": "Overflowing", "id": "vegetable-id"}` | Pre-placed vegetable that spans multiple cells (anchor cell) |
+| `{"type": "Overflowing", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
+| `{"type": "Blocked"}` | Blocked cell — non-plantable zone (path, alley, obstacle) |
 
 Grid dimensions are inferred directly from the array: `rows = layout.length`, `cols = layout[0].length`.
 
@@ -299,7 +299,7 @@ flowchart TD
 ```
 
 1. **Validate** — `layout` must have at least one non-empty row; returns `400` otherwise.
-2. **Pre-fill** — blocked cells (`{"type":"blocked"}`) and pre-placed vegetables (`{"type":"selfContained","id":"..."}` / `{"type":"overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
+2. **Pre-fill** — blocked cells (`{"type": "Blocked"}`) and pre-placed vegetables (`{"type": "SelfContained","id":"..."}` / `{"type": "Overflowing","id":"..."}`) are applied from the `layout` array. Unknown vegetable IDs emit a warning and are skipped.
 3. **Early exit** — if every non-blocked cell is already occupied, return immediately with a warning.
 4. **Filter** — the vegetable catalogue is narrowed by the week's `period.start` month, checked against each vegetable's per-region `sowing` and `planting` windows (`CalendarWindow.outdoor` / `CalendarWindow.indoor`), along with `sun`, `soil`, `region`, and `level`. Only vegetables that have an active month in the matching region are considered.
 5. **Sort** — preferred vegetables appear first (in their declared order); remaining candidates are ordered by French household consumption rank (tomato → maïs); unknown IDs sort last.

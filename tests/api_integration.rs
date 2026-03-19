@@ -2,7 +2,7 @@ use actix_web::{test, web, App};
 use garden::api::routes::configure;
 
 fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
-    let empty_cell = serde_json::json!({"type": "empty"});
+    let empty_cell = serde_json::json!({"type": "Empty"});
     let row: Vec<serde_json::Value> = vec![empty_cell; cols];
     let layout: Vec<serde_json::Value> = (0..rows)
         .map(|_| serde_json::Value::Array(row.clone()))
@@ -293,8 +293,8 @@ async fn test_post_plan_with_existing_layout_preserved() {
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "region": "Temperate",
         "layout": [
-            [{"type": "selfContained", "id": "tomato"}, {"type": "empty"}],
-            [{"type": "empty"}, {"type": "empty"}]
+            [{"type": "SelfContained", "id": "tomato"}, {"type": "Empty"}],
+            [{"type": "Empty"}, {"type": "Empty"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -318,7 +318,7 @@ async fn test_post_plan_existing_layout_planted_date_sets_estimated_harvest_date
         "period": {"start": "2025-06-02", "end": "2025-06-08"},
         "region": "Temperate",
         "layout": [
-            [{"type": "selfContained", "id": "tomato", "plantedDate": "2025-05-01"}]
+            [{"type": "SelfContained", "id": "tomato", "plantedDate": "2025-05-01"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -357,9 +357,9 @@ async fn test_post_plan_blocked_cells_never_planted() {
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "region": "Temperate",
         "layout": [
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
-            [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}]
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}],
+            [{"type": "Blocked"}, {"type": "Blocked"}, {"type": "Blocked"}],
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -372,8 +372,8 @@ async fn test_post_plan_blocked_cells_never_planted() {
     for cell in row1 {
         assert!(cell["id"].is_null(), "Blocked cell must have no vegetable");
         assert_eq!(
-            cell["type"], "blocked",
-            "Blocked cell must have type='blocked'"
+            cell["type"], "Blocked",
+            "Blocked cell must have type='Blocked'"
         );
     }
 }
@@ -385,9 +385,9 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "region": "Temperate",
         "layout": [
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}],
-            [{"type": "blocked"}, {"type": "blocked"}, {"type": "blocked"}],
-            [{"type": "empty"}, {"type": "empty"}, {"type": "empty"}]
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}],
+            [{"type": "Blocked"}, {"type": "Blocked"}, {"type": "Blocked"}],
+            [{"type": "Empty"}, {"type": "Empty"}, {"type": "Empty"}]
         ]
     });
     let req = test::TestRequest::post()
@@ -400,8 +400,8 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
         let row = body["payload"]["weeks"][0]["grid"][r].as_array().unwrap();
         for cell in row {
             assert_ne!(
-                cell["type"], "blocked",
-                "Non-blocked cell must not have type='blocked' (row {r})"
+                cell["type"], "Blocked",
+                "Non-blocked cell must not have type='Blocked' (row {r})"
             );
         }
     }

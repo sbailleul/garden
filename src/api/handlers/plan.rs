@@ -1,12 +1,17 @@
 use actix_web::{http::Method, post, web, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::models::request::{ErrorResponse, PlanApiResponse};
+use crate::models::hateoas::PlanApiResponse;
+#[allow(unused_imports)]
+use crate::models::request::ErrorResponse;
 
 use crate::{
     data::vegetables::get_all_vegetables,
     logic::{filter::filter_candidates_base, planner::plan_garden},
-    models::request::{link, ApiResponse, PlanRequest},
+    models::{
+        hateoas::{link, ApiResponse},
+        request::PlanRequest,
+    },
 };
 
 /// POST /api/plan

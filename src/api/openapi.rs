@@ -1,10 +1,13 @@
 use utoipa::OpenApi;
 
 use crate::models::{
+    hateoas::{
+        CompanionsApiResponse, Link, Pagination, PlanApiResponse, VegetableApiResponse,
+        VegetableListResponse,
+    },
     request::{
-        CompanionInfo, CompanionsApiResponse, CompanionsResponse, ErrorResponse, LayoutCell, Level,
-        Link, Pagination, PlanApiResponse, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry,
-        VegetableApiResponse, VegetableListResponse, VegetableResponse, WeeklyPlan,
+        CompanionInfo, CompanionsResponse, ErrorResponse, LayoutCell, Level, PlanRequest,
+        PlanResponse, PlannedCell, PreferenceEntry, VegetableResponse, WeeklyPlan,
     },
     vegetable::{
         CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,

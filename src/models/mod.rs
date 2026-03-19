@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 pub mod garden;
+pub mod hateoas;
 pub mod request;
 pub mod vegetable;
 
@@ -10,6 +11,7 @@ pub type Matrix<T> = Vec<Vec<T>>;
 
 /// A zero-based (row, col) position within the garden grid.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct Coordinate {
     pub row: usize,
     pub col: usize,
