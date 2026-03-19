@@ -1,15 +1,15 @@
 use actix_web::{get, http::Method, web, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::models::hateoas::{CompanionsApiResponse, VegetableApiResponse, VegetableListResponse};
+use crate::models::hateoas::{CompanionsApiResponse, VegetableApiResponse};
 #[allow(unused_imports)]
-use crate::models::request::ErrorResponse;
+use crate::models::response::ErrorResponse;
 
 use crate::{
     data::vegetables::{get_all_vegetables, get_vegetable_by_id},
     models::{
         hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
-        request::{CompanionInfo, CompanionsResponse, VegetableResponse},
+        response::{CompanionInfo, CompanionsResponse, VegetableResponse},
     },
 };
 
@@ -21,7 +21,7 @@ use crate::{
     tag = "vegetables",
     responses(
         (status = 200, description = "Paginated list of all vegetables",
-         body = VegetableListResponse)
+         body = VegetablesApiResponse),
     )
 )]
 #[get("/vegetables")]

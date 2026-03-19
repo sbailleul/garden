@@ -3,7 +3,7 @@ use actix_web::{http::Method, post, web, HttpResponse, Responder};
 #[allow(unused_imports)]
 use crate::models::hateoas::PlanApiResponse;
 #[allow(unused_imports)]
-use crate::models::request::ErrorResponse;
+use crate::models::response::ErrorResponse;
 
 use crate::{
     data::vegetables::get_all_vegetables,

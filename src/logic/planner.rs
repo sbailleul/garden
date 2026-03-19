@@ -8,9 +8,8 @@ use crate::logic::schedule::{harvest_plants, weeks_for_period};
 use crate::logic::{companion::companion_score, filter::filter_vegetables};
 use crate::models::{
     garden::GardenGrid,
-    request::{
-        LayoutCell, Period, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry, WeeklyPlan,
-    },
+    request::{LayoutCell, Period, PlanRequest, PreferenceEntry},
+    response::{PlanResponse, PlannedCell, WeeklyPlan},
     vegetable::{Month, Vegetable},
     Coordinate, Matrix,
 };
@@ -743,7 +742,8 @@ mod tests {
     use crate::data::vegetables::{get_all_vegetables, get_vegetable_by_id};
     use crate::logic::filter::{filter_candidates_base, filter_vegetables};
     use crate::models::{
-        request::{LayoutCell, Period, PlanRequest, PlannedCell},
+        request::{LayoutCell, Period, PlanRequest},
+        response::PlannedCell,
         vegetable::{Month, Region, Season},
     };
     use chrono::NaiveDate;

@@ -4,7 +4,7 @@ use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::request::{CompanionsResponse, PlanResponse, VegetableResponse};
+use crate::models::response::{CompanionsResponse, PlanResponse, VegetableResponse};
 
 /// Serde adapter for `actix_web::http::Method` (serialises as its uppercase string).
 mod method_serde {
@@ -81,24 +81,11 @@ impl<T> ApiResponse<T> {
 
 /// Generic paginated list response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[aliases(
+    VegetablesApiResponse   = PaginatedResponse<VegetableResponse>,
+)]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub errors: Vec<String>,
-    /// HAL-style hypermedia links.
-    #[schema(value_type = HashMap<String, Link>)]
-    #[serde(rename = "_links")]
-    pub links: Links,
-    pub pagination: Pagination,
-}
-
-/// OpenAPI schema for the paginated vegetables list.
-/// Uses the concrete alias `VegetableApiResponse` so utoipa emits a
-/// resolvable `$ref` for each item instead of the bare generic `ApiResponse`.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct VegetableListResponse {
-    pub payload: Vec<VegetableApiResponse>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
     /// HAL-style hypermedia links.

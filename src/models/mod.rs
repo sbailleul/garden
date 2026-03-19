@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 pub mod garden;
 pub mod hateoas;
 pub mod request;
+pub mod response;
 pub mod vegetable;
 
 /// Convenience alias for a two-dimensional grid.
