@@ -155,7 +155,7 @@ Computes the optimal garden layout.
 **Request body:**
 ```json
 {
-  "period": {"start": "2025-06-01", "end": "2025-08-31"},
+  "period": {"start": "2025-06-02", "end": "2025-08-31"},
   "sun": "FullSun",
   "soil": "Loamy",
   "region": "Temperate",
@@ -165,10 +165,16 @@ Computes the optimal garden layout.
     { "id": "basil" }
   ],
   "layout": [
-    ["tomato", null,  null,  null,  null,  null,  null],
-    [null,     null,  null,  null,  null,  null,  null],
-    [true,     true,  true,  true,  true,  true,  true],
-    [null,     null,  null,  null,  null,  null,  null]
+    [
+      { "type": "selfContained", "id": "tomato", "plantedDate": "2025-05-01" },
+      { "type": "empty" },
+      { "type": "empty" }
+    ],
+    [
+      { "type": "empty" },
+      { "type": "blocked" },
+      { "type": "empty" }
+    ]
   ]
 }
 ```
@@ -182,7 +188,9 @@ Each cell is a JSON object with a `type` discriminator:
 |---|---|
 | `{"type": "empty"}` | Free cell — plantable and empty |
 | `{"type": "selfContained", "id": "vegetable-id"}` | Pre-placed vegetable that fits in one cell (preserved in output) |
+| `{"type": "selfContained", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
 | `{"type": "overflowing", "id": "vegetable-id"}` | Pre-placed vegetable that spans multiple cells (anchor cell) |
+| `{"type": "overflowing", "id": "vegetable-id", "plantedDate": "2025-05-01"}` | Same, with a planting date used for harvest scheduling and `estimatedHarvestDate` |
 | `{"type": "blocked"}` | Blocked cell — non-plantable zone (path, alley, obstacle) |
 
 Grid dimensions are inferred directly from the array: `rows = layout.length`, `cols = layout[0].length`.

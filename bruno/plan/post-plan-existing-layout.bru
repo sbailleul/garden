@@ -15,10 +15,10 @@ headers {
 
 body {
   {
-    "period": {"start": "2025-06-01", "end": "2025-08-31"},
+    "period": {"start": "2025-06-02", "end": "2025-08-31"},
     "preferences": [{"id": "basil"}],
     "layout": [
-      [{"type":"selfContained","id":"tomato"}, {"type":"empty"}, {"type":"empty"}],
+      [{"type":"selfContained","id":"tomato","plantedDate":"2025-05-01"}, {"type":"empty"}, {"type":"empty"}],
       [{"type":"empty"}, {"type":"empty"}, {"type":"empty"}],
       [{"type":"empty"}, {"type":"empty"}, {"type":"empty"}]
     ]
@@ -41,12 +41,12 @@ tests {
   });
 
   test("existing cell [0][0] is preserved as tomato", function() {
-    expect(res.body.payload.grid[0][0].id).to.equal("tomato");
+    expect(res.body.payload.weeks[0].grid[0][0].id).to.equal("tomato");
   });
 
   test("basil is placed in the grid (preferred + good companion)", function() {
     var placed = [];
-    res.body.payload.grid.forEach(function(row) {
+    res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {
         if (cell.id) placed.push(cell.id);
       });
@@ -55,8 +55,13 @@ tests {
   });
 
   test("basil is adjacent to tomato at [0][0]", function() {
-    var r0c1 = res.body.payload.grid[0][1] && res.body.payload.grid[0][1].id === "basil";
-    var r1c0 = res.body.payload.grid[1][0] && res.body.payload.grid[1][0].id === "basil";
+    var r0c1 = res.body.payload.weeks[0].grid[0][1] && res.body.payload.weeks[0].grid[0][1].id === "basil";
+    var r1c0 = res.body.payload.weeks[0].grid[1][0] && res.body.payload.weeks[0].grid[1][0].id === "basil";
     expect(r0c1 || r1c0).to.be.true;
+  });
+
+  test("existing tomato exposes estimatedHarvestDate when plantedDate is provided", function() {
+    expect(res.body.payload.weeks[0].grid[0][0].estimatedHarvestDate).to.not.equal(undefined);
+    expect(res.body.payload.weeks[0].grid[0][0].estimatedHarvestDate).to.not.equal(null);
   });
 }

@@ -1,16 +1,7 @@
-use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 use crate::models::{Coordinate, Matrix};
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PlantedAt {
-    /// 0-based index of the week in which this plant was placed.
-    pub week: usize,
-    /// Calendar date on which this plant was placed (None for pre-placed layout cells).
-    pub date: Option<NaiveDate>,
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlacedVegetable {
@@ -23,9 +14,12 @@ pub struct PlacedVegetable {
     pub span: u32,
     /// Top-left cell of this plant's block.
     pub anchor: Coordinate,
-    pub planted_at: PlantedAt,
+    /// 0-based index of the week in which this plant was placed.
+    pub planted_week: usize,
     /// Days until this plant is ready to harvest (copied from the vegetable catalogue).
     pub days_to_harvest: u32,
+    /// Calendar date when this plant is expected to be ready for harvest.
+    pub estimated_harvest_date: Option<chrono::NaiveDate>,
 }
 
 #[skip_serializing_none]

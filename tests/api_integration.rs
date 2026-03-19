@@ -306,6 +306,27 @@ async fn test_post_plan_with_existing_layout_preserved() {
 }
 
 #[actix_web::test]
+async fn test_post_plan_existing_layout_planted_date_sets_estimated_harvest_date() {
+    let app = test::init_service(build_app()).await;
+    let payload = serde_json::json!({
+        "period": {"start": "2025-06-02", "end": "2025-06-08"},
+        "layout": [
+            [{"type": "selfContained", "id": "tomato", "plantedDate": "2025-05-01"}]
+        ]
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/plan")
+        .set_json(&payload)
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+
+    assert!(
+        body["payload"]["weeks"][0]["grid"][0][0]["estimatedHarvestDate"].is_string(),
+        "estimatedHarvestDate must be present when plantedDate is supplied: {body}"
+    );
+}
+
+#[actix_web::test]
 async fn test_post_plan_malformed_json_returns_400() {
     let app = test::init_service(build_app()).await;
     let req = test::TestRequest::post()

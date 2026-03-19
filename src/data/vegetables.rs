@@ -1,7 +1,6 @@
 use crate::models::vegetable::Month::*;
 use crate::models::vegetable::{
-    CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
-    Vegetable,
+    CalendarWindow, Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure, Vegetable,
 };
 
 pub fn get_all_vegetables() -> Vec<Vegetable> {

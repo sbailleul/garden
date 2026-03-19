@@ -141,6 +141,12 @@ pub enum LayoutCell {
         id: String,
         /// Number of plants per cell. Computed from the vegetable's spacing if absent.
         plants_per_cell: Option<u32>,
+        /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+        /// When provided, it is used to free the cell after harvest and compute
+        /// `estimatedHarvestDate` in the response.
+        #[serde(rename = "plantedDate", default)]
+        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
+        planted_date: Option<NaiveDate>,
     },
     /// The top-left (anchor) cell of a pre-planted multi-cell block.
     Overflowing {
@@ -151,6 +157,12 @@ pub enum LayoutCell {
         width_cells: Option<u32>,
         /// Block length in grid cells. Computed from the vegetable's spacing if absent.
         length_cells: Option<u32>,
+        /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+        /// When provided, it is used to free the cell after harvest and compute
+        /// `estimatedHarvestDate` in the response.
+        #[serde(rename = "plantedDate", default)]
+        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
+        planted_date: Option<NaiveDate>,
     },
     /// A continuation cell of a multi-cell block (skipped — anchor handles placement).
     Overflowed { covered_by: Coordinate },
@@ -228,8 +240,10 @@ pub enum PlannedCell {
         reason: String,
         plants_per_cell: u32,
         /// Estimated date the plant will be ready to harvest.
-        /// `None` when the plant was pre-placed in the request layout.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(
+            rename = "estimatedHarvestDate",
+            skip_serializing_if = "Option::is_none"
+        )]
         estimated_harvest_date: Option<NaiveDate>,
     },
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
@@ -241,8 +255,10 @@ pub enum PlannedCell {
         width_cells: u32,
         length_cells: u32,
         /// Estimated date the plant will be ready to harvest.
-        /// `None` when the plant was pre-placed in the request layout.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(
+            rename = "estimatedHarvestDate",
+            skip_serializing_if = "Option::is_none"
+        )]
         estimated_harvest_date: Option<NaiveDate>,
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
@@ -342,4 +358,28 @@ pub struct CompanionInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ErrorResponse {
     pub error: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_layout_cell_selfcontained_planted_date_deserializes_from_camel_case() {
+        let json = r#"{"type":"selfContained","id":"tomato","plantedDate":"2025-05-01"}"#;
+        let cell: LayoutCell = serde_json::from_str(json).expect("should deserialize");
+
+        match cell {
+            LayoutCell::SelfContained {
+                id, planted_date, ..
+            } => {
+                assert_eq!(id, "tomato");
+                assert_eq!(
+                    planted_date,
+                    Some(NaiveDate::from_ymd_opt(2025, 5, 1).unwrap())
+                );
+            }
+            other => panic!("expected SelfContained, got {other:?}"),
+        }
+    }
 }

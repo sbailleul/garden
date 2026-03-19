@@ -77,15 +77,20 @@ pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Vec<String>) -> 
 
 /// Removes any plant whose harvest week (`planted_week + ⌈days_to_harvest / 7⌉`) is ≤
 /// `current_week_idx`, freeing those cells for new plantings.
-pub fn harvest_plants(grid: &mut GardenGrid, current_week_idx: usize) {
+pub fn harvest_plants(
+    grid: &mut GardenGrid,
+    current_week_idx: usize,
+    _current_week_start: chrono::NaiveDate,
+) {
     for row in &mut grid.cells {
         for cell in row.iter_mut() {
             if let Some(ref v) = cell.vegetable {
-                let harvest_week = v.planted_at.week + (v.days_to_harvest as usize).div_ceil(7);
+                let harvest_week = v.planted_week + (v.days_to_harvest as usize).div_ceil(7);
                 if harvest_week <= current_week_idx {
                     trace!(
                         "harvest_plants: harvesting '{}' planted week {} (harvest_week={harvest_week})",
-                        v.id, v.planted_at.week
+                        v.id,
+                        v.planted_week
                     );
                     cell.vegetable = None;
                 }

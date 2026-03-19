@@ -7,7 +7,7 @@ use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::schedule::{harvest_plants, weeks_for_period};
 use crate::logic::{companion::companion_score, filter::filter_vegetables};
 use crate::models::{
-    garden::{GardenGrid, PlantedAt},
+    garden::GardenGrid,
     request::{
         LayoutCell, Period, PlanRequest, PlanResponse, PlannedCell, PreferenceEntry, WeeklyPlan,
     },
@@ -94,6 +94,7 @@ fn initialize_grid(
     rows: usize,
     cols: usize,
     layout: &[Vec<LayoutCell>],
+    planning_start: NaiveDate,
     warnings: &mut Vec<String>,
 ) -> GardenGrid {
     debug!("initialize_grid: building {rows}×{cols} grid from layout");
@@ -111,10 +112,16 @@ fn initialize_grid(
                 LayoutCell::SelfContained {
                     id,
                     plants_per_cell: ppc_input,
+                    planted_date,
                 } => {
                     if let Some(v) = get_vegetable_by_id(id) {
                         debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
+                        let adjusted_days = adjusted_days_to_harvest(
+                            v.days_to_harvest,
+                            *planted_date,
+                            planning_start,
+                        );
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -122,11 +129,10 @@ fn initialize_grid(
                             plants_per_cell: ppc,
                             span: 1,
                             anchor: Coordinate { row: r, col: c },
-                            planted_at: PlantedAt {
-                                week: 0,
-                                date: None,
-                            },
-                            days_to_harvest: v.days_to_harvest,
+                            planted_week: 0,
+                            days_to_harvest: adjusted_days,
+                            estimated_harvest_date: planted_date
+                                .map(|d| d + Duration::days(adjusted_days as i64)),
                         });
                     } else {
                         warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
@@ -143,6 +149,7 @@ fn initialize_grid(
                     plants_per_cell: ppc_input,
                     width_cells,
                     length_cells,
+                    planted_date,
                 } => {
                     if let Some(v) = get_vegetable_by_id(id) {
                         debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
@@ -150,6 +157,11 @@ fn initialize_grid(
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let w = width_cells.unwrap_or(span);
                         let l = length_cells.unwrap_or(span);
+                        let adjusted_days = adjusted_days_to_harvest(
+                            v.days_to_harvest,
+                            *planted_date,
+                            planning_start,
+                        );
                         grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
                             id: v.id.clone(),
                             name: v.name.clone(),
@@ -157,11 +169,10 @@ fn initialize_grid(
                             plants_per_cell: ppc,
                             span: w.max(l),
                             anchor: Coordinate { row: r, col: c },
-                            planted_at: PlantedAt {
-                                week: 0,
-                                date: None,
-                            },
-                            days_to_harvest: v.days_to_harvest,
+                            planted_week: 0,
+                            days_to_harvest: adjusted_days,
+                            estimated_harvest_date: planted_date
+                                .map(|d| d + Duration::days(adjusted_days as i64)),
                         });
                     } else {
                         warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
@@ -211,6 +222,25 @@ fn initialize_grid(
     }
 
     grid
+}
+
+/// Adjusts `days_to_harvest` for pre-placed vegetables based on user-provided
+/// planting date and planning start.
+///
+/// Formula requested by product:
+/// `planning_start - planted_date + base_days_to_harvest`.
+fn adjusted_days_to_harvest(
+    base_days_to_harvest: u32,
+    planted_date: Option<NaiveDate>,
+    planning_start: NaiveDate,
+) -> u32 {
+    match planted_date {
+        None => base_days_to_harvest,
+        Some(date) => {
+            let adjusted = (planning_start - date).num_days() + i64::from(base_days_to_harvest);
+            adjusted.clamp(0, i64::from(u32::MAX)) as u32
+        }
+    }
 }
 
 /// Returns `GridOccupancy(occupied, blocked)` cell counts for the given grid.
@@ -347,11 +377,11 @@ fn fill_block(
                     plants_per_cell: ppc,
                     span: span as u32,
                     anchor: coordinate,
-                    planted_at: PlantedAt {
-                        week: week_idx,
-                        date: Some(week_start),
-                    },
+                    planted_week: week_idx,
                     days_to_harvest: vegetable.days_to_harvest,
+                    estimated_harvest_date: Some(
+                        week_start + Duration::days(vegetable.days_to_harvest as i64),
+                    ),
                 });
         }
     }
@@ -517,13 +547,18 @@ pub fn plan_garden(
 
     let GridSize(rows, cols) = validate_layout(&request.layout)?;
 
-    let mut grid = initialize_grid(rows, cols, &request.layout, &mut warnings);
+    let planning_start = weeks
+        .first()
+        .map(|w| w.start)
+        .or_else(|| request.period.as_ref().map(|p| p.start))
+        .unwrap_or(NaiveDate::MIN);
+    let mut grid = initialize_grid(rows, cols, &request.layout, planning_start, &mut warnings);
     let preferences = request.preferences.as_deref().unwrap_or(&[]);
     let mut weekly_plans: Vec<WeeklyPlan> = Vec::with_capacity(weeks.len());
 
     for (week_idx, week) in weeks.into_iter().enumerate() {
         // Free cells occupied by plants that have matured by this week.
-        harvest_plants(&mut grid, week_idx);
+        harvest_plants(&mut grid, week_idx, week.start);
 
         // Filter candidates for the current week's month.
         let week_candidates = filter_vegetables(
@@ -644,10 +679,7 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
                             name: v.name.clone(),
                             reason: v.reason.clone(),
                             plants_per_cell: v.plants_per_cell,
-                            estimated_harvest_date: v
-                                .planted_at
-                                .date
-                                .map(|d| d + Duration::days(v.days_to_harvest as i64)),
+                            estimated_harvest_date: v.estimated_harvest_date,
                         }
                     }
                     Some(v) if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) => {
@@ -658,10 +690,7 @@ fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
                             plants_per_cell: v.plants_per_cell,
                             width_cells: v.span,
                             length_cells: v.span,
-                            estimated_harvest_date: v
-                                .planted_at
-                                .date
-                                .map(|d| d + Duration::days(v.days_to_harvest as i64)),
+                            estimated_harvest_date: v.estimated_harvest_date,
                         }
                     }
                     Some(v) => PlannedCell::Overflowed {
@@ -818,6 +847,7 @@ mod tests {
                     LayoutCell::SelfContained {
                         id: "tomato".into(),
                         plants_per_cell: None,
+                        planted_date: None,
                     },
                     LayoutCell::Empty,
                 ],
@@ -834,6 +864,86 @@ mod tests {
             Some("tomato"),
             "Existing cell must be preserved"
         );
+    }
+
+    #[test]
+    fn test_existing_layout_planted_date_updates_estimated_harvest_date() {
+        let planted = NaiveDate::from_ymd_opt(2025, 5, 1).unwrap();
+        let planning_start = NaiveDate::from_ymd_opt(2025, 6, 2).unwrap();
+        let req = PlanRequest {
+            period: Some(Period {
+                start: planning_start,
+                end: NaiveDate::from_ymd_opt(2025, 6, 8).unwrap(),
+            }),
+            sun: None,
+            soil: None,
+            region: None,
+            level: None,
+            preferences: None,
+            layout: vec![vec![LayoutCell::SelfContained {
+                id: "tomato".into(),
+                plants_per_cell: None,
+                planted_date: Some(planted),
+            }]],
+        };
+
+        let resp = plan_garden(vec![], &req).unwrap();
+        let tomato = get_vegetable_by_id("tomato").unwrap();
+        let expected_days =
+            (planning_start - planted).num_days() + i64::from(tomato.days_to_harvest);
+        let expected_harvest = planted + chrono::Duration::days(expected_days);
+
+        match &first_grid(&resp)[0][0] {
+            PlannedCell::SelfContained {
+                id,
+                estimated_harvest_date,
+                ..
+            } => {
+                assert_eq!(id, "tomato");
+                assert_eq!(*estimated_harvest_date, Some(expected_harvest));
+            }
+            other => panic!("expected SelfContained, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_existing_layout_harvest_date_is_shifted_by_planning_start_formula() {
+        let planning_start = NaiveDate::from_ymd_opt(2025, 6, 2).unwrap();
+        let planted = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+        let req = PlanRequest {
+            period: Some(Period {
+                start: planning_start,
+                end: NaiveDate::from_ymd_opt(2025, 6, 8).unwrap(),
+            }),
+            sun: None,
+            soil: None,
+            region: None,
+            level: None,
+            preferences: None,
+            layout: vec![vec![LayoutCell::SelfContained {
+                id: "tomato".into(),
+                plants_per_cell: None,
+                planted_date: Some(planted),
+            }]],
+        };
+
+        let resp = plan_garden(vec![], &req).unwrap();
+        let tomato = get_vegetable_by_id("tomato").unwrap();
+        let expected_days =
+            (planning_start - planted).num_days() + i64::from(tomato.days_to_harvest);
+        let expected_harvest = planted + chrono::Duration::days(expected_days);
+
+        match &first_grid(&resp)[0][0] {
+            PlannedCell::SelfContained {
+                id,
+                estimated_harvest_date,
+                ..
+            } => {
+                assert_eq!(id, "tomato");
+                assert_eq!(*estimated_harvest_date, Some(expected_harvest));
+            }
+            other => panic!("expected SelfContained, got {other:?}"),
+        }
     }
 
     #[test]
