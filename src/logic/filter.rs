@@ -67,14 +67,12 @@ fn filter_and_sort_internal(
         .iter()
         .filter(|v| {
             // Filter by region and/or month via calendars
-            let region_match = match (&request.region, month_filter) {
-                (Some(region), Some(month)) => v
+            let region_match = match month_filter {
+                Some(month) => v
                     .calendars
                     .iter()
-                    .any(|c| c.region == *region && is_active_month(c, month)),
-                (Some(region), None) => v.calendars.iter().any(|c| c.region == *region),
-                (None, Some(month)) => v.calendars.iter().any(|c| is_active_month(c, month)),
-                (None, None) => true,
+                    .any(|c| c.region == request.region && is_active_month(c, month)),
+                None => v.calendars.iter().any(|c| c.region == request.region),
             };
             if !region_match {
                 return false;
@@ -150,7 +148,7 @@ mod tests {
             }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
         }
@@ -253,7 +251,7 @@ mod tests {
     fn test_filter_by_region() {
         let db = get_all_vegetables();
         let req = PlanRequest {
-            region: Some(Region::Mountain),
+            region: Region::Mountain,
             ..make_request_for_month(5)
         };
         let result = filter_vegetables(&db, &req, Month::May);
@@ -273,7 +271,7 @@ mod tests {
         let req = PlanRequest {
             sun: Some(SunExposure::Shade),
             soil: Some(SoilType::Chalky),
-            region: Some(Region::Mountain),
+            region: Region::Mountain,
             level: Some(Level::Beginner),
             ..make_request_for_month(6)
         };

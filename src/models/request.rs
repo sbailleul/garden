@@ -211,7 +211,7 @@ pub struct PlanRequest {
     pub period: Option<Period>,
     pub sun: Option<SunExposure>,
     pub soil: Option<SoilType>,
-    pub region: Option<Region>,
+    pub region: Region,
     pub level: Option<Level>,
     /// Preferred vegetables with optional per-vegetable plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,

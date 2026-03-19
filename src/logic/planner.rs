@@ -744,7 +744,7 @@ mod tests {
     use crate::logic::filter::{filter_candidates_base, filter_vegetables};
     use crate::models::{
         request::{LayoutCell, Period, PlanRequest, PlannedCell},
-        vegetable::{Month, Season},
+        vegetable::{Month, Region, Season},
     };
     use chrono::NaiveDate;
 
@@ -777,7 +777,7 @@ mod tests {
             period: Some(season_to_dates(&season)),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::Empty; cols]; rows],
@@ -877,7 +877,7 @@ mod tests {
             }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::SelfContained {
@@ -917,7 +917,7 @@ mod tests {
             }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::SelfContained {
@@ -1205,7 +1205,7 @@ mod tests {
             period: Some(Period { start, end }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::Empty]],
@@ -1245,7 +1245,7 @@ mod tests {
             period: Some(Period { start, end }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::Blocked]],
@@ -1294,7 +1294,7 @@ mod tests {
             period: None,
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::Empty; 3]; 3],
@@ -1338,7 +1338,7 @@ mod tests {
             }),
             sun: None,
             soil: None,
-            region: None,
+            region: Region::Temperate,
             level: None,
             preferences: None,
             layout: vec![vec![LayoutCell::Empty; 3]; 3],

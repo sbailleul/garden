@@ -179,7 +179,7 @@ Computes the optimal garden layout.
 }
 ```
 
-Required field: `layout`. All others are optional.
+Required fields: `layout`, `region`. All others are optional.
 
 The `layout` field is a 2-D array that simultaneously defines grid dimensions and cell state.
 Each cell is a JSON object with a `type` discriminator:
@@ -201,7 +201,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `layout` | `LayoutCell[][]` | Grid encoding size, blocked zones, and pre-placed vegetables |
 | `sun` | `SunExposure?` | Sun exposure filter |
 | `soil` | `SoilType?` | Soil type filter |
-| `region` | `Region?` | Climate region filter |
+| `region` | `Region` | Climate region (required) |
 | `level` | `Level?` | Skill level filter |
 | `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of **plants** (placements) — each plant may occupy more than one cell |
 
