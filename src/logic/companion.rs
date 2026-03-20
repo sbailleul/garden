@@ -19,6 +19,7 @@ pub fn companion_score(vegetable: &Vegetable, neighbor_ids: &[&str]) -> i32 {
 }
 
 /// Returns true if the two vegetables are compatible (neither appears in the other's bad_companions list).
+#[cfg(test)]
 pub fn is_compatible(a: &Vegetable, b: &Vegetable) -> bool {
     !a.bad_companions.iter().any(|c| c == &b.id) && !b.bad_companions.iter().any(|c| c == &a.id)
 }

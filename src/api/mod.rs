@@ -1,3 +1,3 @@
-pub mod handlers;
-pub mod openapi;
+mod handlers;
+mod openapi;
 pub mod routes;

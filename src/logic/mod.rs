@@ -1,4 +1,9 @@
-pub mod companion;
+mod allocation;
+mod companion;
 pub mod filter;
+mod grid;
+mod helpers;
+mod placement;
 pub mod planner;
-pub mod schedule;
+mod response;
+mod schedule;

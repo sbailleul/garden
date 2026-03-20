@@ -1,6 +1,6 @@
 use chrono::{Datelike, Duration, Local};
 
-use crate::models::{garden::GardenGrid, request::Period, warnings::Warnings};
+use crate::models::{request::Period, warnings::Warnings};
 
 impl Warnings {
     /// Adds schedule warning when the requested period is normalized to full weeks.
@@ -82,23 +82,6 @@ pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Warnings) -> Vec
 
 /// Removes any plant whose harvest week (`planted_week + ⌈days_to_harvest / 7⌉`) is ≤
 /// `current_week_idx`, freeing those cells for new plantings.
-pub fn harvest_plants(
-    grid: &mut GardenGrid,
-    current_week_idx: usize,
-    _current_week_start: chrono::NaiveDate,
-) {
-    for row in &mut grid.cells {
-        for cell in row.iter_mut() {
-            if let Some(ref v) = cell.vegetable {
-                let harvest_week = v.planted_week + (v.days_to_harvest as usize).div_ceil(7);
-                if harvest_week <= current_week_idx {
-                    cell.vegetable = None;
-                }
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

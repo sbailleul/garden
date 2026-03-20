@@ -29,6 +29,13 @@ For enum serialization:
 
 Prefer named structs over bare tuples and tuple structs when a pair or group of values has a specific meaning. For example, use `struct WeekRange { start: NaiveDate, end: NaiveDate }` rather than `(NaiveDate, NaiveDate)` or `struct WeekRange(NaiveDate, NaiveDate)`. This improves readability, enables `impl` blocks, and makes function signatures and field accesses self-documenting.
 
+## Module visibility
+
+Export modules only when necessary.
+- Default to private modules (`mod ...`).
+- Use `pub mod ...` only for modules that must be accessed from outside their parent module.
+- Keep internal implementation modules private and expose only the minimal public API.
+
 ## HATEOAS
 
 Every API response must include a `_links` object following the HAL convention. Each link is an object with an `href` field and a `method` field indicating the HTTP method to use. Required links per endpoint:
