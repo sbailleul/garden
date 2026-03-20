@@ -1,7 +1,7 @@
 use chrono::{Datelike, Duration, Local};
 use log::{trace, warn};
 
-use crate::models::{garden::GardenGrid, request::Period};
+use crate::models::{garden::GardenGrid, request::Period, warnings::Warnings};
 
 /// Returns `(monday, sunday)` for the current calendar week.
 pub fn current_week() -> Period {
@@ -57,7 +57,7 @@ pub fn normalize_period(period: &Period) -> NormalizedPeriod {
 ///
 /// Returns the ordered `Vec<Period>` and any warning messages emitted
 /// (e.g. when the period was adjusted to full-week boundaries).
-pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Vec<String>) -> Vec<Period> {
+pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Warnings) -> Vec<Period> {
     let period = period.clone().unwrap_or_else(current_week);
 
     let normalized = normalize_period(&period);
@@ -66,7 +66,7 @@ pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Vec<String>) -> 
             "weeks_for_period: period adjusted — {0} → {1} (was {2} → {3})",
             normalized.period.start, normalized.period.end, period.start, period.end
         );
-        warnings.push(format!(
+        warnings.add(format!(
             "Planning period adjusted to full weeks: {0} (Monday) → {1} (Sunday).",
             normalized.period.start, normalized.period.end
         ));

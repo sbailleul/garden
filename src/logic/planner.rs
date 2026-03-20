@@ -11,6 +11,7 @@ use crate::models::{
     request::{LayoutCell, Period, PlanRequest, PreferenceEntry},
     response::{PlanResponse, PlannedCell, WeeklyPlan},
     vegetable::{Month, Vegetable},
+    warnings::Warnings,
     Coordinate, Matrix,
 };
 
@@ -94,7 +95,7 @@ fn initialize_grid(
     cols: usize,
     layout: &[Vec<LayoutCell>],
     planning_start: NaiveDate,
-    warnings: &mut Vec<String>,
+    warnings: &mut Warnings,
 ) -> GardenGrid {
     debug!("initialize_grid: building {rows}×{cols} grid from layout");
     let mut grid = GardenGrid::new(rows, cols);
@@ -135,7 +136,7 @@ fn initialize_grid(
                         });
                     } else {
                         warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
-                        warnings.push(format!(
+                        warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."
                         ));
                     }
@@ -175,7 +176,7 @@ fn initialize_grid(
                         });
                     } else {
                         warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
-                        warnings.push(format!(
+                        warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."
                         ));
                     }
@@ -206,7 +207,7 @@ fn initialize_grid(
                 warn!(
                     "initialize_grid: [{position_row},{position_col}] Overflowed references [{covered_by_row},{covered_by_col}] which has no planted anchor, skipping"
                 );
-                warnings.push(format!(
+                warnings.add(format!(
                     "Continuation cell [{position_row},{position_col}] references an unplanted anchor [{covered_by_row},{covered_by_col}], skipped."
                 ));
             }
@@ -214,7 +215,7 @@ fn initialize_grid(
             warn!(
                 "initialize_grid: [{position_row},{position_col}] Overflowed references out-of-bounds anchor [{covered_by_row},{covered_by_col}]"
             );
-            warnings.push(format!(
+            warnings.add(format!(
                 "Continuation cell [{position_row},{position_col}] references out-of-bounds anchor [{covered_by_row},{covered_by_col}], skipped."
             ));
         }
@@ -529,7 +530,7 @@ pub fn plan_garden(
     base_candidates: Vec<Vegetable>,
     request: &PlanRequest,
 ) -> Result<PlanResponse, String> {
-    let mut warnings: Vec<String> = Vec::new();
+    let mut warnings = Warnings::new();
 
     let weeks = weeks_for_period(&request.period, &mut warnings);
 
@@ -609,9 +610,9 @@ pub fn plan_garden(
     }
 
     if weekly_plans.is_empty() {
-        warnings.push("No weeks to plan in the provided date range.".into());
-    } else if let Some(w) = empty_cells_warning(&grid) {
-        warnings.push(w);
+        warnings.add("No weeks to plan in the provided date range.");
+    } else {
+        warnings.add_optional(empty_cells_warning(&grid));
     }
 
     let weekly_plans = merge_consecutive_plans(weekly_plans);
@@ -626,7 +627,7 @@ pub fn plan_garden(
         rows,
         cols,
         weeks: weekly_plans,
-        warnings,
+        warnings: warnings.into_vec(),
     })
 }
 

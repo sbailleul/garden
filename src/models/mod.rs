@@ -6,6 +6,7 @@ pub mod hateoas;
 pub mod request;
 pub mod response;
 pub mod vegetable;
+pub mod warnings;
 
 /// Convenience alias for a two-dimensional grid.
 pub type Matrix<T> = Vec<Vec<T>>;
