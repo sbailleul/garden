@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use chrono::{Datelike, Duration, NaiveDate};
-use log::{debug, info, trace, warn};
 
 use crate::data::vegetables::get_vegetable_by_id;
 use crate::logic::schedule::{harvest_plants, weeks_for_period};
@@ -23,6 +22,25 @@ struct GridOccupancy(usize, usize);
 
 /// A deferred continuation cell and its anchor coordinate: `(position, anchor)`.
 struct DeferredCell(Coordinate, Coordinate);
+
+impl Warnings {
+    /// Planner warning text when no week can be generated for the period.
+    fn no_weeks_to_plan() -> String {
+        "No weeks to plan in the provided date range.".to_string()
+    }
+
+    /// Adds planner warning for an empty planning period.
+    fn add_no_weeks_to_plan(&mut self) {
+        self.add(Self::no_weeks_to_plan());
+    }
+
+    /// Planner warning text when non-blocked cells remain empty.
+    fn empty_cells_not_filled(empty_cells: usize) -> String {
+        format!(
+            "{empty_cells} empty cell(s): not enough compatible vegetables to fill the entire grid."
+        )
+    }
+}
 
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
@@ -75,15 +93,12 @@ fn compute_explicit_allocation(
 /// Returns `GridSize(rows, cols)` on success.
 fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<GridSize, String> {
     if layout.is_empty() {
-        warn!("validate_layout: rejected — layout has no rows");
         return Err("Layout must contain at least one row.".into());
     }
     let cols = layout[0].len();
     if cols == 0 {
-        warn!("validate_layout: rejected — first row is empty");
         return Err("Layout rows must not be empty.".into());
     }
-    debug!("validate_layout: {}×{} grid accepted", layout.len(), cols);
     Ok(GridSize(layout.len(), cols))
 }
 
@@ -97,7 +112,6 @@ fn initialize_grid(
     planning_start: NaiveDate,
     warnings: &mut Warnings,
 ) -> GardenGrid {
-    debug!("initialize_grid: building {rows}×{cols} grid from layout");
     let mut grid = GardenGrid::new(rows, cols);
     // Continuation cells are collected here and resolved after all anchors are placed.
     let mut deferred: Vec<DeferredCell> = Vec::new();
@@ -106,7 +120,6 @@ fn initialize_grid(
         for (c, cell) in row.iter().enumerate() {
             match cell {
                 LayoutCell::Blocked => {
-                    trace!("initialize_grid: [{r},{c}] marked as blocked");
                     grid.cells[r][c].blocked = true;
                 }
                 LayoutCell::SelfContained {
@@ -115,7 +128,6 @@ fn initialize_grid(
                     planted_date,
                 } => {
                     if let Some(v) = get_vegetable_by_id(id) {
-                        debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let adjusted_days = adjusted_days_to_harvest(
                             v.days_to_harvest,
@@ -135,7 +147,6 @@ fn initialize_grid(
                                 .map(|d| d + Duration::days(adjusted_days as i64)),
                         });
                     } else {
-                        warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
                         warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."
                         ));
@@ -152,7 +163,6 @@ fn initialize_grid(
                     planted_date,
                 } => {
                     if let Some(v) = get_vegetable_by_id(id) {
-                        debug!("initialize_grid: [{r},{c}] pre-filled with '{}'", v.id);
                         let span = cell_span(v.spacing_cm);
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let w = width_cells.unwrap_or(span);
@@ -175,7 +185,6 @@ fn initialize_grid(
                                 .map(|d| d + Duration::days(adjusted_days as i64)),
                         });
                     } else {
-                        warn!("initialize_grid: vegetable '{id}' not found, skipping [{r},{c}]");
                         warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."
                         ));
@@ -198,23 +207,13 @@ fn initialize_grid(
         } = covered_by;
         if covered_by_row < rows && covered_by_col < cols {
             if let Some(anchor_veg) = grid.cells[covered_by_row][covered_by_col].vegetable.clone() {
-                trace!(
-                    "initialize_grid: [{position_row},{position_col}] continuation of anchor [{covered_by_row},{covered_by_col}] ('{}')",
-                    anchor_veg.id
-                );
                 grid.cells[position_row][position_col].vegetable = Some(anchor_veg);
             } else {
-                warn!(
-                    "initialize_grid: [{position_row},{position_col}] Overflowed references [{covered_by_row},{covered_by_col}] which has no planted anchor, skipping"
-                );
                 warnings.add(format!(
                     "Continuation cell [{position_row},{position_col}] references an unplanted anchor [{covered_by_row},{covered_by_col}], skipped."
                 ));
             }
         } else {
-            warn!(
-                "initialize_grid: [{position_row},{position_col}] Overflowed references out-of-bounds anchor [{covered_by_row},{covered_by_col}]"
-            );
             warnings.add(format!(
                 "Continuation cell [{position_row},{position_col}] references out-of-bounds anchor [{covered_by_row},{covered_by_col}], skipped."
             ));
@@ -248,7 +247,6 @@ fn count_grid_occupancy(grid: &GardenGrid) -> GridOccupancy {
     let flat = || grid.cells.iter().flat_map(|r| r.iter());
     let occupied = flat().filter(|c| c.vegetable.is_some()).count();
     let blocked = flat().filter(|c| c.blocked).count();
-    debug!("count_grid_occupancy: {occupied} occupied, {blocked} blocked");
     GridOccupancy(occupied, blocked)
 }
 
@@ -261,11 +259,6 @@ fn build_placement_queue<'a>(
     preferences: &[PreferenceEntry],
     free_cells: usize,
 ) -> (Vec<&'a Vegetable>, HashMap<String, usize>) {
-    debug!(
-        "build_placement_queue: {} candidates, {} free cells",
-        candidates.len(),
-        free_cells
-    );
     let allocation = compute_explicit_allocation(candidates, preferences, free_cells);
 
     // Convert cell allocations → placement counts (one placement = span² cells).
@@ -280,13 +273,6 @@ fn build_placement_queue<'a>(
             } else {
                 0
             };
-            debug!(
-                "build_placement_queue: '{}' → {} cell(s) → {} placement(s) (span {})",
-                v.id,
-                cells,
-                n,
-                cell_span(v.spacing_cm)
-            );
             (v.id.clone(), n)
         })
         .collect();
@@ -300,8 +286,6 @@ fn build_placement_queue<'a>(
             std::iter::repeat_n(v, n)
         })
         .collect();
-
-    debug!("build_placement_queue: queue length = {}", queue.len());
     (queue, placements_map)
 }
 
@@ -327,26 +311,10 @@ fn find_best_block(
                 .map(|v| v.id.as_str())
                 .collect();
             let score = companion_score(vegetable, &neighbor_ids);
-            trace!(
-                "find_best_block: '{}' at [{r},{c}] span={span} score={score}",
-                vegetable.id
-            );
             if best.is_none_or(|(_, s)| score > s) {
                 best = Some((Coordinate { row: r, col: c }, score));
             }
         }
-    }
-
-    if let Some((Coordinate { row, col }, s)) = best {
-        debug!(
-            "find_best_block: best block for '{}' at [{row},{col}] score={s}",
-            vegetable.id
-        );
-    } else {
-        debug!(
-            "find_best_block: no free {span}×{span} block for '{}'",
-            vegetable.id
-        );
     }
 
     best
@@ -363,10 +331,6 @@ fn fill_block(
 ) {
     let span = cell_span(vegetable.spacing_cm) as usize;
     let ppc = plants_per_cell(vegetable.spacing_cm);
-    debug!(
-        "fill_block: placing '{}' at [{},{}] span={span} plants_per_cell={ppc} week={week_idx}",
-        vegetable.id, coordinate.row, coordinate.col
-    );
     for dr in 0..span {
         for dc in 0..span {
             grid.cells[coordinate.row + dr][coordinate.col + dc].vegetable =
@@ -414,10 +378,6 @@ fn place_candidates(
     'outer: for vegetable in queue {
         let max_count = placements_map.get(&vegetable.id).copied().unwrap_or(0);
         if placed_counts.get(&vegetable.id).copied().unwrap_or(0) >= max_count {
-            trace!(
-                "place_candidates: '{}' reached its cap of {max_count}, skipping",
-                vegetable.id
-            );
             continue;
         }
 
@@ -425,14 +385,9 @@ fn place_candidates(
 
         match find_best_block(grid, vegetable, rows, cols) {
             None if span == 1 => {
-                debug!("place_candidates: no free cells left — stopping early");
                 break 'outer; // no free single cell — grid is full
             }
             None => {
-                debug!(
-                    "place_candidates: no {span}×{span} block for '{}', skipping",
-                    vegetable.id
-                );
                 continue; // no span×span block; smaller plants may still fit
             }
             Some((coordinate, score)) => {
@@ -451,8 +406,6 @@ fn place_candidates(
             }
         }
     }
-
-    info!("place_candidates: finished — cumulative score = {global_score}");
     global_score
 }
 
@@ -472,10 +425,8 @@ fn fill_remaining_cells(
     week_start: NaiveDate,
 ) -> i32 {
     let mut total_score: i32 = 0;
-    let mut pass = 0usize;
 
     loop {
-        pass += 1;
         let mut placements_this_pass = 0usize;
 
         for vegetable in candidates {
@@ -489,10 +440,6 @@ fn fill_remaining_cells(
                         .map(|v| v.name.clone())
                         .collect();
                     let reason = build_reason(vegetable, &neighbor_names, score);
-                    debug!(
-                        "fill_remaining_cells pass {pass}: placing '{}' at [{},{}] score={score}",
-                        vegetable.id, coordinate.row, coordinate.col
-                    );
                     fill_block(grid, vegetable, coordinate, &reason, week_idx, week_start);
                     total_score += score;
                     placements_this_pass += 1;
@@ -500,14 +447,10 @@ fn fill_remaining_cells(
             }
         }
 
-        debug!("fill_remaining_cells pass {pass}: {placements_this_pass} placement(s) made");
-
         if placements_this_pass == 0 {
             break;
         }
     }
-
-    info!("fill_remaining_cells: done after {pass} pass(es), score gained = {total_score}");
     total_score
 }
 fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
@@ -517,12 +460,7 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
         .flat_map(|r| r.iter())
         .filter(|c| c.vegetable.is_none() && !c.blocked)
         .count();
-    if empty > 0 {
-        warn!("empty_cells_warning: {empty} cell(s) left unplanted");
-    }
-    (empty > 0).then(|| {
-        format!("{empty} empty cell(s): not enough compatible vegetables to fill the entire grid.")
-    })
+    (empty > 0).then(|| Warnings::empty_cells_not_filled(empty))
 }
 
 /// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
@@ -533,17 +471,6 @@ pub fn plan_garden(
     let mut warnings = Warnings::new();
 
     let weeks = weeks_for_period(&request.period, &mut warnings);
-
-    info!(
-        "plan_garden: starting — {} candidate(s), {} → {}",
-        base_candidates.len(),
-        weeks
-            .first()
-            .map_or_else(|| "-".to_string(), |w| w.start.to_string()),
-        weeks
-            .last()
-            .map_or_else(|| "-".to_string(), |w| w.end.to_string()),
-    );
 
     let GridSize(rows, cols) = validate_layout(&request.layout)?;
 
@@ -570,12 +497,6 @@ pub fn plan_garden(
         let GridOccupancy(occupied, blocked_count) = count_grid_occupancy(&grid);
         let available_cells = (rows * cols).saturating_sub(blocked_count);
         let free_cells = available_cells.saturating_sub(occupied);
-        info!(
-            "plan_garden week {week_idx} ({}): {free_cells} free, month={}, {} candidate(s)",
-            week.start,
-            week.start.month(),
-            week_candidates.len()
-        );
 
         let week_score = if free_cells > 0 && !week_candidates.is_empty() {
             // Phase 1: place vegetables with an explicit quantity (in preference order).
@@ -610,18 +531,12 @@ pub fn plan_garden(
     }
 
     if weekly_plans.is_empty() {
-        warnings.add("No weeks to plan in the provided date range.");
+        warnings.add_no_weeks_to_plan();
     } else {
         warnings.add_optional(empty_cells_warning(&grid));
     }
 
     let weekly_plans = merge_consecutive_plans(weekly_plans);
-
-    info!(
-        "plan_garden: done — {} week(s), warnings={}",
-        weekly_plans.len(),
-        warnings.len()
-    );
 
     Ok(PlanResponse {
         rows,

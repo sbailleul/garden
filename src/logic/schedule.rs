@@ -1,7 +1,19 @@
 use chrono::{Datelike, Duration, Local};
-use log::{trace, warn};
 
 use crate::models::{garden::GardenGrid, request::Period, warnings::Warnings};
+
+impl Warnings {
+    /// Adds schedule warning when the requested period is normalized to full weeks.
+    fn add_period_adjusted_to_full_weeks(
+        &mut self,
+        start: chrono::NaiveDate,
+        end: chrono::NaiveDate,
+    ) {
+        self.add(format!(
+            "Planning period adjusted to full weeks: {start} (Monday) → {end} (Sunday)."
+        ));
+    }
+}
 
 /// Returns `(monday, sunday)` for the current calendar week.
 pub fn current_week() -> Period {
@@ -62,14 +74,7 @@ pub fn weeks_for_period(period: &Option<Period>, warnings: &mut Warnings) -> Vec
 
     let normalized = normalize_period(&period);
     if normalized.has_changed {
-        warn!(
-            "weeks_for_period: period adjusted — {0} → {1} (was {2} → {3})",
-            normalized.period.start, normalized.period.end, period.start, period.end
-        );
-        warnings.add(format!(
-            "Planning period adjusted to full weeks: {0} (Monday) → {1} (Sunday).",
-            normalized.period.start, normalized.period.end
-        ));
+        warnings.add_period_adjusted_to_full_weeks(normalized.period.start, normalized.period.end);
     }
 
     generate_weeks(normalized.period)
@@ -87,11 +92,6 @@ pub fn harvest_plants(
             if let Some(ref v) = cell.vegetable {
                 let harvest_week = v.planted_week + (v.days_to_harvest as usize).div_ceil(7);
                 if harvest_week <= current_week_idx {
-                    trace!(
-                        "harvest_plants: harvesting '{}' planted week {} (harvest_week={harvest_week})",
-                        v.id,
-                        v.planted_week
-                    );
                     cell.vegetable = None;
                 }
             }
