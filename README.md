@@ -183,6 +183,10 @@ Computes the optimal garden layout.
     { "id": "tomato", "quantity": 3 },
     { "id": "basil" }
   ],
+  "sown": {
+    "tomato": [{"sowingDate": "2025-03-15", "seedsSown": 10}],
+    "pepper": [{"sowingDate": "2025-02-20", "seedsSown": 6}, {"seedsSown": 4}]
+  },
   "layout": [
     [
       { "type": "SelfContained", "id": "tomato", "plantedDate": "2025-05-01" },
@@ -223,6 +227,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `region` | `Region` | Climate region (required) |
 | `level` | `Level?` | Skill level filter |
 | `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of **plants** (placements) — each plant may occupy more than one cell |
+| `sown` | `{ [id: string]: { sowingDate?: string, seedsSown: number }[] }?` | Vegetables already sown from seed, keyed by vegetable id — each entry is a list of sowing batches with an optional date and a seed count |
 
 **Enums:**
 

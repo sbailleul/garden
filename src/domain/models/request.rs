@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use utoipa::ToSchema;
 
 use crate::domain::models::{
@@ -77,6 +78,19 @@ pub struct Period {
     pub end: NaiveDate,
 }
 
+/// One sowing event: an optional date and a seed count.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SowingRecord {
+    /// Date when the seeds were sown (ISO 8601, e.g. `"2025-03-15"`).
+    /// When omitted the planner uses the vegetable's regional sowing calendar.
+    #[serde(default)]
+    #[schema(value_type = Option<String>, format = Date, example = "2025-03-15")]
+    pub sowing_date: Option<NaiveDate>,
+    /// Number of seeds (or seedlings) that were sown in this batch.
+    pub seeds_sown: u32,
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequest {
@@ -90,6 +104,11 @@ pub struct PlanRequest {
     pub level: Option<Level>,
     /// Preferred vegetables with optional per-vegetable plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,
+    /// Vegetables already sown from seed, keyed by vegetable id.
+    /// Each entry is a list of sowing batches, each with an optional date and a seed count.
+    /// Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`
+    #[serde(default)]
+    pub sown: HashMap<String, Vec<SowingRecord>>,
     /// Combined grid layout — defines dimensions and pre-filled cells.
     /// Each cell is a `LayoutCell` object: `{"type":"Empty"}` (free),
     /// `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).

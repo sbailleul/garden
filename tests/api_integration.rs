@@ -521,3 +521,23 @@ async fn test_post_plan_returns_links() {
     );
     assert_eq!(links["vegetables"]["method"].as_str().unwrap(), "GET");
 }
+
+#[actix_web::test]
+async fn test_post_plan_with_sown_entries_is_accepted() {
+    let app = test::init_service(build_app()).await;
+    let payload = serde_json::json!({
+        "period": {"start": "2025-06-01", "end": "2025-08-31"},
+        "region": "Temperate",
+        "sown": {
+            "tomato": [{"sowingDate": "2025-03-15", "seedsSown": 10}],
+            "pepper": [{"sowingDate": "2025-02-20", "seedsSown": 6}, {"seedsSown": 4}]
+        },
+        "layout": null_layout(4, 4)
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/plan")
+        .set_json(&payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+}

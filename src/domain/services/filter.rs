@@ -151,6 +151,7 @@ mod tests {
             region: Region::Temperate,
             level: None,
             preferences: None,
+            sown: std::collections::HashMap::new(),
         }
     }
 
