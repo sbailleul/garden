@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::{
+use crate::domain::models::{
     vegetable::{Region, SoilType, SunExposure},
     Coordinate, Matrix,
 };

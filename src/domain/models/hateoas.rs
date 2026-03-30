@@ -4,7 +4,7 @@ use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::response::{CompanionsResponse, PlanResponse, VegetableResponse};
+use crate::domain::models::response::{CompanionsResponse, PlanResponse, VegetableResponse};
 
 /// Serde adapter for `actix_web::http::Method` (serialises as its uppercase string).
 mod method_serde {

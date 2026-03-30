@@ -2,8 +2,10 @@ use actix_web::web;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::api::handlers::{get_companions, get_vegetable, list_vegetables, post_plan};
-use crate::api::openapi::ApiDoc;
+use crate::adapters::inbound::http::handlers::{
+    get_companions, get_vegetable, list_vegetables, post_plan,
+};
+use crate::adapters::inbound::http::openapi::ApiDoc;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(

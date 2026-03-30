@@ -1,6 +1,6 @@
 use utoipa::OpenApi;
 
-use crate::models::{
+use crate::domain::models::{
     hateoas::{
         CompanionsApiResponse, Link, Pagination, PlanApiResponse, VegetableApiResponse,
         VegetablesApiResponse,
@@ -26,10 +26,10 @@ use crate::models::{
         license(name = "MIT"),
     ),
     paths(
-        crate::api::handlers::vegetables::list_vegetables,
-        crate::api::handlers::vegetables::get_vegetable,
-        crate::api::handlers::vegetables::get_companions,
-        crate::api::handlers::plan::post_plan,
+        crate::adapters::inbound::http::handlers::vegetables::list_vegetables,
+        crate::adapters::inbound::http::handlers::vegetables::get_vegetable,
+        crate::adapters::inbound::http::handlers::vegetables::get_companions,
+        crate::adapters::inbound::http::handlers::plan::post_plan,
     ),
     components(
         schemas(

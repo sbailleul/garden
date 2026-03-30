@@ -1,6 +1,6 @@
 use chrono::{Datelike, Duration, Local};
 
-use crate::models::{request::Period, warnings::Warnings};
+use crate::domain::models::{request::Period, warnings::Warnings};
 
 impl Warnings {
     /// Adds schedule warning when the requested period is normalized to full weeks.

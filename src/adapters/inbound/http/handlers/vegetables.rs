@@ -1,15 +1,18 @@
 use actix_web::{get, http::Method, web, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::models::hateoas::{CompanionsApiResponse, VegetableApiResponse};
+use crate::domain::models::hateoas::{CompanionsApiResponse, VegetableApiResponse};
 #[allow(unused_imports)]
-use crate::models::response::ErrorResponse;
+use crate::domain::models::response::ErrorResponse;
 
 use crate::{
-    data::vegetables::{get_all_vegetables, get_vegetable_by_id},
-    models::{
+    application::{
+        ports::vegetable_repository::VegetableRepository,
+        use_cases::vegetables::{GetCompanionsUseCase, GetVegetableUseCase, ListVegetablesUseCase},
+    },
+    domain::models::{
         hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
-        response::{CompanionInfo, CompanionsResponse, VegetableResponse},
+        response::{CompanionsResponse, VegetableResponse},
     },
 };
 
@@ -25,8 +28,8 @@ use crate::{
     )
 )]
 #[get("/vegetables")]
-pub async fn list_vegetables() -> impl Responder {
-    let vegetables = get_all_vegetables();
+pub async fn list_vegetables(repo: web::Data<Box<dyn VegetableRepository>>) -> impl Responder {
+    let vegetables = ListVegetablesUseCase::new(repo.as_ref().as_ref()).execute();
     let total = vegetables.len();
     let items: Vec<ApiResponse<VegetableResponse>> = vegetables
         .into_iter()
@@ -73,9 +76,12 @@ pub async fn list_vegetables() -> impl Responder {
     )
 )]
 #[get("/vegetables/{id}")]
-pub async fn get_vegetable(path: web::Path<String>) -> impl Responder {
+pub async fn get_vegetable(
+    path: web::Path<String>,
+    repo: web::Data<Box<dyn VegetableRepository>>,
+) -> impl Responder {
     let id = path.into_inner();
-    match get_vegetable_by_id(&id) {
+    match GetVegetableUseCase::new(repo.as_ref().as_ref()).execute(&id) {
         None => HttpResponse::NotFound().json(serde_json::json!({
             "error": format!("Vegetable '{}' not found.", id)
         })),
@@ -110,37 +116,16 @@ pub async fn get_vegetable(path: web::Path<String>) -> impl Responder {
     )
 )]
 #[get("/vegetables/{id}/companions")]
-pub async fn get_companions(path: web::Path<String>) -> impl Responder {
+pub async fn get_companions(
+    path: web::Path<String>,
+    repo: web::Data<Box<dyn VegetableRepository>>,
+) -> impl Responder {
     let id = path.into_inner();
-    let all = get_all_vegetables();
-
-    match get_vegetable_by_id(&id) {
+    match GetCompanionsUseCase::new(repo.as_ref().as_ref()).execute(&id) {
         None => HttpResponse::NotFound().json(serde_json::json!({
             "error": format!("Vegetable '{}' not found.", id)
         })),
-        Some(vegetable) => {
-            let good: Vec<CompanionInfo> = vegetable
-                .good_companions
-                .iter()
-                .filter_map(|cid| {
-                    all.iter().find(|v| &v.id == cid).map(|v| CompanionInfo {
-                        id: v.id.clone(),
-                        name: v.name.clone(),
-                    })
-                })
-                .collect();
-
-            let bad: Vec<CompanionInfo> = vegetable
-                .bad_companions
-                .iter()
-                .filter_map(|cid| {
-                    all.iter().find(|v| &v.id == cid).map(|v| CompanionInfo {
-                        id: v.id.clone(),
-                        name: v.name.clone(),
-                    })
-                })
-                .collect();
-
+        Some(data) => {
             let mut links = std::collections::HashMap::new();
             links.insert(
                 "self".into(),
@@ -152,10 +137,10 @@ pub async fn get_companions(path: web::Path<String>) -> impl Responder {
             );
             HttpResponse::Ok().json(ApiResponse::new(
                 CompanionsResponse {
-                    id: vegetable.id,
-                    name: vegetable.name,
-                    good,
-                    bad,
+                    id: data.vegetable.id,
+                    name: data.vegetable.name,
+                    good: data.good,
+                    bad: data.bad,
                 },
                 links,
             ))

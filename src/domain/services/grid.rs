@@ -1,8 +1,9 @@
 use chrono::{Duration, NaiveDate};
 
-use crate::data::vegetables::get_vegetable_by_id;
-use crate::logic::helpers::{adjusted_days_to_harvest, cell_span, plants_per_cell};
-use crate::models::{garden::GardenGrid, request::LayoutCell, warnings::Warnings, Coordinate};
+use crate::domain::models::{
+    garden::GardenGrid, request::LayoutCell, vegetable::Vegetable, warnings::Warnings, Coordinate,
+};
+use crate::domain::services::helpers::{adjusted_days_to_harvest, cell_span, plants_per_cell};
 
 /// Grid dimensions returned by layout validation: `(rows, cols)`.
 pub struct GridSize(pub usize, pub usize);
@@ -29,11 +30,13 @@ pub fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<GridSize, String> {
 /// Creates a blank grid and pre-fills it from the unified layout array:
 /// blocked zones (`true`) and pre-placed vegetables (`"id"`).
 /// Returns the grid and any warnings produced (e.g. unknown vegetable IDs).
+/// The `lookup` closure resolves a vegetable ID to a `Vegetable` without any I/O dependency.
 pub fn initialize_grid(
     rows: usize,
     cols: usize,
     layout: &[Vec<LayoutCell>],
     planning_start: NaiveDate,
+    lookup: impl Fn(&str) -> Option<Vegetable>,
     warnings: &mut Warnings,
 ) -> GardenGrid {
     let mut grid = GardenGrid::new(rows, cols);
@@ -51,25 +54,26 @@ pub fn initialize_grid(
                     plants_per_cell: ppc_input,
                     planted_date,
                 } => {
-                    if let Some(v) = get_vegetable_by_id(id) {
+                    if let Some(v) = lookup(id) {
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let adjusted_days = adjusted_days_to_harvest(
                             v.days_to_harvest,
                             *planted_date,
                             planning_start,
                         );
-                        grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
-                            id: v.id.clone(),
-                            name: v.name.clone(),
-                            reason: "Present in the existing layout.".into(),
-                            plants_per_cell: ppc,
-                            span: 1,
-                            anchor: Coordinate { row: r, col: c },
-                            planted_week: 0,
-                            days_to_harvest: adjusted_days,
-                            estimated_harvest_date: planted_date
-                                .map(|d| d + Duration::days(adjusted_days as i64)),
-                        });
+                        grid.cells[r][c].vegetable =
+                            Some(crate::domain::models::garden::PlacedVegetable {
+                                id: v.id.clone(),
+                                name: v.name.clone(),
+                                reason: "Present in the existing layout.".into(),
+                                plants_per_cell: ppc,
+                                span: 1,
+                                anchor: Coordinate { row: r, col: c },
+                                planted_week: 0,
+                                days_to_harvest: adjusted_days,
+                                estimated_harvest_date: planted_date
+                                    .map(|d| d + Duration::days(adjusted_days as i64)),
+                            });
                     } else {
                         warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."
@@ -86,7 +90,7 @@ pub fn initialize_grid(
                     length_cells,
                     planted_date,
                 } => {
-                    if let Some(v) = get_vegetable_by_id(id) {
+                    if let Some(v) = lookup(id) {
                         let span = cell_span(v.spacing_cm);
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let w = width_cells.unwrap_or(span);
@@ -96,18 +100,19 @@ pub fn initialize_grid(
                             *planted_date,
                             planning_start,
                         );
-                        grid.cells[r][c].vegetable = Some(crate::models::garden::PlacedVegetable {
-                            id: v.id.clone(),
-                            name: v.name.clone(),
-                            reason: "Present in the existing layout.".into(),
-                            plants_per_cell: ppc,
-                            span: w.max(l),
-                            anchor: Coordinate { row: r, col: c },
-                            planted_week: 0,
-                            days_to_harvest: adjusted_days,
-                            estimated_harvest_date: planted_date
-                                .map(|d| d + Duration::days(adjusted_days as i64)),
-                        });
+                        grid.cells[r][c].vegetable =
+                            Some(crate::domain::models::garden::PlacedVegetable {
+                                id: v.id.clone(),
+                                name: v.name.clone(),
+                                reason: "Present in the existing layout.".into(),
+                                plants_per_cell: ppc,
+                                span: w.max(l),
+                                anchor: Coordinate { row: r, col: c },
+                                planted_week: 0,
+                                days_to_harvest: adjusted_days,
+                                estimated_harvest_date: planted_date
+                                    .map(|d| d + Duration::days(adjusted_days as i64)),
+                            });
                     } else {
                         warnings.add(format!(
                             "Vegetable '{id}' not found in the database, skipped."

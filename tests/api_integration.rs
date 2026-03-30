@@ -1,5 +1,7 @@
 use actix_web::{test, web, App};
-use garden::api::routes::configure;
+use garden::adapters::inbound::http::routes::configure;
+use garden::adapters::outbound::memory::vegetable_repository::InMemoryVegetableRepository;
+use garden::application::ports::vegetable_repository::VegetableRepository;
 
 fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
     let empty_cell = serde_json::json!({"type": "Empty"});
@@ -19,7 +21,9 @@ fn build_app() -> actix_web::App<
         InitError = (),
     >,
 > {
+    let repo: Box<dyn VegetableRepository> = Box::new(InMemoryVegetableRepository);
     App::new()
+        .app_data(web::Data::new(repo))
         .configure(configure)
         .app_data(web::JsonConfig::default().error_handler(|err, _req| {
             let message = format!("{err}");

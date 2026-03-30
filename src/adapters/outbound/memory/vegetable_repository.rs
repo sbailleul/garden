@@ -1,5 +1,6 @@
-use crate::models::vegetable::Month::*;
-use crate::models::vegetable::{
+use crate::application::ports::vegetable_repository::VegetableRepository;
+use crate::domain::models::vegetable::Month::*;
+use crate::domain::models::vegetable::{
     CalendarWindow, Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure, Vegetable,
 };
 
@@ -2045,6 +2046,20 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
 
 pub fn get_vegetable_by_id(id: &str) -> Option<Vegetable> {
     get_all_vegetables().into_iter().find(|v| v.id == id)
+}
+
+/// Outbound adapter: implements [`VegetableRepository`] using the in-memory
+/// vegetable catalogue defined in this module.
+pub struct InMemoryVegetableRepository;
+
+impl VegetableRepository for InMemoryVegetableRepository {
+    fn get_all(&self) -> Vec<Vegetable> {
+        get_all_vegetables()
+    }
+
+    fn get_by_id(&self, id: &str) -> Option<Vegetable> {
+        get_vegetable_by_id(id)
+    }
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use crate::models::{
+use crate::domain::models::{
     request::{Level, PlanRequest},
     vegetable::{Month, RegionCalendar, Vegetable},
 };
@@ -130,8 +130,8 @@ pub fn filter_candidates_base(db: &[Vegetable], request: &PlanRequest) -> Vec<Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::vegetables::get_all_vegetables;
-    use crate::models::{
+    use crate::adapters::outbound::memory::vegetable_repository::get_all_vegetables;
+    use crate::domain::models::{
         request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry},
         vegetable::{Month, Region, SoilType, SunExposure},
     };

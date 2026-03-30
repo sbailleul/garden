@@ -1,21 +1,21 @@
 use chrono::Datelike;
 
-use crate::logic::allocation::build_placement_queue;
-use crate::logic::filter::filter_vegetables;
-use crate::logic::grid::{
-    count_grid_occupancy, initialize_grid, validate_layout, GridOccupancy, GridSize,
-};
-pub use crate::logic::helpers::{cell_span, CELL_SIZE_CM};
-use crate::logic::placement::{fill_remaining_cells, harvest_plants, place_candidates};
-use crate::logic::response::{build_reason, build_weekly_plan, merge_consecutive_plans};
-use crate::logic::schedule::weeks_for_period;
-use crate::models::{
+use crate::domain::models::{
     garden::GardenGrid,
     request::PlanRequest,
     response::PlanResponse,
     vegetable::{Month, Vegetable},
     warnings::Warnings,
 };
+use crate::domain::services::allocation::build_placement_queue;
+use crate::domain::services::filter::filter_vegetables;
+use crate::domain::services::grid::{
+    count_grid_occupancy, initialize_grid, validate_layout, GridOccupancy, GridSize,
+};
+pub use crate::domain::services::helpers::{cell_span, CELL_SIZE_CM};
+use crate::domain::services::placement::{fill_remaining_cells, harvest_plants, place_candidates};
+use crate::domain::services::response::{build_reason, build_weekly_plan, merge_consecutive_plans};
+use crate::domain::services::schedule::weeks_for_period;
 
 impl Warnings {
     /// Planner warning text when no week can be generated for the period.
@@ -50,6 +50,7 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
 pub fn plan_garden(
     base_candidates: Vec<Vegetable>,
     request: &PlanRequest,
+    lookup: impl Fn(&str) -> Option<Vegetable>,
 ) -> Result<PlanResponse, String> {
     let mut warnings = Warnings::new();
 
@@ -62,7 +63,14 @@ pub fn plan_garden(
         .map(|w| w.start)
         .or_else(|| request.period.as_ref().map(|p| p.start))
         .unwrap_or(chrono::NaiveDate::MIN);
-    let mut grid = initialize_grid(rows, cols, &request.layout, planning_start, &mut warnings);
+    let mut grid = initialize_grid(
+        rows,
+        cols,
+        &request.layout,
+        planning_start,
+        lookup,
+        &mut warnings,
+    );
     let preferences = request.preferences.as_deref().unwrap_or(&[]);
     let mut weekly_plans = Vec::with_capacity(weeks.len());
 

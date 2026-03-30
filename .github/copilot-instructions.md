@@ -36,6 +36,24 @@ Export modules only when necessary.
 - Use `pub mod ...` only for modules that must be accessed from outside their parent module.
 - Keep internal implementation modules private and expose only the minimal public API.
 
+## Port-Adapter (Hexagonal) Architecture
+
+The project must follow the **port-adapter (hexagonal) architecture** with four distinct layers:
+
+- **`domain/`** — pure business logic with no I/O or use-case orchestration.
+  - `domain/models/` — domain model structs and enums (Vegetable, GardenGrid, requests, responses, etc.).
+  - `domain/services/` — domain services (placement, companion scoring, grid operations, filtering, scheduling, etc.). These modules must not import from `adapters/` or `application/`.
+
+- **`application/`** — use-case orchestration layer that sits between the domain and the outside world.
+  - `application/ports/` — outbound port traits (e.g. `VegetableRepository`). Defined here and implemented by adapters.
+  - `application/use_cases/` — one struct per use case. Each use case receives an outbound port via its constructor, fetches data, calls domain services, and returns a result ready for the inbound adapter (e.g. `PlanGardenUseCase`, `ListVegetablesUseCase`).
+
+- **`adapters/inbound/http/`** — inbound (driving) HTTP adapter built with Actix-web. Handlers receive `web::Data<Box<dyn Port + Send + Sync>>`, instantiate the matching use case, and delegate to it.
+
+- **`adapters/outbound/memory/`** — outbound (driven) adapter. Concrete structs (e.g. `InMemoryVegetableRepository`) implement the port traits defined in `application/ports/`.
+
+Dependency direction: `adapters` → `application` → `domain`. Neither `domain` nor `application` may import from `adapters`.
+
 ## HATEOAS
 
 Every API response must include a `_links` object following the HAL convention. Each link is an object with an `href` field and a `method` field indicating the HTTP method to use. Required links per endpoint:

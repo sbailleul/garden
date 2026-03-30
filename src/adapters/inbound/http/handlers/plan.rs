@@ -1,14 +1,15 @@
 use actix_web::{http::Method, post, web, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::models::hateoas::PlanApiResponse;
+use crate::domain::models::hateoas::PlanApiResponse;
 #[allow(unused_imports)]
-use crate::models::response::ErrorResponse;
+use crate::domain::models::response::ErrorResponse;
 
 use crate::{
-    data::vegetables::get_all_vegetables,
-    logic::{filter::filter_candidates_base, planner::plan_garden},
-    models::{
+    application::{
+        ports::vegetable_repository::VegetableRepository, use_cases::plan_garden::PlanGardenUseCase,
+    },
+    domain::models::{
         hateoas::{link, ApiResponse},
         request::PlanRequest,
     },
@@ -31,13 +32,13 @@ use crate::{
     )
 )]
 #[post("/plan")]
-pub async fn post_plan(body: web::Json<PlanRequest>) -> impl Responder {
+pub async fn post_plan(
+    body: web::Json<PlanRequest>,
+    repo: web::Data<Box<dyn VegetableRepository>>,
+) -> impl Responder {
     let request = body.into_inner();
-
-    let db = get_all_vegetables();
-    let candidates = filter_candidates_base(&db, &request);
-
-    match plan_garden(candidates, &request) {
+    let use_case = PlanGardenUseCase::new(repo.as_ref().as_ref());
+    match use_case.execute(&request) {
         Ok(response) => {
             let mut links = std::collections::HashMap::new();
             links.insert("self".into(), link("/api/plan", Method::POST));

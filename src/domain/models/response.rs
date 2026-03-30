@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::{request::Period, vegetable::Vegetable, Coordinate, Matrix};
+use crate::domain::models::{request::Period, vegetable::Vegetable, Coordinate, Matrix};
 
 /// Vegetable domain struct for use in responses.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

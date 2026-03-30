@@ -1,4 +1,4 @@
-use crate::models::{
+use crate::domain::models::{
     garden::GardenGrid,
     request::Period,
     response::{PlannedCell, WeeklyPlan},
@@ -124,7 +124,7 @@ mod tests {
         let mid = NaiveDate::from_ymd_opt(2025, 6, 8).unwrap();
         let end = NaiveDate::from_ymd_opt(2025, 6, 22).unwrap();
 
-        let grid = vec![vec![crate::models::response::PlannedCell::Empty]];
+        let grid = vec![vec![crate::domain::models::response::PlannedCell::Empty]];
 
         let plans = vec![
             WeeklyPlan {

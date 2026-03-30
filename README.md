@@ -23,31 +23,50 @@ A REST API written in Rust (Actix-web) that computes the optimal planting layout
 
 ## Project Structure
 
+The project follows **port-adapter (hexagonal) architecture** with four layers. Dependency direction: `adapters` → `application` → `domain`.
+
 ```
 src/
-  lib.rs              # library crate root
-  main.rs             # binary entry point — binds to 0.0.0.0:8080
-  models/
-    vegetable.rs      # Vegetable struct + enums: CalendarWindow, RegionCalendar, SoilType, SunExposure, Region, Category, Lifecycle
-    garden.rs         # GardenGrid, Cell (vegetable + blocked flag), PlacedVegetable
-    request.rs        # PlanRequest, PlanResponse, PlannedCell, Level, CompanionsResponse, Link DTOs
-  data/
-    vegetables.rs     # in-memory vegetable database (~40 entries)
-  logic/
-    filter.rs         # filter by calendar month / sun / soil / region / level, sort by preference
-    companion.rs      # companion_score(), is_compatible()
-    planner.rs        # plan_garden() — greedy grid placement
-  api/
-    handlers.rs       # HTTP handlers
-    routes.rs         # Actix-web route configuration
+  lib.rs                      # library crate root
+  main.rs                     # binary — wires adapters and binds to 0.0.0.0:8080
+  domain/
+    models/
+      vegetable.rs            # Vegetable struct + enums: CalendarWindow, RegionCalendar, SoilType, SunExposure, Region, Category, Lifecycle
+      garden.rs               # GardenGrid, Cell (vegetable + blocked flag), PlacedVegetable
+      request.rs              # PlanRequest, LayoutCell, Level DTOs
+      response.rs             # PlanResponse, PlannedCell, WeeklyPlan, VegetableResponse, CompanionsResponse
+    services/
+      filter.rs               # filter by calendar month / sun / soil / region / level, sort by preference
+      companion.rs            # companion_score(), is_compatible()
+      planner.rs              # plan_garden() — greedy grid placement
+      placement.rs            # find_best_block(), fill_block(), place_candidates()
+      grid.rs                 # initialize_grid(), validate_layout()
+      allocation.rs           # compute_explicit_allocation(), build_placement_queue()
+      schedule.rs             # weeks_for_period(), generate_weeks()
+      response.rs             # build_weekly_plan(), build_grid_cells(), merge_consecutive_plans()
+  application/
+    ports/
+      vegetable_repository.rs # VegetableRepository trait (outbound port)
+    use_cases/
+      plan_garden.rs          # PlanGardenUseCase — fetches data, calls domain, returns PlanResponse
+      vegetables.rs           # ListVegetablesUseCase, GetVegetableUseCase, GetCompanionsUseCase
+  adapters/
+    inbound/
+      http/
+        handlers/             # Actix-web HTTP handlers — instantiate use cases and delegate
+        routes.rs             # route configuration
+        openapi.rs            # Utoipa OpenAPI schema
+    outbound/
+      memory/
+        vegetable_repository.rs  # InMemoryVegetableRepository (implements application::ports::VegetableRepository)
 tests/
-  api_integration.rs  # HTTP integration tests (actix_web::test)
-  planner_e2e.rs      # realistic end-to-end scenarios
+  api_integration.rs          # HTTP integration tests (actix_web::test)
+  planner_e2e.rs              # realistic end-to-end scenarios
 bruno/
-  bruno.json          # Bruno collection manifest
+  bruno.json                  # Bruno collection manifest
   environments/
-    local.bru         # baseUrl: http://localhost:8080
-  vegetables/         # Bruno requests for vegetable endpoints
+    local.bru                 # baseUrl: http://localhost:8080
+  vegetables/                 # Bruno requests for vegetable endpoints
   plan/               # Bruno requests for the plan endpoint
 ```
 

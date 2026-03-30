@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use chrono::NaiveDate;
 
-use crate::logic::companion::companion_score;
-use crate::logic::helpers::{cell_span, plants_per_cell};
-use crate::models::{garden::GardenGrid, vegetable::Vegetable, Coordinate};
+use crate::domain::models::{garden::GardenGrid, vegetable::Vegetable, Coordinate};
+use crate::domain::services::companion::companion_score;
+use crate::domain::services::helpers::{cell_span, plants_per_cell};
 
 /// Scans the grid for the free `span x span` block that maximises the companion score
 /// for `vegetable`. Returns `Some((row, col, score))` or `None` when no valid block exists.
@@ -51,7 +51,7 @@ pub fn fill_block(
     for dr in 0..span {
         for dc in 0..span {
             grid.cells[coordinate.row + dr][coordinate.col + dc].vegetable =
-                Some(crate::models::garden::PlacedVegetable {
+                Some(crate::domain::models::garden::PlacedVegetable {
                     id: vegetable.id.clone(),
                     name: vegetable.name.clone(),
                     reason: reason.to_owned(),
@@ -194,7 +194,7 @@ mod tests {
     #[test]
     fn test_harvest_frees_cells_for_replanting() {
         let mut grid = GardenGrid::new(1, 1);
-        grid.cells[0][0].vegetable = Some(crate::models::garden::PlacedVegetable {
+        grid.cells[0][0].vegetable = Some(crate::domain::models::garden::PlacedVegetable {
             id: "test".into(),
             name: "Test".into(),
             reason: "Test".into(),

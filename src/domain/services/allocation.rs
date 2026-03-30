@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::logic::helpers::cell_span;
-use crate::models::{request::PreferenceEntry, vegetable::Vegetable};
+use crate::domain::models::{request::PreferenceEntry, vegetable::Vegetable};
+use crate::domain::services::helpers::cell_span;
 
 /// Distributes cells for vegetables that have an explicit `quantity` preference.
 /// Returns a map of `id -> cell count` only for those vegetables; everything else
@@ -71,7 +71,7 @@ pub fn build_placement_queue<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::vegetables::get_vegetable_by_id;
+    use crate::adapters::outbound::memory::vegetable_repository::get_vegetable_by_id;
 
     #[test]
     fn test_compute_explicit_allocation_honours_quantities() {
