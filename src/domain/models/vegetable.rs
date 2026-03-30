@@ -171,6 +171,8 @@ pub struct Vegetable {
     pub spacing_cm: u32,
     /// Approximate number of days from planting/transplanting to first harvest.
     pub days_to_harvest: u32,
+    /// Approximate number of days from sowing a seed to being ready for transplanting outdoors.
+    pub days_to_plant: u32,
     pub lifecycle: Lifecycle,
     pub good_companions: Vec<String>,
     pub bad_companions: Vec<String>,
