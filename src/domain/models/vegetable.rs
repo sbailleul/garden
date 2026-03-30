@@ -86,6 +86,23 @@ impl Month {
             _ => Month::December,
         }
     }
+
+    pub fn to_u32(self) -> u32 {
+        match self {
+            Month::January => 1,
+            Month::February => 2,
+            Month::March => 3,
+            Month::April => 4,
+            Month::May => 5,
+            Month::June => 6,
+            Month::July => 7,
+            Month::August => 8,
+            Month::September => 9,
+            Month::October => 10,
+            Month::November => 11,
+            Month::December => 12,
+        }
+    }
 }
 
 /// Sowing or planting window — distinguishes direct outdoor from under-cover months.

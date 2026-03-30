@@ -13,7 +13,9 @@ use crate::domain::services::grid::{
     count_grid_occupancy, initialize_grid, validate_layout, GridOccupancy, GridSize,
 };
 pub use crate::domain::services::helpers::{cell_span, CELL_SIZE_CM};
-use crate::domain::services::placement::{fill_remaining_cells, harvest_plants, place_candidates};
+use crate::domain::services::placement::{
+    fill_remaining_cells, harvest_plants, place_candidates, PlacementWeek,
+};
 use crate::domain::services::response::{build_reason, build_weekly_plan, merge_consecutive_plans};
 use crate::domain::services::schedule::weeks_for_period;
 
@@ -68,6 +70,7 @@ pub fn plan_garden(
         cols,
         &request.layout,
         planning_start,
+        &request.region,
         lookup,
         &mut warnings,
     );
@@ -93,27 +96,16 @@ pub fn plan_garden(
             // Phase 1: place vegetables with an explicit quantity (in preference order).
             let (queue, placements_map) =
                 build_placement_queue(&week_candidates, preferences, free_cells);
-            let score_p1 = place_candidates(
-                &mut grid,
-                &queue,
-                &placements_map,
+            let pw = PlacementWeek {
                 rows,
                 cols,
                 week_idx,
-                week.start,
-                build_reason,
-            );
+                week_start: week.start,
+            };
+            let score_p1 = place_candidates(&mut grid, &queue, &placements_map, &pw, build_reason);
 
             // Phase 2: iteratively fill every remaining free cell.
-            let score_p2 = fill_remaining_cells(
-                &mut grid,
-                &week_candidates,
-                rows,
-                cols,
-                week_idx,
-                week.start,
-                build_reason,
-            );
+            let score_p2 = fill_remaining_cells(&mut grid, &week_candidates, &pw, build_reason);
 
             score_p1 + score_p2
         } else {

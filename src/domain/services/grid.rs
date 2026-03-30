@@ -1,9 +1,15 @@
 use chrono::{Duration, NaiveDate};
 
 use crate::domain::models::{
-    garden::GardenGrid, request::LayoutCell, vegetable::Vegetable, warnings::Warnings, Coordinate,
+    garden::GardenGrid,
+    request::LayoutCell,
+    vegetable::{Region, Vegetable},
+    warnings::Warnings,
+    Coordinate,
 };
-use crate::domain::services::helpers::{adjusted_days_to_harvest, cell_span, plants_per_cell};
+use crate::domain::services::helpers::{
+    adjusted_days_to_harvest, cell_span, infer_planted_date, plants_per_cell,
+};
 
 /// Grid dimensions returned by layout validation: `(rows, cols)`.
 pub struct GridSize(pub usize, pub usize);
@@ -36,6 +42,7 @@ pub fn initialize_grid(
     cols: usize,
     layout: &[Vec<LayoutCell>],
     planning_start: NaiveDate,
+    region: &Region,
     lookup: impl Fn(&str) -> Option<Vegetable>,
     warnings: &mut Warnings,
 ) -> GardenGrid {
@@ -56,9 +63,11 @@ pub fn initialize_grid(
                 } => {
                     if let Some(v) = lookup(id) {
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
+                        let effective_date = planted_date
+                            .unwrap_or_else(|| infer_planted_date(&v, region, planning_start));
                         let adjusted_days = adjusted_days_to_harvest(
                             v.days_to_harvest,
-                            *planted_date,
+                            Some(effective_date),
                             planning_start,
                         );
                         grid.cells[r][c].vegetable =
@@ -71,8 +80,8 @@ pub fn initialize_grid(
                                 anchor: Coordinate { row: r, col: c },
                                 planted_week: 0,
                                 days_to_harvest: adjusted_days,
-                                estimated_harvest_date: planted_date
-                                    .map(|d| d + Duration::days(adjusted_days as i64)),
+                                estimated_harvest_date: effective_date
+                                    + Duration::days(adjusted_days as i64),
                             });
                     } else {
                         warnings.add(format!(
@@ -95,9 +104,11 @@ pub fn initialize_grid(
                         let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
                         let w = width_cells.unwrap_or(span);
                         let l = length_cells.unwrap_or(span);
+                        let effective_date = planted_date
+                            .unwrap_or_else(|| infer_planted_date(&v, region, planning_start));
                         let adjusted_days = adjusted_days_to_harvest(
                             v.days_to_harvest,
-                            *planted_date,
+                            Some(effective_date),
                             planning_start,
                         );
                         grid.cells[r][c].vegetable =
@@ -110,8 +121,8 @@ pub fn initialize_grid(
                                 anchor: Coordinate { row: r, col: c },
                                 planted_week: 0,
                                 days_to_harvest: adjusted_days,
-                                estimated_harvest_date: planted_date
-                                    .map(|d| d + Duration::days(adjusted_days as i64)),
+                                estimated_harvest_date: effective_date
+                                    + Duration::days(adjusted_days as i64),
                             });
                     } else {
                         warnings.add(format!(

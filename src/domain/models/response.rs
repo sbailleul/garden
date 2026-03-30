@@ -30,8 +30,7 @@ pub enum PlannedCell {
         reason: String,
         plants_per_cell: u32,
         /// Estimated date the plant will be ready to harvest.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        estimated_harvest_date: Option<NaiveDate>,
+        estimated_harvest_date: NaiveDate,
     },
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
     Overflowing {
@@ -42,8 +41,7 @@ pub enum PlannedCell {
         width_cells: u32,
         length_cells: u32,
         /// Estimated date the plant will be ready to harvest.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        estimated_harvest_date: Option<NaiveDate>,
+        estimated_harvest_date: NaiveDate,
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
     /// All plant data lives on the anchor cell; this cell only holds a back-reference.

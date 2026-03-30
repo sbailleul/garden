@@ -29,6 +29,11 @@ impl Warnings {
         self.0.len()
     }
 
+    /// Returns `true` when no warnings have been collected.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     /// Returns collected warnings as a slice.
     pub fn as_slice(&self) -> &[String] {
         &self.0

@@ -1,4 +1,6 @@
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate};
+
+use crate::domain::models::vegetable::{Region, Vegetable};
 
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
@@ -40,6 +42,43 @@ pub fn adjusted_days_to_harvest(
     }
 }
 
+/// Infers the planting date for a pre-placed vegetable from its regional calendar.
+///
+/// Selects the most recent planting month (outdoor preferred, indoor as fallback)
+/// that falls on or before `planning_start`. Falls back to `planning_start` when
+/// no suitable calendar entry exists for the given region.
+pub fn infer_planted_date(
+    vegetable: &Vegetable,
+    region: &Region,
+    planning_start: NaiveDate,
+) -> NaiveDate {
+    let inferred = vegetable
+        .calendars
+        .iter()
+        .find(|c| &c.region == region)
+        .and_then(|calendar| {
+            let months: &[_] = if !calendar.planting.outdoor.is_empty() {
+                &calendar.planting.outdoor
+            } else {
+                &calendar.planting.indoor
+            };
+
+            let planning_year = planning_start.year();
+            months
+                .iter()
+                .flat_map(|&m| {
+                    let mn = m.to_u32();
+                    [planning_year, planning_year - 1]
+                        .into_iter()
+                        .filter_map(move |y| NaiveDate::from_ymd_opt(y, mn, 1))
+                })
+                .filter(|&d| d <= planning_start)
+                .max()
+        });
+
+    inferred.unwrap_or(planning_start)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -51,5 +90,119 @@ mod tests {
         assert_eq!(cell_span(31), 2, "31 cm needs 2 cells");
         assert_eq!(cell_span(60), 2, "60 cm needs 2 cells");
         assert_eq!(cell_span(90), 3, "90 cm needs 3 cells");
+    }
+
+    #[test]
+    fn test_infer_planted_date_picks_most_recent_before_planning_start() {
+        use crate::domain::models::vegetable::{
+            CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
+            Vegetable,
+        };
+        let veg = Vegetable {
+            id: "tomato".into(),
+            name: "Tomato".into(),
+            latin_name: "Solanum lycopersicum".into(),
+            calendars: vec![RegionCalendar {
+                region: Region::Temperate,
+                sowing: CalendarWindow {
+                    outdoor: vec![],
+                    indoor: vec![Month::February, Month::March],
+                },
+                planting: CalendarWindow {
+                    outdoor: vec![Month::April, Month::May],
+                    indoor: vec![],
+                },
+            }],
+            sun_requirement: vec![SunExposure::FullSun],
+            soil_types: vec![SoilType::Loamy],
+            spacing_cm: 50,
+            days_to_harvest: 80,
+            lifecycle: Lifecycle::Annual,
+            good_companions: vec![],
+            bad_companions: vec![],
+            beginner_friendly: true,
+            category: Category::Fruit,
+        };
+
+        // Planning starts in June: most recent planting month on/before June is May
+        let planning_start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let result = infer_planted_date(&veg, &Region::Temperate, planning_start);
+        assert_eq!(result, NaiveDate::from_ymd_opt(2026, 5, 1).unwrap());
+    }
+
+    #[test]
+    fn test_infer_planted_date_falls_back_to_previous_year() {
+        use crate::domain::models::vegetable::{
+            CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
+            Vegetable,
+        };
+        let veg = Vegetable {
+            id: "tomato".into(),
+            name: "Tomato".into(),
+            latin_name: "Solanum lycopersicum".into(),
+            calendars: vec![RegionCalendar {
+                region: Region::Temperate,
+                sowing: CalendarWindow {
+                    outdoor: vec![],
+                    indoor: vec![],
+                },
+                planting: CalendarWindow {
+                    outdoor: vec![Month::April, Month::May],
+                    indoor: vec![],
+                },
+            }],
+            sun_requirement: vec![SunExposure::FullSun],
+            soil_types: vec![SoilType::Loamy],
+            spacing_cm: 50,
+            days_to_harvest: 80,
+            lifecycle: Lifecycle::Annual,
+            good_companions: vec![],
+            bad_companions: vec![],
+            beginner_friendly: true,
+            category: Category::Fruit,
+        };
+
+        // Planning starts in March: all 2026 planting months (Apr, May) are in the future
+        // so the inference falls back to May 2025
+        let planning_start = NaiveDate::from_ymd_opt(2026, 3, 1).unwrap();
+        let result = infer_planted_date(&veg, &Region::Temperate, planning_start);
+        assert_eq!(result, NaiveDate::from_ymd_opt(2025, 5, 1).unwrap());
+    }
+
+    #[test]
+    fn test_infer_planted_date_returns_planning_start_for_unknown_region() {
+        use crate::domain::models::vegetable::{
+            CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
+            Vegetable,
+        };
+        let veg = Vegetable {
+            id: "tomato".into(),
+            name: "Tomato".into(),
+            latin_name: "Solanum lycopersicum".into(),
+            calendars: vec![RegionCalendar {
+                region: Region::Temperate,
+                sowing: CalendarWindow {
+                    outdoor: vec![],
+                    indoor: vec![],
+                },
+                planting: CalendarWindow {
+                    outdoor: vec![Month::April],
+                    indoor: vec![],
+                },
+            }],
+            sun_requirement: vec![SunExposure::FullSun],
+            soil_types: vec![SoilType::Loamy],
+            spacing_cm: 50,
+            days_to_harvest: 80,
+            lifecycle: Lifecycle::Annual,
+            good_companions: vec![],
+            bad_companions: vec![],
+            beginner_friendly: true,
+            category: Category::Fruit,
+        };
+
+        let planning_start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let result = infer_planted_date(&veg, &Region::Mediterranean, planning_start);
+        assert_eq!(result, planning_start);
     }
 }

@@ -20,7 +20,7 @@ pub struct PlacedVegetable {
     /// Days until this plant is ready to harvest (copied from the vegetable catalogue).
     pub days_to_harvest: u32,
     /// Calendar date when this plant is expected to be ready for harvest.
-    pub estimated_harvest_date: Option<chrono::NaiveDate>,
+    pub estimated_harvest_date: chrono::NaiveDate,
 }
 
 #[skip_serializing_none]

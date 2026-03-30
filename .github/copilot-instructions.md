@@ -4,6 +4,10 @@
 
 Run `cargo fmt` after every code modification before considering the task complete. This keeps the codebase consistently formatted and avoids pre-commit hook failures.
 
+## Linting
+
+Run `cargo clippy -- -D warnings` after every code modification before considering the task complete. All Clippy warnings must be resolved; warnings are treated as errors.
+
 ## Tests
 
 Every feature must be covered by at least one automated test. This includes new endpoints, new fields, new business rules, and bug fixes. Tests live in `src/` (unit/integration via `#[cfg(test)]`) or in `tests/` (integration tests using `actix_web::test`).

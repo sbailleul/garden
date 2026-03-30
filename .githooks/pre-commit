@@ -13,6 +13,12 @@ if ! cargo fmt -- --check; then
   exit 1
 fi
 
+echo "▶ cargo clippy"
+if ! cargo clippy -- -D warnings; then
+  echo "❌ Clippy warnings found. Fix them then re-stage your changes."
+  exit 1
+fi
+
 echo "▶ cargo build"
 if ! cargo build; then
   echo "❌ Build failed."

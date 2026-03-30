@@ -60,12 +60,19 @@ pub fn fill_block(
                     anchor: coordinate,
                     planted_week: week_idx,
                     days_to_harvest: vegetable.days_to_harvest,
-                    estimated_harvest_date: Some(
-                        week_start + chrono::Duration::days(vegetable.days_to_harvest as i64),
-                    ),
+                    estimated_harvest_date: week_start
+                        + chrono::Duration::days(vegetable.days_to_harvest as i64),
                 });
         }
     }
+}
+
+/// Shared context for a single planning week passed to placement functions.
+pub struct PlacementWeek {
+    pub rows: usize,
+    pub cols: usize,
+    pub week_idx: usize,
+    pub week_start: NaiveDate,
 }
 
 /// Iterates over the placement queue and greedily places each vegetable on the grid.
@@ -74,10 +81,7 @@ pub fn place_candidates(
     grid: &mut GardenGrid,
     queue: &[&Vegetable],
     placements_map: &HashMap<String, usize>,
-    rows: usize,
-    cols: usize,
-    week_idx: usize,
-    week_start: NaiveDate,
+    week: &PlacementWeek,
     build_reason_fn: impl Fn(&Vegetable, &[String], i32) -> String,
 ) -> i32 {
     let mut global_score: i32 = 0;
@@ -101,7 +105,7 @@ pub fn place_candidates(
 
         let span = cell_span(vegetable.spacing_cm) as usize;
 
-        match find_best_block(grid, vegetable, rows, cols) {
+        match find_best_block(grid, vegetable, week.rows, week.cols) {
             None if span == 1 => {
                 break 'outer; // no free single cell - grid is full
             }
@@ -115,7 +119,14 @@ pub fn place_candidates(
                     .map(|v| v.name.clone())
                     .collect();
                 let reason = build_reason_fn(vegetable, &neighbor_names, score);
-                fill_block(grid, vegetable, coordinate, &reason, week_idx, week_start);
+                fill_block(
+                    grid,
+                    vegetable,
+                    coordinate,
+                    &reason,
+                    week.week_idx,
+                    week.week_start,
+                );
                 placed_counts
                     .entry(vegetable.id.clone())
                     .and_modify(|n| *n += 1)
@@ -137,10 +148,7 @@ pub fn place_candidates(
 pub fn fill_remaining_cells(
     grid: &mut GardenGrid,
     candidates: &[Vegetable],
-    rows: usize,
-    cols: usize,
-    week_idx: usize,
-    week_start: NaiveDate,
+    week: &PlacementWeek,
     build_reason_fn: impl Fn(&Vegetable, &[String], i32) -> String,
 ) -> i32 {
     let mut total_score: i32 = 0;
@@ -149,7 +157,7 @@ pub fn fill_remaining_cells(
         let mut placements_this_pass = 0usize;
 
         for vegetable in candidates {
-            match find_best_block(grid, vegetable, rows, cols) {
+            match find_best_block(grid, vegetable, week.rows, week.cols) {
                 None => continue,
                 Some((coordinate, score)) => {
                     let span = cell_span(vegetable.spacing_cm) as usize;
@@ -159,7 +167,14 @@ pub fn fill_remaining_cells(
                         .map(|v| v.name.clone())
                         .collect();
                     let reason = build_reason_fn(vegetable, &neighbor_names, score);
-                    fill_block(grid, vegetable, coordinate, &reason, week_idx, week_start);
+                    fill_block(
+                        grid,
+                        vegetable,
+                        coordinate,
+                        &reason,
+                        week.week_idx,
+                        week.week_start,
+                    );
                     total_score += score;
                     placements_this_pass += 1;
                 }
@@ -203,7 +218,7 @@ mod tests {
             anchor: Coordinate { row: 0, col: 0 },
             planted_week: 0,
             days_to_harvest: 7,
-            estimated_harvest_date: None,
+            estimated_harvest_date: chrono::NaiveDate::from_ymd_opt(2025, 6, 8).unwrap(),
         });
 
         harvest_plants(&mut grid, 1);
