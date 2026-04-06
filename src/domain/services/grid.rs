@@ -82,6 +82,7 @@ pub fn initialize_grid(
                                 days_to_harvest: adjusted_days,
                                 estimated_harvest_date: effective_date
                                     + Duration::days(adjusted_days as i64),
+                                lifecycle: v.lifecycle.clone(),
                             });
                     } else {
                         warnings.add(format!(
@@ -123,6 +124,7 @@ pub fn initialize_grid(
                                 days_to_harvest: adjusted_days,
                                 estimated_harvest_date: effective_date
                                     + Duration::days(adjusted_days as i64),
+                                lifecycle: v.lifecycle.clone(),
                             });
                     } else {
                         warnings.add(format!(

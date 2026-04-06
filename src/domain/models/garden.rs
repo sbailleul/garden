@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::domain::models::{Coordinate, Matrix};
+use crate::domain::models::{vegetable::Lifecycle, Coordinate, Matrix};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,6 +21,8 @@ pub struct PlacedVegetable {
     pub days_to_harvest: u32,
     /// Calendar date when this plant is expected to be ready for harvest.
     pub estimated_harvest_date: chrono::NaiveDate,
+    /// Plant lifecycle — `Perennial` plants are never removed from the grid after harvest.
+    pub lifecycle: Lifecycle,
 }
 
 #[skip_serializing_none]

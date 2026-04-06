@@ -62,6 +62,7 @@ pub fn fill_block(
                     days_to_harvest: vegetable.days_to_harvest,
                     estimated_harvest_date: week_start
                         + chrono::Duration::days(vegetable.days_to_harvest as i64),
+                    lifecycle: vegetable.lifecycle.clone(),
                 });
         }
     }
@@ -189,10 +190,15 @@ pub fn fill_remaining_cells(
 }
 
 /// Harvests plants by clearing cells where the plant has reached its harvest week.
+/// Perennial plants are never removed — they re-grow the following season.
 pub fn harvest_plants(grid: &mut GardenGrid, current_week_idx: usize) {
+    use crate::domain::models::vegetable::Lifecycle;
     for row in &mut grid.cells {
         for cell in row.iter_mut() {
             if let Some(ref v) = cell.vegetable {
+                if v.lifecycle == Lifecycle::Perennial {
+                    continue;
+                }
                 let harvest_week = v.planted_week + (v.days_to_harvest as usize).div_ceil(7);
                 if harvest_week <= current_week_idx {
                     cell.vegetable = None;
@@ -219,9 +225,33 @@ mod tests {
             planted_week: 0,
             days_to_harvest: 7,
             estimated_harvest_date: chrono::NaiveDate::from_ymd_opt(2025, 6, 8).unwrap(),
+            lifecycle: crate::domain::models::vegetable::Lifecycle::Annual,
         });
 
         harvest_plants(&mut grid, 1);
         assert!(grid.cells[0][0].vegetable.is_none());
+    }
+
+    #[test]
+    fn test_harvest_keeps_perennial_plants() {
+        let mut grid = GardenGrid::new(1, 1);
+        grid.cells[0][0].vegetable = Some(crate::domain::models::garden::PlacedVegetable {
+            id: "asparagus".into(),
+            name: "Asparagus".into(),
+            reason: "Test".into(),
+            plants_per_cell: 1,
+            span: 1,
+            anchor: Coordinate { row: 0, col: 0 },
+            planted_week: 0,
+            days_to_harvest: 7,
+            estimated_harvest_date: chrono::NaiveDate::from_ymd_opt(2025, 6, 8).unwrap(),
+            lifecycle: crate::domain::models::vegetable::Lifecycle::Perennial,
+        });
+
+        harvest_plants(&mut grid, 100);
+        assert!(
+            grid.cells[0][0].vegetable.is_some(),
+            "Perennial plants must not be removed after harvest"
+        );
     }
 }
