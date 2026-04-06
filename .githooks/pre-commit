@@ -6,6 +6,8 @@
 # - set -o pipefail: Exit if any command in a pipeline fails
 set -euo pipefail
 
+cd "$(git rev-parse --show-toplevel)/api"
+
 echo "▶ cargo fmt --check"
 if ! cargo fmt -- --check; then
   cargo fmt
