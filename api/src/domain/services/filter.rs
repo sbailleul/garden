@@ -93,6 +93,10 @@ fn filter_and_sort_internal(
             if is_beginner && !v.beginner_friendly {
                 return false;
             }
+            // Filter out explicitly excluded vegetables
+            if request.exclusions.contains(&v.id) {
+                return false;
+            }
             true
         })
         .cloned()
@@ -151,6 +155,7 @@ mod tests {
             region: Region::Temperate,
             level: None,
             preferences: None,
+            exclusions: vec![],
             sown: std::collections::HashMap::new(),
         }
     }
@@ -314,5 +319,23 @@ mod tests {
                 "Tomato (rank 1) must appear before carrot (rank 2); got positions {tp} vs {cp}"
             );
         }
+    }
+
+    #[test]
+    fn test_exclusions_removes_vegetables() {
+        let db = get_all_vegetables();
+        let req = PlanRequest {
+            exclusions: vec!["tomato".to_string(), "basil".to_string()],
+            ..make_request_for_month(6)
+        };
+        let result = filter_vegetables(&db, &req, Month::June);
+        assert!(
+            !result.iter().any(|v| v.id == "tomato"),
+            "Tomato must not appear in result when excluded"
+        );
+        assert!(
+            !result.iter().any(|v| v.id == "basil"),
+            "Basil must not appear in result when excluded"
+        );
     }
 }

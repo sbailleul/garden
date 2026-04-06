@@ -221,6 +221,7 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
 | `region` | `Region` | Climate region (required) |
 | `level` | `Level?` | Skill level filter |
 | `preferences` | `{ id: string, quantity?: number }[]?` | Vegetables to prioritise; optional `quantity` sets the desired number of **plants** (placements) — each plant may occupy more than one cell |
+| `exclusions` | `string[]?` | Vegetable IDs to exclude from planning — these will never be auto-placed regardless of other filters. Pre-placed cells in `layout` are not affected. |
 | `sown` | `{ [id: string]: { sowingDate?: string, seedsSown: number }[] }?` | Vegetables already sown from seed, keyed by vegetable id — each entry is a list of sowing batches with an optional date and a seed count |
 
 **Enums:**

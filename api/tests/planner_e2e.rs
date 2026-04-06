@@ -328,3 +328,41 @@ async fn scenario_sowing_tasks_computed_per_week() {
         "Every sowingTask must have id, name, and targetWeekStart"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Scenario 7: Explicit exclusions — excluded vegetables must never be placed
+// ---------------------------------------------------------------------------
+#[actix_web::test]
+async fn scenario_exclusions_prevent_placement() {
+    let app = test::init_service(build_app()).await;
+    let payload = serde_json::json!({
+        "period": {"start": "2025-06-01", "end": "2025-08-31"},
+        "region": "Temperate",
+        "exclusions": ["tomato", "basil", "carrot"],
+        "layout": null_layout(10, 7)
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/plan")
+        .set_json(&payload)
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+
+    assert!(
+        body["payload"]["weeks"].as_array().is_some(),
+        "Response must contain weeks"
+    );
+
+    let excluded = ["tomato", "basil", "carrot"];
+    for week in body["payload"]["weeks"].as_array().unwrap() {
+        for row in week["grid"].as_array().unwrap_or(&vec![]) {
+            for cell in row.as_array().unwrap_or(&vec![]) {
+                if let Some(id) = cell["id"].as_str() {
+                    assert!(
+                        !excluded.contains(&id),
+                        "Excluded vegetable '{id}' must not appear in the plan"
+                    );
+                }
+            }
+        }
+    }
+}

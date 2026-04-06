@@ -1,0 +1,65 @@
+meta {
+  name: POST Plan (exclusions)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/plan
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "period": {"start": "2025-06-01", "end": "2025-08-31"},
+    "region": "Temperate",
+    "exclusions": ["tomato", "fennel", "basil"],
+    "layout": [
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}],
+      [{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"},{"type": "Empty"}]
+    ]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload.weeks[0].grid: isArray
+  res.body.payload.warnings: isArray
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("excluded vegetables never appear in any week", function() {
+    var excluded = ["tomato", "fennel", "basil"];
+    res.body.payload.weeks.forEach(function(week) {
+      week.grid.forEach(function(row) {
+        row.forEach(function(cell) {
+          if (cell.id) {
+            expect(excluded.indexOf(cell.id)).to.equal(-1,
+              "Excluded vegetable '" + cell.id + "' must not appear in the plan");
+          }
+        });
+      });
+    });
+  });
+
+  test("response has HATEOAS links", function() {
+    expect(res.body._links.self.href).to.equal("/api/plan");
+    expect(res.body._links.vegetables.href).to.equal("/api/vegetables");
+  });
+}

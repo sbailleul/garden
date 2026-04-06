@@ -104,6 +104,10 @@ pub struct PlanRequest {
     pub level: Option<Level>,
     /// Preferred vegetables with optional per-vegetable plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,
+    /// Vegetable IDs to exclude from planning — these will never be auto-placed
+    /// regardless of other filters. Pre-placed cells in `layout` are not affected.
+    #[serde(default)]
+    pub exclusions: Vec<String>,
     /// Vegetables already sown from seed, keyed by vegetable id.
     /// Each entry is a list of sowing batches, each with an optional date and a seed count.
     /// Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`
