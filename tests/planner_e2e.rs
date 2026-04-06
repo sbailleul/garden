@@ -225,3 +225,106 @@ async fn scenario_winter_garden() {
 fn resp_status_from_body(body: &serde_json::Value) -> Option<&str> {
     body.get("error").and_then(|e| e.as_str())
 }
+
+// ---------------------------------------------------------------------------
+// Scenario 5: Sown tomato seeds are placed in the grid after their plant date
+// ---------------------------------------------------------------------------
+#[actix_web::test]
+async fn scenario_sown_seeds_appear_in_plan() {
+    let app = test::init_service(build_app()).await;
+    // Tomato: days_to_plant=42; sown 2025-03-01 → ready 2025-04-12.
+    // Planning window starts 2025-04-14 (after ready date) so tomato must appear.
+    let payload = serde_json::json!({
+        "period": {"start": "2025-04-14", "end": "2025-06-30"},
+        "region": "Temperate",
+        "sown": {
+            "tomato": [{"sowingDate": "2025-03-01", "seedsSown": 2}]
+        },
+        "layout": null_layout(5, 5)
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/plan")
+        .set_json(&payload)
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+
+    // Collect placed ids across ALL weeks (merging may collapse multiple weeks).
+    let placed: Vec<String> = body["payload"]["weeks"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .flat_map(|w| {
+            w["grid"]
+                .as_array()
+                .unwrap_or(&vec![])
+                .iter()
+                .flat_map(|row| row.as_array().unwrap_or(&vec![]).to_owned())
+                .filter_map(|cell| cell["id"].as_str().map(String::from))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+
+    assert!(
+        placed.contains(&"tomato".to_string()),
+        "Sown tomato should appear in the plan after its plant_date. Placed: {:?}",
+        placed
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Scenario 6: Sowing schedule — tomato must appear in sowingTasks for the
+//             week that is exactly days_to_plant before its transplant week
+// ---------------------------------------------------------------------------
+#[actix_web::test]
+async fn scenario_sowing_tasks_computed_per_week() {
+    let app = test::init_service(build_app()).await;
+    // Planning period: 2025-03-03 → 2025-06-29 (Temperate).
+    // Tomato (days_to_plant=42): first eligible month is May/June.
+    // The first week where tomato could be transplanted is around 2025-05-05.
+    // Therefore tomato should appear in sowingTasks for the week starting ~2025-03-24
+    // (42 days before 2025-05-05).
+    let payload = serde_json::json!({
+        "period": {"start": "2025-03-03", "end": "2025-06-29"},
+        "region": "Temperate",
+        "layout": null_layout(5, 5)
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/plan")
+        .set_json(&payload)
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+
+    // At least one week must have a non-empty sowingTasks list.
+    let has_sowing_tasks = body["payload"]["weeks"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .any(|w| {
+            w["sowingTasks"]
+                .as_array()
+                .map(|a| !a.is_empty())
+                .unwrap_or(false)
+        });
+
+    assert!(
+        has_sowing_tasks,
+        "At least one week must contain sowing tasks for the planning period 2025-03-03 → 2025-06-29"
+    );
+
+    // Every sowingTask entry must have id, name, and targetWeekStart fields.
+    let all_valid = body["payload"]["weeks"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .flat_map(|w| w["sowingTasks"].as_array().unwrap_or(&vec![]).to_owned())
+        .all(|task| {
+            task["id"].is_string()
+                && task["name"].is_string()
+                && task["targetWeekStart"].is_string()
+        });
+
+    assert!(
+        all_valid,
+        "Every sowingTask must have id, name, and targetWeekStart"
+    );
+}

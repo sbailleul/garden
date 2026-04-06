@@ -251,6 +251,9 @@ Grid dimensions are inferred directly from the array: `rows = layout.length`, `c
         "period": { "start": "2025-06-01", "end": "2025-06-07" },
         "weekCount": 1,
         "score": 14,
+        "sowingTasks": [
+          { "id": "tomato", "name": "Tomato", "targetWeekStart": "2025-07-14" }
+        ],
         "grid": [
           [
             { "id": "tomato", "name": "Tomato", "reason": "...", "plantsPerCell": 1, "widthCells": 2, "lengthCells": 2, "blocked": false },
@@ -275,6 +278,7 @@ The `weeks` array contains one entry per run of consecutive 7-day periods that p
 | `period` | Object with `start` and `end` (ISO 8601) — the Monday–Sunday range this snapshot covers (spans multiple weeks when entries are merged) |
 | `weekCount` | Number of consecutive 7-day periods that produced this identical layout |
 | `score` | Cumulative companion-planting score across all merged weeks |
+| `sowingTasks` | Vegetables to sow during this week so they will be ready to transplant in a later planning week. Each entry: `{ id, name, targetWeekStart }` where `targetWeekStart` is the start of the target transplanting week |
 | `grid` | 2-D array of `PlannedCell` objects (same structure as before) |
 
 Each `PlannedCell` carries:

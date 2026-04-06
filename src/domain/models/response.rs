@@ -96,6 +96,20 @@ impl PlannedCell {
     }
 }
 
+/// A vegetable that should be sown during a given planning week so it is
+/// ready to transplant into the garden during a future week.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SowingTask {
+    /// Vegetable identifier.
+    pub id: String,
+    /// Human-readable vegetable name.
+    pub name: String,
+    /// Start date of the target transplanting week.
+    #[schema(value_type = String, format = Date, example = "2025-05-05")]
+    pub target_week_start: NaiveDate,
+}
+
 /// A snapshot of the garden layout for one week of the planning period.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -108,6 +122,9 @@ pub struct WeeklyPlan {
     pub grid: Matrix<PlannedCell>,
     /// Cumulative companion-planting score for plants placed **this week**.
     pub score: i32,
+    /// Vegetables to sow this week so they are ready to transplant during a
+    /// future planning week.
+    pub sowing_tasks: Vec<SowingTask>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

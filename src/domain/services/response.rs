@@ -1,7 +1,7 @@
 use crate::domain::models::{
     garden::GardenGrid,
     request::Period,
-    response::{PlannedCell, WeeklyPlan},
+    response::{PlannedCell, SowingTask, WeeklyPlan},
     vegetable::Vegetable,
     Matrix,
 };
@@ -20,6 +20,7 @@ pub fn merge_consecutive_plans(plans: Vec<WeeklyPlan>) -> Vec<WeeklyPlan> {
                 last.period.end = plan.period.end;
                 last.week_count += plan.week_count;
                 last.score += plan.score;
+                last.sowing_tasks.extend(plan.sowing_tasks);
             }
             _ => merged.push(plan),
         }
@@ -28,12 +29,18 @@ pub fn merge_consecutive_plans(plans: Vec<WeeklyPlan>) -> Vec<WeeklyPlan> {
 }
 
 /// Converts the current garden grid into a [`WeeklyPlan`] snapshot.
-pub fn build_weekly_plan(week: Period, grid: &GardenGrid, score: i32) -> WeeklyPlan {
+pub fn build_weekly_plan(
+    week: Period,
+    grid: &GardenGrid,
+    score: i32,
+    sowing_tasks: Vec<SowingTask>,
+) -> WeeklyPlan {
     WeeklyPlan {
         period: week,
         grid: build_grid_cells(grid),
         score,
         week_count: 1,
+        sowing_tasks,
     }
 }
 
@@ -132,6 +139,7 @@ mod tests {
                 grid: grid.clone(),
                 score: 10,
                 week_count: 1,
+                sowing_tasks: vec![],
             },
             WeeklyPlan {
                 period: Period {
@@ -141,6 +149,7 @@ mod tests {
                 grid,
                 score: 10,
                 week_count: 1,
+                sowing_tasks: vec![],
             },
         ];
 
