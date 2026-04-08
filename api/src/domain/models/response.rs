@@ -30,6 +30,7 @@ pub enum PlannedCell {
         reason: String,
         plants_per_cell: u32,
         /// Estimated date the plant will be ready to harvest.
+        #[schema(value_type = String, format = Date, example = "2025-08-01")]
         estimated_harvest_date: NaiveDate,
     },
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
@@ -41,6 +42,7 @@ pub enum PlannedCell {
         width_cells: u32,
         length_cells: u32,
         /// Estimated date the plant will be ready to harvest.
+        #[schema(value_type = String, format = Date, example = "2025-08-01")]
         estimated_harvest_date: NaiveDate,
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
@@ -119,6 +121,7 @@ pub struct WeeklyPlan {
 
     pub week_count: u16,
     /// Full garden grid for this week (same dimensions as the request layout).
+    #[schema(value_type = Vec<Vec<PlannedCell>>)]
     pub grid: Matrix<PlannedCell>,
     /// Cumulative companion-planting score for plants placed **this week**.
     pub score: i32,

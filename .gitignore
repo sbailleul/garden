@@ -18,3 +18,9 @@
 # OS
 .DS_Store
 Thumbs.db
+**/node_modules/
+**/dist/
+
+# Client build & env
+client/.env.local
+client/dist/

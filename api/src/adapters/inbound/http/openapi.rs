@@ -5,9 +5,9 @@ use crate::domain::models::{
         CompanionsApiResponse, Link, Pagination, PlanApiResponse, VegetableApiResponse,
         VegetablesApiResponse,
     },
-    request::{LayoutCell, Level, PlanRequest, PreferenceEntry},
+    request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry, SowingRecord},
     response::{
-        CompanionInfo, CompanionsResponse, ErrorResponse, PlanResponse, PlannedCell,
+        CompanionInfo, CompanionsResponse, ErrorResponse, PlanResponse, PlannedCell, SowingTask,
         VegetableResponse, WeeklyPlan,
     },
     vegetable::{
@@ -40,9 +40,9 @@ use crate::domain::models::{
             // Vegetable
             Vegetable, VegetableResponse,
             // Plan request
-            LayoutCell, PreferenceEntry, PlanRequest,
+            LayoutCell, PreferenceEntry, Period, SowingRecord, PlanRequest,
             // Plan response
-            Coordinate, PlannedCell, WeeklyPlan, PlanResponse,
+            Coordinate, PlannedCell, SowingTask, WeeklyPlan, PlanResponse,
             // Companions
             CompanionInfo, CompanionsResponse,
             // Shared

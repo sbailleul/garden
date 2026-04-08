@@ -116,6 +116,7 @@ pub struct PlanRequest {
     /// Combined grid layout — defines dimensions and pre-filled cells.
     /// Each cell is a `LayoutCell` object: `{"type":"Empty"}` (free),
     /// `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).
+    #[schema(value_type = Vec<Vec<LayoutCell>>)]
     pub layout: Matrix<LayoutCell>,
 }
 
