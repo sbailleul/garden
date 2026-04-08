@@ -1,5 +1,5 @@
-import type { components } from "./schema.d.ts";
-import { apiClient } from "./client";
+import type { components } from "@/api/schema.d.ts";
+import { apiClient } from "@/api/client";
 
 export type Vegetable = components["schemas"]["Vegetable"];
 export type VegetableResponse = components["schemas"]["VegetableResponse"];

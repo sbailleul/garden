@@ -9,9 +9,9 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { fetchVegetables, type Vegetable } from "../../api/vegetables";
-import { Badge } from "../../components/ui/badge";
-import { Input } from "../../components/ui/input";
+import { fetchVegetables, type Vegetable } from "@/api/vegetables";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,14 +19,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table";
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/vegetables/")({
   loader: ({ context: { queryClient } }) =>

@@ -1,5 +1,5 @@
-import type { components } from "./schema.d.ts";
-import { apiClient } from "./client";
+import type { components } from "@/api/schema.d.ts";
+import { apiClient } from "@/api/client";
 
 export type PlanRequest = components["schemas"]["PlanRequest"];
 export type PlanApiResponse = components["schemas"]["PlanApiResponse"];

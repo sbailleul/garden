@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-import type { components } from "../api/schema.d.ts";
+import type { components } from "@/api/schema.d.ts";
 
 type Vegetable = components["schemas"]["Vegetable"];
 type VegetablesApiResponse = components["schemas"]["VegetablesApiResponse"];

@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll } from "vitest";
 
-import { worker } from "./browser";
+import { worker } from "@/mocks/browser";
 
 beforeAll(async () => {
   await worker.start({ onUnhandledRequest: "error" });

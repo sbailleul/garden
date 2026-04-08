@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../"
+		},
+		{
+			"path": "../bruno"
+		},
+		{
+			"path": "../api"
+		},
+		{
+			"path": "../client"
+		}
+	],
+	"settings": {
+		"js/ts.preferences.importModuleSpecifier": "non-relative"
+	}
+}
