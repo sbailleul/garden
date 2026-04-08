@@ -9,7 +9,8 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { fetchVegetables, type Vegetable } from "@/api/vegetables";
+import { fetchVegetables } from "@/api/vegetables";
+import type { Vegetable } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,7 +81,7 @@ function VegetableCatalogue() {
     queryKey: ["vegetables"],
     queryFn: fetchVegetables,
   });
-
+  console.log(data.payload)
   const [nameFilter, setNameFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
@@ -90,7 +91,7 @@ function VegetableCatalogue() {
   ];
 
   const table = useReactTable({
-    data: data.payload,
+    data: data.payload.map(v => v.payload),
     columns,
     state: { columnFilters },
     getCoreRowModel: getCoreRowModel(),

@@ -1,13 +1,5 @@
-import type { components } from "@/api/schema.d.ts";
 import { apiClient } from "@/api/client";
-
-export type PlanRequest = components["schemas"]["PlanRequest"];
-export type PlanApiResponse = components["schemas"]["PlanApiResponse"];
-export type PlanResponse = components["schemas"]["PlanResponse"];
-export type WeeklyPlan = components["schemas"]["WeeklyPlan"];
-export type PlannedCell = components["schemas"]["PlannedCell"];
-export type Period = components["schemas"]["Period"];
-export type LayoutCell = components["schemas"]["LayoutCell"];
+import type { PlanApiResponse, PlanRequest } from "@/api/types";
 
 export async function postPlan(body: PlanRequest): Promise<PlanApiResponse> {
   const { data, error } = await apiClient.POST("/api/plan", { body });

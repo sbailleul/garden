@@ -1,12 +1,9 @@
-import type { components } from "@/api/schema.d.ts";
 import { apiClient } from "@/api/client";
-
-export type Vegetable = components["schemas"]["Vegetable"];
-export type VegetableResponse = components["schemas"]["VegetableResponse"];
-export type VegetablesApiResponse = components["schemas"]["VegetablesApiResponse"];
-export type VegetableApiResponse = components["schemas"]["VegetableApiResponse"];
-export type CompanionsResponse = components["schemas"]["CompanionsResponse"];
-export type CompanionsApiResponse = components["schemas"]["CompanionsApiResponse"];
+import type {
+  VegetablesApiResponse,
+  VegetableApiResponse,
+  CompanionsApiResponse,
+} from "@/api/types";
 
 export async function fetchVegetables(): Promise<VegetablesApiResponse> {
   const { data, error } = await apiClient.GET("/api/vegetables");

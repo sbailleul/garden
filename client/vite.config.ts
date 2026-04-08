@@ -1,6 +1,6 @@
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
+import { tanstackRouter } from "@tanstack/router-vite-plugin";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import oxlintPlugin from "vite-plugin-oxlint";
@@ -14,7 +14,7 @@ export default defineConfig({
     plugins: [
         react(),
         babel({ presets: [reactCompilerPreset()] }),
-        TanStackRouterVite(),
+        tanstackRouter(),
         tailwindcss(),
         oxlintPlugin({ path: "src", failOnError: true }),
         VitePWA({

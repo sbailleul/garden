@@ -1,12 +1,12 @@
 import { http, HttpResponse } from "msw";
 
-import type { components } from "@/api/schema.d.ts";
-
-type Vegetable = components["schemas"]["Vegetable"];
-type VegetablesApiResponse = components["schemas"]["VegetablesApiResponse"];
-type VegetableApiResponse = components["schemas"]["VegetableApiResponse"];
-type CompanionsApiResponse = components["schemas"]["CompanionsApiResponse"];
-type PlanApiResponse = components["schemas"]["PlanApiResponse"];
+import type {
+  Vegetable,
+  VegetablesApiResponse,
+  VegetableApiResponse,
+  CompanionsApiResponse,
+  PlanApiResponse,
+} from "@/api/types";
 
 const TOMATO: Vegetable = {
   id: "tomato",
@@ -57,7 +57,7 @@ const BASIL: Vegetable = {
 const SELF_LINK = (path: string) => ({ href: path, method: "GET" });
 
 const VEGETABLES_RESPONSE: VegetablesApiResponse = {
-  payload: [TOMATO, BASIL] as VegetablesApiResponse["payload"],
+  payload: [TOMATO, BASIL] as unknown as VegetablesApiResponse["payload"],
   pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
   _links: {
     self: SELF_LINK("/api/vegetables"),

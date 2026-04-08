@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 
-import { postPlan, type PlanRequest, type WeeklyPlan, type PlannedCell } from "@/api/plan";
+import { postPlan } from "@/api/plan";
+import type { PlanRequest, WeeklyPlan, PlannedCell } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
