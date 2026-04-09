@@ -139,12 +139,12 @@ export interface components {
              *     `estimatedHarvestDate` in the response.
              * @example 2025-05-01
              */
-            planted_date?: string | null;
+            plantedDate?: string | null;
             /**
              * Format: int32
              * @description Number of plants per cell. Computed from the vegetable's spacing if absent.
              */
-            plants_per_cell?: number | null;
+            plantsPerCell?: number | null;
             /** @enum {string} */
             type: "SelfContained";
         } | {
@@ -153,7 +153,7 @@ export interface components {
              * Format: int32
              * @description Block length in grid cells. Computed from the vegetable's spacing if absent.
              */
-            length_cells?: number | null;
+            lengthCells?: number | null;
             /**
              * Format: date
              * @description Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
@@ -161,21 +161,21 @@ export interface components {
              *     `estimatedHarvestDate` in the response.
              * @example 2025-05-01
              */
-            planted_date?: string | null;
+            plantedDate?: string | null;
             /**
              * Format: int32
              * @description Number of plants per cell. Computed from the vegetable's spacing if absent.
              */
-            plants_per_cell?: number | null;
+            plantsPerCell?: number | null;
             /** @enum {string} */
             type: "Overflowing";
             /**
              * Format: int32
              * @description Block width in grid cells. Computed from the vegetable's spacing if absent.
              */
-            width_cells?: number | null;
+            widthCells?: number | null;
         } | {
-            covered_by: components["schemas"]["Coordinate"];
+            coveredBy: components["schemas"]["Coordinate"];
             /** @enum {string} */
             type: "Overflowed";
         } | {
@@ -289,11 +289,11 @@ export interface components {
              * @description Estimated date the plant will be ready to harvest.
              * @example 2025-08-01
              */
-            estimated_harvest_date: string;
+            estimatedHarvestDate: string;
             id: string;
             name: string;
             /** Format: int32 */
-            plants_per_cell: number;
+            plantsPerCell: number;
             reason: string;
             /** @enum {string} */
             type: "SelfContained";
@@ -303,20 +303,20 @@ export interface components {
              * @description Estimated date the plant will be ready to harvest.
              * @example 2025-08-01
              */
-            estimated_harvest_date: string;
+            estimatedHarvestDate: string;
             id: string;
             /** Format: int32 */
-            length_cells: number;
+            lengthCells: number;
             name: string;
             /** Format: int32 */
-            plants_per_cell: number;
+            plantsPerCell: number;
             reason: string;
             /** @enum {string} */
             type: "Overflowing";
             /** Format: int32 */
-            width_cells: number;
+            widthCells: number;
         } | {
-            covered_by: components["schemas"]["Coordinate"];
+            coveredBy: components["schemas"]["Coordinate"];
             /** @enum {string} */
             type: "Overflowed";
         } | {

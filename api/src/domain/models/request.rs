@@ -12,9 +12,10 @@ use crate::domain::models::{
 /// Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
 /// relevant for input: `id` for pre-planted cells, nothing for `Empty`/`Blocked`.
 #[derive(Debug, Clone, Deserialize, ToSchema)]
-#[serde(tag = "type", rename_all_fields = "camelCase")]
+#[serde(tag = "type")]
 pub enum LayoutCell {
     /// A pre-planted cell that fits in one 30 cm × 30 cm grid cell.
+    #[serde(rename_all = "camelCase")]
     SelfContained {
         id: String,
         /// Number of plants per cell. Computed from the vegetable's spacing if absent.
@@ -26,6 +27,7 @@ pub enum LayoutCell {
         planted_date: Option<NaiveDate>,
     },
     /// The top-left (anchor) cell of a pre-planted multi-cell block.
+    #[serde(rename_all = "camelCase")]
     Overflowing {
         id: String,
         /// Number of plants per cell. Computed from the vegetable's spacing if absent.
@@ -41,6 +43,7 @@ pub enum LayoutCell {
         planted_date: Option<NaiveDate>,
     },
     /// A continuation cell of a multi-cell block (skipped — anchor handles placement).
+    #[serde(rename_all = "camelCase")]
     Overflowed { covered_by: Coordinate },
     /// Free, unoccupied, non-blocked cell.
     Empty,

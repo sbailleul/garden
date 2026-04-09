@@ -89,7 +89,7 @@ function WeekGrid({ week }: { week: WeeklyPlan }) {
               title={
                 cell.type !== "Empty" && cell.type !== "Blocked"
                   ? cell.type === "Overflowed"
-                    ? `Overflowed by (${cell.covered_by.row},${cell.covered_by.col})`
+                    ? `Overflowed by (${cell.coveredBy.row},${cell.coveredBy.col})`
                     : `${cell.name} — ${cell.reason}`
                   : cell.type
               }

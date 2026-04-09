@@ -21,9 +21,10 @@ pub struct VegetableResponse {
 /// - `Empty`         - free, unoccupied, non-blocked cell.
 /// - `Blocked`       - non-plantable zone (path, alley, obstacle).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
-#[serde(tag = "type", rename_all_fields = "camelCase")]
+#[serde(tag = "type")]
 pub enum PlannedCell {
     /// A plant that fits entirely within one 30 cm x 30 cm cell.
+    #[serde(rename_all = "camelCase")]
     SelfContained {
         id: String,
         name: String,
@@ -34,6 +35,7 @@ pub enum PlannedCell {
         estimated_harvest_date: NaiveDate,
     },
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
+    #[serde(rename_all = "camelCase")]
     Overflowing {
         id: String,
         name: String,
@@ -47,6 +49,7 @@ pub enum PlannedCell {
     },
     /// A continuation cell covered by a multi-cell plant's anchor.
     /// All plant data lives on the anchor cell; this cell only holds a back-reference.
+    #[serde(rename_all = "camelCase")]
     Overflowed { covered_by: Coordinate },
     /// A free, unoccupied, non-blocked cell.
     Empty,
