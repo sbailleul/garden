@@ -68,4 +68,17 @@ Every API response must include a `_links` object following the HAL convention. 
 
 The `_links` key is exempt from camelCase renaming and must be serialised literally as `_links` using `#[serde(rename = "_links")]`.
 
+## Smart / Dumb Component Pattern (client)
+
+All React components in `client/src/` must follow the **smart/dumb** (container/presentational) pattern:
+
+- **Dumb (presentational) components** — live in `src/components/`. They receive all data and callbacks via props, contain no data-fetching, no `useSuspenseQuery`, no `useMutation`, and no router hooks. They are pure UI: given the same props they render the same output.
+
+- **Smart (container) components** — are the route components in `src/routes/`. They own data-fetching (`useSuspenseQuery`, `useMutation`), read route params and search params, and pass the resulting data down to dumb components as props.
+
+Rules:
+- A component in `src/components/` must never import from `@tanstack/react-query` or `@tanstack/react-router` (except `Link`, which is a pure UI primitive).
+- A route component in `src/routes/` should delegate all rendering to one or more presentational components; it must not contain raw JSX beyond a top-level wrapper.
+- Shared UI primitives (buttons, inputs, badges, etc.) stay in `src/components/ui/`. Feature-level dumb components (e.g. `VegetableTable`, `PlanGrid`, `CompanionList`) go in `src/components/` under a feature subfolder (e.g. `src/components/vegetables/`, `src/components/plan/`).
+
 

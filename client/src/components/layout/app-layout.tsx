@@ -1,6 +1,6 @@
 import { Outlet } from "@tanstack/react-router";
 
-import { NavBar } from "@/components/layout/NavBar";
+import { NavBar } from "@/components/layout/nav-bar";
 
 export function AppLayout() {
   return (

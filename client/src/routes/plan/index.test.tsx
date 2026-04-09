@@ -4,7 +4,7 @@ import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/rea
 import { QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/query-client";
 import { routeTree } from "@/routeTree.gen";
 
 function renderAt(path: string) {
@@ -37,7 +37,7 @@ describe("Plan form", () => {
 
     await waitFor(() => screen.getAllByRole("button", { name: /generate plan/i }));
 
-    await user.click(screen.getAllByRole("button", { name: /generate plan/i })[0]);
+    await user.click(screen.getAllByRole("button", { name: /generate plan/i })[0]!);
 
     await waitFor(() => {
       // MSW mock returns a 2×2 grid with one Tomato cell

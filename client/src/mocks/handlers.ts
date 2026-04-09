@@ -56,14 +56,6 @@ const BASIL: Vegetable = {
 
 const SELF_LINK = (path: string) => ({ href: path, method: "GET" });
 
-const VEGETABLES_RESPONSE: VegetablesApiResponse = {
-  payload: [TOMATO, BASIL] as unknown as VegetablesApiResponse["payload"],
-  pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
-  _links: {
-    self: SELF_LINK("/api/vegetables"),
-  },
-};
-
 const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v as VegetableApiResponse["payload"],
   _links: {
@@ -72,6 +64,14 @@ const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
     collection: SELF_LINK("/api/vegetables"),
   },
 });
+
+const VEGETABLES_RESPONSE: VegetablesApiResponse = {
+  payload: [TOMATO, BASIL].map(vegetableResponse),
+  pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
+  _links: {
+    self: SELF_LINK("/api/vegetables"),
+  },
+};
 
 const COMPANIONS_RESPONSE: CompanionsApiResponse = {
   payload: {

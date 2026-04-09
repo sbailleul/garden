@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 
 import { worker } from "@/mocks/browser";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/query-client";
 import { routeTree } from "@/routeTree.gen";
 
 function renderAt(path: string) {
