@@ -129,7 +129,7 @@ export const handlers = [
   http.get("/api/vegetables", () => HttpResponse.json(VEGETABLES_RESPONSE)),
 
   http.get("/api/vegetables/:id", ({ params }) => {
-    const veg = VEGETABLE_MAP[params.id as string];
+    const veg = VEGETABLE_MAP[params['id']as string];
     if (!veg) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -137,7 +137,7 @@ export const handlers = [
   }),
 
   http.get("/api/vegetables/:id/companions", ({ params }) => {
-    if (params.id !== "tomato") {
+    if (params['id'] !== "tomato") {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
     return HttpResponse.json(COMPANIONS_RESPONSE);

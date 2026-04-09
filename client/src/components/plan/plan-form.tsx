@@ -101,7 +101,7 @@ type Props = {
 export function PlanForm({ onSubmit, isPending, isError, error, result }: Props) {
   const form = useForm({
     defaultValues: {
-      region: "Temperate" as PlanRequest["region"],
+      region: "Temperate" as Region,
       rows: 4,
       cols: 4,
       periodStart: "",
@@ -123,16 +123,16 @@ export function PlanForm({ onSubmit, isPending, isError, error, result }: Props)
         ...(value.periodStart && value.periodEnd
           ? { period: { start: value.periodStart, end: value.periodEnd } }
           : {}),
-        ...(value.sun ? { sun: value.sun as PlanRequest["sun"] } : {}),
-        ...(value.soil ? { soil: value.soil as PlanRequest["soil"] } : {}),
-        ...(value.level ? { level: value.level as PlanRequest["level"] } : {}),
+        ...(value.sun ? { sun: value.sun as SunExposure } : {}),
+        ...(value.soil ? { soil: value.soil as SoilType } : {}),
+        ...(value.level ? { level: value.level as Level} : {}),
         preferences: value.preferences
           ? value.preferences
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean)
               .map((id) => ({ id }))
-          : undefined,
+          : null,
         exclusions: value.exclusions
           ? value.exclusions
               .split(",")
