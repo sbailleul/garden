@@ -9,17 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlanRouteImport } from './routes/plan'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VegetablesIndexRouteImport } from './routes/vegetables/index'
+import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as VegetablesIdRouteImport } from './routes/vegetables/$id'
 import { Route as VegetablesIdCompanionsRouteImport } from './routes/vegetables/$id.companions'
 
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -28,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const VegetablesIndexRoute = VegetablesIndexRouteImport.update({
   id: '/vegetables/',
   path: '/vegetables/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanIndexRoute = PlanIndexRouteImport.update({
+  id: '/plan/',
+  path: '/plan/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VegetablesIdRoute = VegetablesIdRouteImport.update({
@@ -43,23 +43,23 @@ const VegetablesIdCompanionsRoute = VegetablesIdCompanionsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/plan': typeof PlanRoute
   '/vegetables/$id': typeof VegetablesIdRouteWithChildren
+  '/plan/': typeof PlanIndexRoute
   '/vegetables/': typeof VegetablesIndexRoute
   '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/plan': typeof PlanRoute
   '/vegetables/$id': typeof VegetablesIdRouteWithChildren
+  '/plan': typeof PlanIndexRoute
   '/vegetables': typeof VegetablesIndexRoute
   '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/plan': typeof PlanRoute
   '/vegetables/$id': typeof VegetablesIdRouteWithChildren
+  '/plan/': typeof PlanIndexRoute
   '/vegetables/': typeof VegetablesIndexRoute
   '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
@@ -67,42 +67,35 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/plan'
     | '/vegetables/$id'
+    | '/plan/'
     | '/vegetables/'
     | '/vegetables/$id/companions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/plan'
     | '/vegetables/$id'
+    | '/plan'
     | '/vegetables'
     | '/vegetables/$id/companions'
   id:
     | '__root__'
     | '/'
-    | '/plan'
     | '/vegetables/$id'
+    | '/plan/'
     | '/vegetables/'
     | '/vegetables/$id/companions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PlanRoute: typeof PlanRoute
   VegetablesIdRoute: typeof VegetablesIdRouteWithChildren
+  PlanIndexRoute: typeof PlanIndexRoute
   VegetablesIndexRoute: typeof VegetablesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -115,6 +108,13 @@ declare module '@tanstack/react-router' {
       path: '/vegetables'
       fullPath: '/vegetables/'
       preLoaderRoute: typeof VegetablesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/': {
+      id: '/plan/'
+      path: '/plan'
+      fullPath: '/plan/'
+      preLoaderRoute: typeof PlanIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vegetables/$id': {
@@ -148,8 +148,8 @@ const VegetablesIdRouteWithChildren = VegetablesIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PlanRoute: PlanRoute,
   VegetablesIdRoute: VegetablesIdRouteWithChildren,
+  PlanIndexRoute: PlanIndexRoute,
   VegetablesIndexRoute: VegetablesIndexRoute,
 }
 export const routeTree = rootRouteImport

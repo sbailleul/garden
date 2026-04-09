@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 
 import { postPlan } from "@/api/plan";
-import type { PlanRequest, WeeklyPlan, PlannedCell } from "@/api/types";
+import type { PlanRequest, WeeklyPlan, PlannedCell, Region, SunExposure, SoilType, Level } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/plan")({
+export const Route = createFileRoute("/plan/")({
   component: PlannerPage,
 });
 
 type FormValues = {
-  region: PlanRequest["region"];
+  region: Region;
   rows: number;
   cols: number;
   periodStart: string;
@@ -33,11 +33,11 @@ type FormValues = {
   exclusions: string;
 };
 
-const REGIONS = ["Temperate", "Mediterranean", "Oceanic", "Continental", "Mountain"] as const;
+const REGIONS: Region[] = ["Temperate", "Mediterranean", "Oceanic", "Continental", "Mountain"];
 
-const SUN_OPTIONS = ["FullSun", "PartialShade", "Shade"] as const;
-const SOIL_OPTIONS = ["Clay", "Sandy", "Loamy", "Chalky", "Humus"] as const;
-const LEVEL_OPTIONS = ["Beginner", "Expert"] as const;
+const SUN_OPTIONS: SunExposure[] = ["FullSun", "PartialShade", "Shade"];
+const SOIL_OPTIONS: SoilType[] = ["Clay", "Sandy", "Loamy", "Chalky", "Humus"];
+const LEVEL_OPTIONS: Level[] = ["Beginner", "Expert"];
 
 const CATEGORY_COLOURS: Record<string, string> = {
   Fruit: "bg-red-100 text-red-800",
@@ -135,16 +135,16 @@ function PlannerPage() {
         ...(value.level ? { level: value.level as PlanRequest["level"] } : {}),
         preferences: value.preferences
           ? value.preferences
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-              .map((id) => ({ id }))
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((id) => ({ id }))
           : undefined,
         exclusions: value.exclusions
           ? value.exclusions
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
           : [],
       };
 
