@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { postPlan } from "@/api/plan";
 import type { PlanRequest } from "@/api/types";
-import { PlanForm } from "@/components/plan/plan-form";
+import { PlanForm } from "@/components/plan/form";
 
 export const Route = createFileRoute("/plan/")({
   component: PlannerPage,

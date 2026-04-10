@@ -4,11 +4,12 @@ import type {
   Level,
   PlanApiResponse,
   PlanRequest,
+  PlanRequestLayout,
   PlannedCell,
   Region,
   SoilType,
   SunExposure,
-  WeeklyPlan,
+  WeeklyPlan
 } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +114,7 @@ export function PlanForm({ onSubmit, isPending, isError, error, result }: Props)
       exclusions: "",
     },
     onSubmit: async ({ value }) => {
-      const layout: PlanRequest["layout"] = Array.from({ length: value.rows }, () =>
+      const layout:PlanRequestLayout = Array.from({ length: value.rows }, () =>
         Array.from({ length: value.cols }, () => ({ type: "Empty" as const })),
       );
 

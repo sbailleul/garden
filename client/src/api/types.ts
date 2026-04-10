@@ -30,6 +30,7 @@ export type ErrorResponse = components["schemas"]["ErrorResponse"];
 export type CompanionsResponse = components["schemas"]["CompanionsResponse"];
 export type CompanionsApiResponse = components["schemas"]["CompanionsApiResponse"];
 export type PlanRequest = components["schemas"]["PlanRequest"];
+export type PlanRequestLayout = PlanRequest["layout"];
 export type PlanResponse = components["schemas"]["PlanResponse"];
 export type PlanApiResponse = components["schemas"]["PlanApiResponse"];
 export type VegetableApiResponse = components["schemas"]["VegetableApiResponse"];
