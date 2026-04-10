@@ -1,4 +1,4 @@
-use actix_web::{http::Method, post, web, HttpResponse, Responder};
+use actix_web::{http::Method, post, web, HttpRequest, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
 use crate::domain::models::hateoas::PlanApiResponse;
@@ -14,6 +14,25 @@ use crate::{
         request::PlanRequest,
     },
 };
+
+fn parse_locale(req: &HttpRequest) -> String {
+    req.headers()
+        .get("accept-language")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| {
+            s.split(',').next().map(|tag| {
+                tag.split(';')
+                    .next()
+                    .unwrap_or(tag)
+                    .split('-')
+                    .next()
+                    .unwrap_or(tag)
+                    .trim()
+                    .to_lowercase()
+            })
+        })
+        .unwrap_or_else(|| "en".to_string())
+}
 
 /// POST /api/plan
 /// Generates an optimised garden plan based on the provided constraints.
@@ -33,12 +52,14 @@ use crate::{
 )]
 #[post("/plan")]
 pub async fn post_plan(
+    req: HttpRequest,
     body: web::Json<PlanRequest>,
     repo: web::Data<Box<dyn VegetableRepository>>,
 ) -> impl Responder {
+    let locale = parse_locale(&req);
     let request = body.into_inner();
     let use_case = PlanGardenUseCase::new(repo.as_ref().as_ref());
-    match use_case.execute(&request) {
+    match use_case.execute(&request, &locale).await {
         Ok(response) => {
             let mut links = std::collections::HashMap::new();
             links.insert("self".into(), link("/api/plan", Method::POST));

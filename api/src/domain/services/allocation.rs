@@ -71,7 +71,7 @@ pub fn build_placement_queue<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::adapters::outbound::memory::vegetable_repository::get_vegetable_by_id;
+    use crate::domain::test_fixtures::get_vegetable_by_id;
 
     #[test]
     fn test_compute_explicit_allocation_honours_quantities() {

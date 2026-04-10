@@ -21,20 +21,36 @@ bruno/    — Bruno API collection for end-to-end testing
 
 ## Getting Started
 
+### Prerequisites
+
+- Rust (Edition 2021 toolchain)
+- Docker + Docker Compose (for PostgreSQL)
+- Node.js ≥ 20 + pnpm (for the React client)
+
+### Start the database
+
 ```bash
-# Activate shared git hooks (one-time, after cloning)
-git config core.hooksPath .githooks
+docker compose up -d
+# PostgreSQL 17 listens on localhost:5432
+# Database: garden  User: garden  Password: garden
+```
 
-# Build and run the API
+### Run the API
+
+```bash
 cd api
-cargo run
+DATABASE_URL=postgres://garden:garden@localhost/garden cargo run
+# API available at http://localhost:8080
+# Migrations run automatically on startup
+```
 
-# Run the React client (in another terminal)
+### Run the React client
+
+```bash
 cd client
 pnpm install
 pnpm run dev
-# → development server at http://localhost:5173
-# → server listening on http://localhost:8080
+# Development server at http://localhost:5173
 ```
 
 ---
@@ -42,9 +58,13 @@ pnpm run dev
 ## Running Tests
 
 ```bash
-# Rust unit + integration tests
+# Rust unit + integration tests (no database required)
 cd api
 cargo test
+
+# PostgreSQL integration tests (requires a running database)
+cd api
+TEST_DATABASE_URL=postgres://garden:garden@localhost/garden_test cargo test -- --include-ignored
 
 # Bruno end-to-end tests (API must be running)
 cd bruno

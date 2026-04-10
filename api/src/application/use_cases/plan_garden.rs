@@ -21,8 +21,12 @@ impl<'a> PlanGardenUseCase<'a> {
         Self { repo }
     }
 
-    pub fn execute(&self, request: &PlanRequest) -> Result<PlanResponse, String> {
-        let db = self.repo.get_all();
+    pub async fn execute(
+        &self,
+        request: &PlanRequest,
+        locale: &str,
+    ) -> Result<PlanResponse, String> {
+        let db = self.repo.get_all(locale).await.map_err(|e| e.to_string())?;
         let candidates = filter_candidates_base(&db, request);
         let lookup: HashMap<String, Vegetable> =
             db.into_iter().map(|v| (v.id.clone(), v)).collect();

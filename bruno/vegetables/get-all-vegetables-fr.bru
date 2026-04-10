@@ -1,0 +1,34 @@
+meta {
+  name: Get All Vegetables (French)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: fr
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload: isArray
+  res.body.payload: isNotEmpty
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("tomato has French name", function() {
+    const tomato = res.body.payload.find(function(v) {
+      return v.payload.id === "tomato";
+    });
+    expect(tomato).to.not.be.undefined;
+    expect(tomato.payload.name).to.equal("Tomate");
+  });
+}

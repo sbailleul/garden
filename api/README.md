@@ -342,20 +342,51 @@ flowchart TD
 
 ## Running Locally
 
+### Prerequisites
+
+- Rust (Edition 2021 toolchain)
+- Docker + Docker Compose
+
+### 1 — Start PostgreSQL
+
 ```bash
-# After cloning — activate the shared git hooks (one-time)
-git config core.hooksPath .githooks
-
-# Build & run
-cd api
-cargo run
-# → server listening on http://localhost:8080
-
-# Run all tests
-cargo test
+# From the repository root
+docker compose up -d
+# PostgreSQL 17 listens on localhost:5432
 ```
 
-The pre-commit hook (`.githooks/pre-commit`) runs `cargo fmt --check`, `cargo build`, and `cargo test` before every commit and aborts on any failure.
+### 2 — Run the API
+
+```bash
+cd api
+DATABASE_URL=postgres://garden:garden@localhost/garden cargo run
+# → server listening on http://localhost:8080
+# Database schema and seed data are applied automatically on startup.
+```
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATABASE_URL` | _(required)_ | libpq connection string for the application database |
+| `TEST_DATABASE_URL` | _(optional)_ | Connection string used by `#[ignore]`d database integration tests |
+| `PORT` | `8080` | HTTP port |
+
+### Running tests
+
+```bash
+# Unit + HTTP integration tests (no database required)
+cargo test
+
+# PostgreSQL integration tests (database must be running)
+TEST_DATABASE_URL=postgres://garden:garden@localhost/garden cargo test -- --include-ignored
+```
+
+### Language negotiation
+
+All three `GET /api/vegetables*` endpoints honour the `Accept-Language` request header. The first language tag is extracted, stripped of its region suffix (e.g. `fr-FR` → `fr`), and matched against the `vegetable_translations` table. If no translation exists for the requested locale, the English (`en`) name is returned.
+
+Supported locales: `en` (default), `fr`.
 
 ---
 

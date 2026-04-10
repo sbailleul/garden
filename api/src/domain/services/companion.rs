@@ -27,7 +27,7 @@ pub fn is_compatible(a: &Vegetable, b: &Vegetable) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::adapters::outbound::memory::vegetable_repository::get_vegetable_by_id;
+    use crate::domain::test_fixtures::get_vegetable_by_id;
 
     fn get(id: &str) -> Vegetable {
         get_vegetable_by_id(id).unwrap_or_else(|| panic!("Vegetable '{}' not found", id))

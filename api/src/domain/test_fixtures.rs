@@ -1,8 +1,15 @@
-use crate::application::ports::vegetable_repository::VegetableRepository;
+//! Vegetable fixture data for unit tests in the domain layer.
+//! This module exists solely for `#[cfg(test)]` use and is never compiled
+//! into production binaries.
+
 use crate::domain::models::vegetable::Month::*;
 use crate::domain::models::vegetable::{
     CalendarWindow, Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure, Vegetable,
 };
+
+pub fn get_vegetable_by_id(id: &str) -> Option<Vegetable> {
+    get_all_vegetables().into_iter().find(|v| v.id == id)
+}
 
 pub fn get_all_vegetables() -> Vec<Vegetable> {
     vec![
@@ -1037,7 +1044,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             days_to_plant: 21,
             lifecycle: Lifecycle::Biennial,
             good_companions: vec!["tomato".into(), "asparagus".into(), "rose".into()],
-            bad_companions: vec!["lettuce".into(), "lettuce".into()],
+            bad_companions: vec!["lettuce".into()],
             beginner_friendly: true,
             category: Category::Herb,
         },
@@ -2076,76 +2083,4 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             category: Category::Leafy,
         },
     ]
-}
-
-pub fn get_vegetable_by_id(id: &str) -> Option<Vegetable> {
-    get_all_vegetables().into_iter().find(|v| v.id == id)
-}
-
-/// Outbound adapter: implements [`VegetableRepository`] using the in-memory
-/// vegetable catalogue defined in this module.
-pub struct InMemoryVegetableRepository;
-
-impl VegetableRepository for InMemoryVegetableRepository {
-    fn get_all(&self) -> Vec<Vegetable> {
-        get_all_vegetables()
-    }
-
-    fn get_by_id(&self, id: &str) -> Option<Vegetable> {
-        get_vegetable_by_id(id)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_all_vegetables_not_empty() {
-        let vegetables = get_all_vegetables();
-        assert!(
-            !vegetables.is_empty(),
-            "The vegetable database must not be empty"
-        );
-    }
-
-    #[test]
-    fn test_no_duplicate_ids() {
-        let vegetables = get_all_vegetables();
-        let mut ids = std::collections::HashSet::new();
-        for v in &vegetables {
-            assert!(ids.insert(&v.id), "Duplicate ID detected: {}", v.id);
-        }
-    }
-
-    #[test]
-    fn test_get_vegetable_by_id_found() {
-        let result = get_vegetable_by_id("tomato");
-        assert!(result.is_some());
-        assert_eq!(result.unwrap().name, "Tomato");
-    }
-
-    #[test]
-    fn test_get_vegetable_by_id_not_found() {
-        let result = get_vegetable_by_id("nonexistent-vegetable");
-        assert!(result.is_none());
-    }
-
-    #[test]
-    fn test_all_vegetables_have_nonempty_calendars() {
-        for v in get_all_vegetables() {
-            assert!(
-                !v.calendars.is_empty(),
-                "Vegetable {} must have at least one calendar entry",
-                v.id
-            );
-        }
-    }
-
-    #[test]
-    fn test_all_vegetables_have_spacing() {
-        for v in get_all_vegetables() {
-            assert!(v.spacing_cm > 0, "Vegetable {} must have spacing > 0", v.id);
-        }
-    }
 }

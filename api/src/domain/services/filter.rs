@@ -134,11 +134,11 @@ pub fn filter_candidates_base(db: &[Vegetable], request: &PlanRequest) -> Vec<Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::adapters::outbound::memory::vegetable_repository::get_all_vegetables;
     use crate::domain::models::{
         request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry},
         vegetable::{Month, Region, SoilType, SunExposure},
     };
+    use crate::domain::test_fixtures::get_all_vegetables;
     use chrono::{Duration, NaiveDate};
 
     fn make_request_for_month(month: u32) -> PlanRequest {

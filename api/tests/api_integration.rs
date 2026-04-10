@@ -1,39 +1,7 @@
-use actix_web::{test, web, App};
-use garden::adapters::inbound::http::routes::configure;
-use garden::adapters::outbound::memory::vegetable_repository::InMemoryVegetableRepository;
-use garden::application::ports::vegetable_repository::VegetableRepository;
+mod common;
 
-fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
-    let empty_cell = serde_json::json!({"type": "Empty"});
-    let row: Vec<serde_json::Value> = vec![empty_cell; cols];
-    let layout: Vec<serde_json::Value> = (0..rows)
-        .map(|_| serde_json::Value::Array(row.clone()))
-        .collect();
-    serde_json::Value::Array(layout)
-}
-
-fn build_app() -> actix_web::App<
-    impl actix_web::dev::ServiceFactory<
-        actix_web::dev::ServiceRequest,
-        Config = (),
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-        InitError = (),
-    >,
-> {
-    let repo: Box<dyn VegetableRepository> = Box::new(InMemoryVegetableRepository);
-    App::new()
-        .app_data(web::Data::new(repo))
-        .configure(configure)
-        .app_data(web::JsonConfig::default().error_handler(|err, _req| {
-            let message = format!("{err}");
-            actix_web::error::InternalError::from_response(
-                err,
-                actix_web::HttpResponse::BadRequest().json(serde_json::json!({ "error": message })),
-            )
-            .into()
-        }))
-}
+use actix_web::test;
+use common::{build_app, null_layout};
 
 // ---------------------------------------------------------------------------
 // GET /api/vegetables

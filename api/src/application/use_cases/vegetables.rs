@@ -1,4 +1,4 @@
-use crate::application::ports::vegetable_repository::VegetableRepository;
+use crate::application::ports::vegetable_repository::{RepositoryError, VegetableRepository};
 use crate::domain::models::{response::CompanionInfo, vegetable::Vegetable};
 
 /// Use case: list all vegetables from the catalogue.
@@ -11,8 +11,8 @@ impl<'a> ListVegetablesUseCase<'a> {
         Self { repo }
     }
 
-    pub fn execute(&self) -> Vec<Vegetable> {
-        self.repo.get_all()
+    pub async fn execute(&self, locale: &str) -> Result<Vec<Vegetable>, RepositoryError> {
+        self.repo.get_all(locale).await
     }
 }
 
@@ -26,8 +26,12 @@ impl<'a> GetVegetableUseCase<'a> {
         Self { repo }
     }
 
-    pub fn execute(&self, id: &str) -> Option<Vegetable> {
-        self.repo.get_by_id(id)
+    pub async fn execute(
+        &self,
+        id: &str,
+        locale: &str,
+    ) -> Result<Option<Vegetable>, RepositoryError> {
+        self.repo.get_by_id(id, locale).await
     }
 }
 
@@ -48,9 +52,16 @@ impl<'a> GetCompanionsUseCase<'a> {
         Self { repo }
     }
 
-    pub fn execute(&self, id: &str) -> Option<CompanionData> {
-        let vegetable = self.repo.get_by_id(id)?;
-        let all = self.repo.get_all();
+    pub async fn execute(
+        &self,
+        id: &str,
+        locale: &str,
+    ) -> Result<Option<CompanionData>, RepositoryError> {
+        let vegetable = match self.repo.get_by_id(id, locale).await? {
+            None => return Ok(None),
+            Some(v) => v,
+        };
+        let all = self.repo.get_all(locale).await?;
 
         let good = vegetable
             .good_companions
@@ -74,10 +85,10 @@ impl<'a> GetCompanionsUseCase<'a> {
             })
             .collect();
 
-        Some(CompanionData {
+        Ok(Some(CompanionData {
             vegetable,
             good,
             bad,
-        })
+        }))
     }
 }
