@@ -12,6 +12,10 @@ Run `cargo clippy -- -D warnings` after every code modification before consideri
 
 Every feature must be covered by at least one automated test. This includes new endpoints, new fields, new business rules, and bug fixes. Tests live in `src/` (unit/integration via `#[cfg(test)]`) or in `tests/` (integration tests using `actix_web::test`).
 
+## Database tests
+
+When a feature involves database access (e.g. a new outbound adapter, a new repository method, or a new query), add database integration tests in `tests/postgres_repository.rs`. These tests run against a real PostgreSQL instance and must cover the new behaviour end-to-end (insert, fetch, edge cases). Only add database tests when the feature actually touches the persistence layer; pure domain or in-memory logic does not require them.
+
 ## Bruno collection
 
 The Bruno collection in `bruno/` must always reflect the current state of the API. Any time an endpoint is added, modified or removed — request bodies, query parameters, assertions and test scripts must be updated accordingly.
@@ -67,6 +71,15 @@ Every API response must include a `_links` object following the HAL convention. 
 - `POST /api/plan` — `self` → `/api/plan`, `vegetables` → `/api/vegetables`
 
 The `_links` key is exempt from camelCase renaming and must be serialised literally as `_links` using `#[serde(rename = "_links")]`.
+
+## Client UI tests
+
+Every new client feature must be covered by at least one UI test. Tests use **Vitest** and **React Testing Library** and live in a `.test.tsx` file co-located with the component or route being tested (e.g. `src/components/vegetables/vegetable-table.test.tsx`, `src/routes/vegetables/index.test.tsx`).
+
+- **Dumb component tests** — render the component directly with explicit props and assert the resulting output. No router or query client setup is required.
+- **Smart / route component tests** — render via `RouterProvider` (with a `createMemoryHistory`) wrapped in `QueryClientProvider`. Call `queryClient.clear()` at the start of each test. Use `screen.findBy*` or `waitFor` to handle async data loading.
+- **API mocking** — all HTTP calls must be intercepted by MSW. Request handlers are registered in `src/mocks/handlers.ts`. Add or extend handlers there when a new endpoint is consumed by the client.
+- Use `@testing-library/user-event` for simulating user interactions (typing, clicking, etc.).
 
 ## File and directory naming (client)
 
