@@ -1,10 +1,9 @@
 //! PostgreSQL repository integration tests.
 //!
-//! Requires a running PostgreSQL database. Set `TEST_DATABASE_URL` to opt in:
-//!
-//! ```sh
-//! TEST_DATABASE_URL=postgres://garden:garden@localhost/garden_test cargo test -- --include-ignored
-//! ```
+//! Requires a running PostgreSQL database. These tests run automatically with
+//! `cargo test`. The database URL is resolved in order:
+//! 1. `TEST_DATABASE_URL` environment variable
+//! 2. `DATABASE_URL` environment variable (or `.env` file)
 
 mod embedded {
     use refinery::embed_migrations;
@@ -40,7 +39,10 @@ async fn run_migrations(pool: &Pool) {
 }
 
 fn database_url() -> Option<String> {
-    std::env::var("TEST_DATABASE_URL").ok()
+    dotenvy::dotenv().ok();
+    std::env::var("TEST_DATABASE_URL")
+        .or_else(|_| std::env::var("DATABASE_URL"))
+        .ok()
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +50,6 @@ fn database_url() -> Option<String> {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore]
 async fn test_get_all_returns_vegetables() {
     let Some(url) = database_url() else {
         return;
@@ -65,7 +66,6 @@ async fn test_get_all_returns_vegetables() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_get_all_returns_french_names() {
     let Some(url) = database_url() else {
         return;
@@ -82,7 +82,6 @@ async fn test_get_all_returns_french_names() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_get_by_id_returns_vegetable() {
     let Some(url) = database_url() else {
         return;
@@ -100,7 +99,6 @@ async fn test_get_by_id_returns_vegetable() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_get_by_id_unknown_returns_none() {
     let Some(url) = database_url() else {
         return;
@@ -116,7 +114,6 @@ async fn test_get_by_id_unknown_returns_none() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_locale_fallback_to_en() {
     let Some(url) = database_url() else {
         return;

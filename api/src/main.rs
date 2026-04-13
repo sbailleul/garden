@@ -25,6 +25,7 @@ fn build_pool(database_url: &str) -> Pool {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenvy::dotenv().ok();
     env_logger::init();
 
     let database_url =
