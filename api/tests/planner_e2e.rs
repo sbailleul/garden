@@ -1,7 +1,7 @@
 mod common;
 
 use actix_web::test;
-use common::{build_app, null_layout};
+use common::{build_app_postgres, null_layout};
 
 fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
     body["payload"]["weeks"][0]["grid"]
@@ -18,7 +18,7 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_small_summer_garden() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     let payload = serde_json::json!({
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "sun": "FullSun",
@@ -64,7 +64,7 @@ async fn scenario_small_summer_garden() {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_spring_cool_climate() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     let payload = serde_json::json!({
         "period": {"start": "2025-03-01", "end": "2025-05-31"},
         "region": "Mountain",
@@ -104,7 +104,7 @@ async fn scenario_spring_cool_climate() {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_existing_tomatoes_add_companions() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
@@ -154,7 +154,7 @@ async fn scenario_existing_tomatoes_add_companions() {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_winter_garden() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     let payload = serde_json::json!({
         "period": {"start": "2024-12-01", "end": "2025-02-28"},
         "region": "Oceanic",
@@ -199,7 +199,7 @@ fn resp_status_from_body(body: &serde_json::Value) -> Option<&str> {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_sown_seeds_appear_in_plan() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     // Tomato: days_to_plant=42; sown 2025-03-01 → ready 2025-04-12.
     // Planning window starts 2025-04-14 (after ready date) so tomato must appear.
     let payload = serde_json::json!({
@@ -245,7 +245,7 @@ async fn scenario_sown_seeds_appear_in_plan() {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_sowing_tasks_computed_per_week() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     // Planning period: 2025-03-03 → 2025-06-29 (Temperate).
     // Tomato (days_to_plant=42): first eligible month is May/June.
     // The first week where tomato could be transplanted is around 2025-05-05.
@@ -302,7 +302,7 @@ async fn scenario_sowing_tasks_computed_per_week() {
 // ---------------------------------------------------------------------------
 #[actix_web::test]
 async fn scenario_exclusions_prevent_placement() {
-    let app = test::init_service(build_app()).await;
+    let app = test::init_service(build_app_postgres().await).await;
     let payload = serde_json::json!({
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "region": "Temperate",
