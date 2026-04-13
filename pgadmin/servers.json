@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "garden",
+      "Group": "Docker",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "garden",
+      "Username": "garden",
+      "PassFile": "/tmp/.pgpass",
+      "SSLMode": "prefer"
+    }
+  }
+}

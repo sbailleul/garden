@@ -15,5 +15,22 @@ services:
       timeout: 5s
       retries: 10
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@garden.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - garden_pgadmin:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/pgpass:/pgpass
+    entrypoint: ["/bin/sh", "-c", "cp /pgpass /tmp/.pgpass && chmod 600 /tmp/.pgpass && /entrypoint.sh"]
+
 volumes:
   garden_db:
+  garden_pgadmin:

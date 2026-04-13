@@ -10,7 +10,20 @@ Run `cargo clippy -- -D warnings` after every code modification before consideri
 
 ## Tests
 
-Every feature must be covered by at least one automated test. This includes new endpoints, new fields, new business rules, and bug fixes. Tests live in `src/` (unit/integration via `#[cfg(test)]`) or in `tests/` (integration tests using `actix_web::test`).
+Every feature must be covered by at least one automated test. This includes new endpoints, new fields, new business rules, and bug fixes. Tests live in `src/` (unit/integration via `#[cfg(test)]`) or in `tests/` (e2e tests using `actix_web::test`).
+
+## E2E tests
+
+When a feature adds or modifies an HTTP endpoint, add e2e tests in the appropriate file under `tests/e2e/`:
+
+- `tests/e2e/vegetables.rs` — `GET /api/vegetables` and `GET /api/vegetables/{id}`
+- `tests/e2e/companions.rs` — `GET /api/vegetables/{id}/companions`
+- `tests/e2e/plan.rs` — `POST /api/plan` (all variants)
+- `tests/e2e/scenarios.rs` — end-to-end planner scenarios asserting business rules
+
+Each file uses `use crate::common::{build_app_postgres, null_layout};` and is declared as a submodule in `tests/e2e/mod.rs`. The test binary is registered in `Cargo.toml` as `[[test]] name = "e2e" path = "tests/e2e/mod.rs"`.
+
+Shared helpers (`build_app_postgres`, `test_pool`, `null_layout`, etc.) live in `tests/common/mod.rs` and are included into the e2e binary via `#[path = "../common/mod.rs"] mod common;` at the top of `tests/e2e/mod.rs`.
 
 ## Database tests
 

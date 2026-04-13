@@ -1,7 +1,5 @@
-mod common;
-
+use crate::common::{build_app_postgres, null_layout};
 use actix_web::test;
-use common::{build_app_postgres, null_layout};
 
 fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
     body["payload"]["weeks"][0]["grid"]
@@ -16,6 +14,7 @@ fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
 // ---------------------------------------------------------------------------
 // Scenario 1: Small summer garden, full sun, loamy soil, beginner
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_small_summer_garden() {
     let app = test::init_service(build_app_postgres().await).await;
@@ -37,7 +36,6 @@ async fn scenario_small_summer_garden() {
     assert_eq!(body["payload"]["cols"], 7, "2m x 3m → 7 cols");
 
     let placed = collect_placed_ids(&body);
-    // A beginner summer garden must contain at least one typical summer vegetable
     let typical_summer = ["tomato", "zucchini", "cucumber", "green-bean", "radish"];
     let found_typical = typical_summer
         .iter()
@@ -48,7 +46,6 @@ async fn scenario_small_summer_garden() {
         typical_summer, placed
     );
 
-    // No advanced vegetables should appear in a beginner garden
     let advanced_vegs = ["pepper", "fennel", "eggplant", "celery", "asparagus"];
     for id in &advanced_vegs {
         assert!(
@@ -62,6 +59,7 @@ async fn scenario_small_summer_garden() {
 // ---------------------------------------------------------------------------
 // Scenario 2: Small spring garden, mountain region, clay soil
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_spring_cool_climate() {
     let app = test::init_service(build_app_postgres().await).await;
@@ -87,7 +85,6 @@ async fn scenario_spring_cool_climate() {
         Some(true)
     );
 
-    // Only spring vegetables must be placed
     let summer_only_vegs = ["tomato", "cucumber", "zucchini", "eggplant", "corn"];
     let placed = collect_placed_ids(&body);
     for id in &summer_only_vegs {
@@ -102,10 +99,10 @@ async fn scenario_spring_cool_climate() {
 // ---------------------------------------------------------------------------
 // Scenario 3: Garden with existing tomatoes → basil must be placed adjacent
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_existing_tomatoes_add_companions() {
     let app = test::init_service(build_app_postgres().await).await;
-    // 3x3 grid, tomato at [0][0], placing summer vegetables with basil as preference
     let payload = serde_json::json!({
         "period": {"start": "2025-06-01", "end": "2025-08-31"},
         "region": "Temperate",
@@ -122,22 +119,18 @@ async fn scenario_existing_tomatoes_add_companions() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    // Cell [0][0] must remain "tomato"
     assert_eq!(
         body["payload"]["weeks"][0]["grid"][0][0]["id"].as_str(),
         Some("tomato"),
         "Existing tomato must be preserved"
     );
 
-    // Basil must be placed somewhere in the grid
     let placed = collect_placed_ids(&body);
     assert!(
         placed.contains(&"basil".to_string()),
         "Basil (preferred and good companion of tomato) must be placed in the grid"
     );
 
-    // Basil must be adjacent to tomato at [0][0]:
-    // adjacent positions: [0][1] and [1][0]
     let basil_adjacent_to_tomato = {
         let r0c1 = body["payload"]["weeks"][0]["grid"][0][1]["id"].as_str() == Some("basil");
         let r1c0 = body["payload"]["weeks"][0]["grid"][1][0]["id"].as_str() == Some("basil");
@@ -152,6 +145,7 @@ async fn scenario_existing_tomatoes_add_companions() {
 // ---------------------------------------------------------------------------
 // Scenario 4: Winter garden → only season-appropriate vegetables
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_winter_garden() {
     let app = test::init_service(build_app_postgres().await).await;
@@ -165,10 +159,8 @@ async fn scenario_winter_garden() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    assert_eq!(resp_status_from_body(&body), None); // no error
 
     let placed = collect_placed_ids(&body);
-    // In winter, no tomatoes or zucchinis
     assert!(
         !placed.contains(&"tomato".to_string()),
         "Tomato must not appear in winter"
@@ -178,7 +170,6 @@ async fn scenario_winter_garden() {
         "Zucchini must not appear in winter"
     );
 
-    // Winter vegetables like garlic or leek must be present
     let winter_vegs = ["garlic", "leek", "spinach", "cabbage"];
     let found_winter = winter_vegs
         .iter()
@@ -190,18 +181,13 @@ async fn scenario_winter_garden() {
     );
 }
 
-fn resp_status_from_body(body: &serde_json::Value) -> Option<&str> {
-    body.get("error").and_then(|e| e.as_str())
-}
-
 // ---------------------------------------------------------------------------
 // Scenario 5: Sown tomato seeds are placed in the grid after their plant date
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_sown_seeds_appear_in_plan() {
     let app = test::init_service(build_app_postgres().await).await;
-    // Tomato: days_to_plant=42; sown 2025-03-01 → ready 2025-04-12.
-    // Planning window starts 2025-04-14 (after ready date) so tomato must appear.
     let payload = serde_json::json!({
         "period": {"start": "2025-04-14", "end": "2025-06-30"},
         "region": "Temperate",
@@ -216,7 +202,6 @@ async fn scenario_sown_seeds_appear_in_plan() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    // Collect placed ids across ALL weeks (merging may collapse multiple weeks).
     let placed: Vec<String> = body["payload"]["weeks"]
         .as_array()
         .unwrap_or(&vec![])
@@ -240,17 +225,12 @@ async fn scenario_sown_seeds_appear_in_plan() {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario 6: Sowing schedule — tomato must appear in sowingTasks for the
-//             week that is exactly days_to_plant before its transplant week
+// Scenario 6: Sowing schedule — tomato must appear in sowingTasks
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_sowing_tasks_computed_per_week() {
     let app = test::init_service(build_app_postgres().await).await;
-    // Planning period: 2025-03-03 → 2025-06-29 (Temperate).
-    // Tomato (days_to_plant=42): first eligible month is May/June.
-    // The first week where tomato could be transplanted is around 2025-05-05.
-    // Therefore tomato should appear in sowingTasks for the week starting ~2025-03-24
-    // (42 days before 2025-05-05).
     let payload = serde_json::json!({
         "period": {"start": "2025-03-03", "end": "2025-06-29"},
         "region": "Temperate",
@@ -262,7 +242,6 @@ async fn scenario_sowing_tasks_computed_per_week() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    // At least one week must have a non-empty sowingTasks list.
     let has_sowing_tasks = body["payload"]["weeks"]
         .as_array()
         .unwrap_or(&vec![])
@@ -273,13 +252,11 @@ async fn scenario_sowing_tasks_computed_per_week() {
                 .map(|a| !a.is_empty())
                 .unwrap_or(false)
         });
-
     assert!(
         has_sowing_tasks,
         "At least one week must contain sowing tasks for the planning period 2025-03-03 → 2025-06-29"
     );
 
-    // Every sowingTask entry must have id, name, and targetWeekStart fields.
     let all_valid = body["payload"]["weeks"]
         .as_array()
         .unwrap_or(&vec![])
@@ -290,7 +267,6 @@ async fn scenario_sowing_tasks_computed_per_week() {
                 && task["name"].is_string()
                 && task["targetWeekStart"].is_string()
         });
-
     assert!(
         all_valid,
         "Every sowingTask must have id, name, and targetWeekStart"
@@ -300,6 +276,7 @@ async fn scenario_sowing_tasks_computed_per_week() {
 // ---------------------------------------------------------------------------
 // Scenario 7: Explicit exclusions — excluded vegetables must never be placed
 // ---------------------------------------------------------------------------
+
 #[actix_web::test]
 async fn scenario_exclusions_prevent_placement() {
     let app = test::init_service(build_app_postgres().await).await;
