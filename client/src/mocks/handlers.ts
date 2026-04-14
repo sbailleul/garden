@@ -2,6 +2,9 @@ import { http, HttpResponse } from "msw";
 
 import type {
   Vegetable,
+  Variety,
+  VarietiesApiResponse,
+  VarietyApiResponse,
   VegetablesApiResponse,
   VegetableApiResponse,
   CompanionsApiResponse,
@@ -22,6 +25,7 @@ const TOMATO: Vegetable = {
   sunRequirement: ["FullSun"],
   goodCompanions: ["basil"],
   badCompanions: ["fennel"],
+  varietyId: "tomato",
   calendars: [
     {
       region: "Temperate",
@@ -45,6 +49,7 @@ const BASIL: Vegetable = {
   sunRequirement: ["FullSun"],
   goodCompanions: ["tomato"],
   badCompanions: [],
+  varietyId: "basil",
   calendars: [
     {
       region: "Temperate",
@@ -125,6 +130,28 @@ const VEGETABLE_MAP: Record<string, Vegetable> = {
   basil: BASIL,
 };
 
+const TOMATO_VARIETY: Variety = { id: "tomato", name: "Tomato" };
+const BASIL_VARIETY: Variety = { id: "basil", name: "Basil" };
+
+const varietyResponse = (v: Variety): VarietyApiResponse => ({
+  payload: v,
+  _links: {
+    self: SELF_LINK(`/api/varieties/${v.id}`),
+    collection: SELF_LINK("/api/varieties"),
+  },
+});
+
+const VARIETIES_RESPONSE: VarietiesApiResponse = {
+  payload: [TOMATO_VARIETY, BASIL_VARIETY].map(varietyResponse),
+  pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
+  _links: { self: SELF_LINK("/api/varieties") },
+};
+
+const VARIETY_MAP: Record<string, Variety> = {
+  tomato: TOMATO_VARIETY,
+  basil: BASIL_VARIETY,
+};
+
 export const handlers = [
   http.get("/api/vegetables", () => HttpResponse.json(VEGETABLES_RESPONSE)),
 
@@ -144,4 +171,14 @@ export const handlers = [
   }),
 
   http.post("/api/plan", () => HttpResponse.json(PLAN_RESPONSE)),
+
+  http.get("/api/varieties", () => HttpResponse.json(VARIETIES_RESPONSE)),
+
+  http.get("/api/varieties/:id", ({ params }) => {
+    const variety = VARIETY_MAP[params["id"] as string];
+    if (!variety) {
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return HttpResponse.json(varietyResponse(variety));
+  }),
 ];

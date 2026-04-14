@@ -178,4 +178,5 @@ pub struct Vegetable {
     pub bad_companions: Vec<String>,
     pub beginner_friendly: bool,
     pub category: Category,
+    pub variety_id: Option<String>,
 }

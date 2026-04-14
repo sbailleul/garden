@@ -85,6 +85,18 @@ Every API response must include a `_links` object following the HAL convention. 
 
 The `_links` key is exempt from camelCase renaming and must be serialised literally as `_links` using `#[serde(rename = "_links")]`.
 
+## Client synchronisation
+
+Any time an API route or response model changes, the client must be updated in the same task. This includes:
+
+- **`client/src/api/schema.d.ts`** — auto-generated from the OpenAPI spec. Run `pnpm generate:api` (from `client/`) whenever the OpenAPI schema changes (new endpoint, new field, renamed field, removed field). Requires the API server to be running on `http://localhost:8080`.
+- **`client/src/api/types.ts`** — TypeScript types mirroring the API response shapes. Add, rename or remove exports to stay in sync with the updated `schema.d.ts`.
+- **`client/src/api/`** — fetch functions (e.g. `vegetables.ts`, `plan.ts`). Update URL paths, request bodies and return types to match the new endpoint signature.
+- **`client/src/mocks/handlers.ts`** — MSW request handlers used in client tests. Update the mock response shapes to match the new payload so UI tests remain accurate.
+- **Affected components and routes** — any component that reads a field that was added, renamed or removed must be updated to reflect the new shape.
+
+Never leave the client in a state where it references fields or endpoints that no longer exist in the API, or omits newly added required fields.
+
 ## Client UI tests
 
 Every new client feature must be covered by at least one UI test. Tests use **Vitest** and **React Testing Library** and live in a `.test.tsx` file co-located with the component or route being tested (e.g. `src/components/vegetables/vegetable-table.test.tsx`, `src/routes/vegetables/index.test.tsx`).

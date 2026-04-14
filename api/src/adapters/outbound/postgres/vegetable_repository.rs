@@ -60,6 +60,7 @@ fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryEr
         good_companions,
         bad_companions,
         calendars,
+        variety_id: row.try_get("variety_id")?,
     })
 }
 
@@ -82,7 +83,8 @@ const SELECT_COLUMNS: &str = r#"
         v.sun_requirement,
         v.good_companions,
         v.bad_companions,
-        v.calendars
+        v.calendars,
+        v.variety_id
     FROM vegetables v
     LEFT JOIN vegetable_translations t_req
            ON t_req.vegetable_id = v.id AND t_req.locale = $1

@@ -2,14 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::domain::models::{request::Period, vegetable::Vegetable, Coordinate, Matrix};
-
-/// Vegetable domain struct for use in responses.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct VegetableResponse {
-    #[serde(flatten)]
-    pub vegetable: Vegetable,
-}
+use crate::domain::models::{request::Period, Coordinate, Matrix};
 
 /// A cell in the planned garden grid (response output).
 ///

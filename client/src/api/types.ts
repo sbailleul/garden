@@ -23,7 +23,7 @@ export type RegionCalendar = components["schemas"]["RegionCalendar"];
 export type SowingRecord = components["schemas"]["SowingRecord"];
 export type SowingTask = components["schemas"]["SowingTask"];
 export type Vegetable = components["schemas"]["Vegetable"];
-export type VegetableResponse = components["schemas"]["VegetableResponse"];
+export type Variety = components["schemas"]["Variety"];
 
 // Request / response envelope types
 export type ErrorResponse = components["schemas"]["ErrorResponse"];
@@ -35,4 +35,6 @@ export type PlanResponse = components["schemas"]["PlanResponse"];
 export type PlanApiResponse = components["schemas"]["PlanApiResponse"];
 export type VegetableApiResponse = components["schemas"]["VegetableApiResponse"];
 export type VegetablesApiResponse = components["schemas"]["VegetablesApiResponse"];
+export type VarietyApiResponse = components["schemas"]["VarietyApiResponse"];
+export type VarietiesApiResponse = components["schemas"]["VarietiesApiResponse"];
 export type WeeklyPlan = components["schemas"]["WeeklyPlan"];

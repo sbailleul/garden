@@ -6,36 +6,17 @@ use crate::domain::models::hateoas::{CompanionsApiResponse, VegetableApiResponse
 use crate::domain::models::response::ErrorResponse;
 
 use crate::{
+    adapters::inbound::http::localization::parse_locale,
     application::{
         ports::vegetable_repository::VegetableRepository,
         use_cases::vegetables::{GetCompanionsUseCase, GetVegetableUseCase, ListVegetablesUseCase},
     },
     domain::models::{
         hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
-        response::{CompanionsResponse, VegetableResponse},
+        response::CompanionsResponse,
+        vegetable::Vegetable,
     },
 };
-
-/// Extract the primary language tag from the `Accept-Language` header.
-/// E.g. `"fr-FR,fr;q=0.9,en;q=0.8"` → `"fr"`. Falls back to `"en"`.
-fn parse_locale(req: &HttpRequest) -> String {
-    req.headers()
-        .get("accept-language")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| {
-            s.split(',').next().map(|tag| {
-                tag.split(';')
-                    .next()
-                    .unwrap_or(tag)
-                    .split('-')
-                    .next()
-                    .unwrap_or(tag)
-                    .trim()
-                    .to_lowercase()
-            })
-        })
-        .unwrap_or_else(|| "en".to_string())
-}
 
 /// GET /api/vegetables
 /// Returns all vegetables from the database.
@@ -43,6 +24,9 @@ fn parse_locale(req: &HttpRequest) -> String {
     get,
     path = "/api/vegetables",
     tag = "vegetables",
+    params(
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
+    ),
     responses(
         (status = 200, description = "Paginated list of all vegetables",
          body = VegetablesApiResponse),
@@ -65,7 +49,7 @@ pub async fn list_vegetables(
         }
         Ok(vegetables) => {
             let total = vegetables.len();
-            let items: Vec<ApiResponse<VegetableResponse>> = vegetables
+            let items: Vec<ApiResponse<Vegetable>> = vegetables
                 .into_iter()
                 .map(|v| {
                     let id = v.id.clone();
@@ -78,7 +62,7 @@ pub async fn list_vegetables(
                         "companions".into(),
                         link(format!("/api/vegetables/{id}/companions"), Method::GET),
                     );
-                    ApiResponse::new(VegetableResponse { vegetable: v }, links)
+                    ApiResponse::new(v, links)
                 })
                 .collect();
             let mut collection_links = std::collections::HashMap::new();
@@ -104,7 +88,8 @@ pub async fn list_vegetables(
     path = "/api/vegetables/{id}",
     tag = "vegetables",
     params(
-        ("id" = String, Path, description = "Vegetable identifier (e.g. `tomato`, `basil`)")
+        ("id" = String, Path, description = "Vegetable identifier (e.g. `tomato`, `basil`)"),
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
         (status = 200, description = "Vegetable found", body = VegetableApiResponse),
@@ -142,7 +127,7 @@ pub async fn get_vegetable(
                 link(format!("/api/vegetables/{id}/companions"), Method::GET),
             );
             links.insert("collection".into(), link("/api/vegetables", Method::GET));
-            HttpResponse::Ok().json(ApiResponse::new(VegetableResponse { vegetable }, links))
+            HttpResponse::Ok().json(ApiResponse::new(vegetable, links))
         }
     }
 }
@@ -154,7 +139,8 @@ pub async fn get_vegetable(
     path = "/api/vegetables/{id}/companions",
     tag = "vegetables",
     params(
-        ("id" = String, Path, description = "Vegetable identifier (e.g. `tomato`)")
+        ("id" = String, Path, description = "Vegetable identifier (e.g. `tomato`)"),
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
         (status = 200, description = "Companion planting info", body = CompanionsApiResponse),

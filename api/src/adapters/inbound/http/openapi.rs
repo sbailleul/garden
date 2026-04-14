@@ -2,14 +2,15 @@ use utoipa::OpenApi;
 
 use crate::domain::models::{
     hateoas::{
-        CompanionsApiResponse, Link, Pagination, PlanApiResponse, VegetableApiResponse,
-        VegetablesApiResponse,
+        CompanionsApiResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
+        VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
     },
     request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry, SowingRecord},
     response::{
         CompanionInfo, CompanionsResponse, ErrorResponse, PlanResponse, PlannedCell, SowingTask,
-        VegetableResponse, WeeklyPlan,
+        WeeklyPlan,
     },
+    variety::Variety,
     vegetable::{
         CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
         Vegetable,
@@ -29,6 +30,8 @@ use crate::domain::models::{
         crate::adapters::inbound::http::handlers::vegetables::list_vegetables,
         crate::adapters::inbound::http::handlers::vegetables::get_vegetable,
         crate::adapters::inbound::http::handlers::vegetables::get_companions,
+        crate::adapters::inbound::http::handlers::varieties::list_varieties,
+        crate::adapters::inbound::http::handlers::varieties::get_variety,
         crate::adapters::inbound::http::handlers::plan::post_plan,
     ),
     components(
@@ -38,7 +41,9 @@ use crate::domain::models::{
             // Vegetable calendar
             CalendarWindow, RegionCalendar,
             // Vegetable
-            Vegetable, VegetableResponse,
+            Vegetable,
+            // Variety
+            Variety,
             // Plan request
             LayoutCell, PreferenceEntry, Period, SowingRecord, PlanRequest,
             // Plan response
@@ -50,12 +55,15 @@ use crate::domain::models::{
             // Concrete response envelopes (via #[aliases])
             VegetableApiResponse,
             VegetablesApiResponse,
+            VarietyApiResponse,
+            VarietiesApiResponse,
             PlanApiResponse,
             CompanionsApiResponse,
         )
     ),
     tags(
         (name = "vegetables", description = "Vegetable catalogue — list, detail, companion lookup"),
+        (name = "varieties",  description = "Variety catalogue — group vegetables by species/type"),
         (name = "plan",       description = "Garden planning — generate an optimised planting layout"),
     )
 )]

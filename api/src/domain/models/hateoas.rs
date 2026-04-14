@@ -4,7 +4,11 @@ use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::domain::models::response::{CompanionsResponse, PlanResponse, VegetableResponse};
+use crate::domain::models::{
+    response::{CompanionsResponse, PlanResponse},
+    variety::Variety,
+    vegetable::Vegetable,
+};
 
 /// Serde adapter for `actix_web::http::Method` (serialises as its uppercase string).
 mod method_serde {
@@ -55,14 +59,13 @@ pub struct Pagination {
 /// Generic single-item response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    VegetableApiResponse   = ApiResponse<VegetableResponse>,
+    VegetableApiResponse   = ApiResponse<Vegetable>,
+    VarietyApiResponse     = ApiResponse<Variety>,
     PlanApiResponse        = ApiResponse<PlanResponse>,
     CompanionsApiResponse  = ApiResponse<CompanionsResponse>
 )]
 pub struct ApiResponse<T> {
     pub payload: T,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub errors: Vec<String>,
     /// HAL-style hypermedia links.
     #[schema(value_type = HashMap<String, Link>)]
     #[serde(rename = "_links")]
@@ -71,11 +74,7 @@ pub struct ApiResponse<T> {
 
 impl<T> ApiResponse<T> {
     pub fn new(payload: T, links: Links) -> Self {
-        Self {
-            payload,
-            errors: vec![],
-            links,
-        }
+        Self { payload, links }
     }
 }
 
@@ -83,11 +82,10 @@ impl<T> ApiResponse<T> {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
     VegetablesApiResponse   = PaginatedResponse<VegetableApiResponse>,
+    VarietiesApiResponse    = PaginatedResponse<VarietyApiResponse>,
 )]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub errors: Vec<String>,
     /// HAL-style hypermedia links.
     #[schema(value_type = HashMap<String, Link>)]
     #[serde(rename = "_links")]
@@ -99,7 +97,6 @@ impl<T> PaginatedResponse<T> {
     pub fn new(payload: Vec<T>, links: Links, pagination: Pagination) -> Self {
         Self {
             payload,
-            errors: vec![],
             links,
             pagination,
         }

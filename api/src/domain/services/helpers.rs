@@ -123,6 +123,7 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         };
 
         // Planning starts in June: most recent planting month on/before June is May
@@ -162,6 +163,7 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         };
 
         // Planning starts in March: all 2026 planting months (Apr, May) are in the future
@@ -202,6 +204,7 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         };
 
         let planning_start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();

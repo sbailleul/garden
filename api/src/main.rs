@@ -3,7 +3,9 @@ use actix_web::{http, web, App, HttpServer};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod};
 use tokio_postgres::NoTls;
 
+use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
 use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
+use garden::application::ports::variety_repository::VarietyRepository;
 use garden::application::ports::vegetable_repository::VegetableRepository;
 
 mod embedded {
@@ -45,8 +47,11 @@ async fn main() -> std::io::Result<()> {
             .expect("Database migration failed");
     }
 
-    let repo: Box<dyn VegetableRepository> = Box::new(PostgresVegetableRepository::new(pool));
+    let repo: Box<dyn VegetableRepository> =
+        Box::new(PostgresVegetableRepository::new(pool.clone()));
     let repo_data = web::Data::new(repo);
+    let variety_repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool));
+    let variety_repo_data = web::Data::new(variety_repo);
 
     let bind_addr = "0.0.0.0:8080";
     log::info!("Starting server on {bind_addr}");
@@ -61,6 +66,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(repo_data.clone())
+            .app_data(variety_repo_data.clone())
             .configure(garden::adapters::inbound::http::routes::configure)
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("JSON deserialization error: {err}");

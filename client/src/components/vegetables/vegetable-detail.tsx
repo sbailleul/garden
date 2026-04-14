@@ -43,6 +43,9 @@ export function VegetableDetail({ vegetable: veg }: Props) {
             <Row label="Days to harvest" value={veg.daysToHarvest} />
             <Row label="Days to plant" value={veg.daysToPlant} />
             <Row label="Beginner-friendly" value={veg.beginnerFriendly ? "Yes" : "No"} />
+            {veg.varietyId && (
+              <Row label="Variety" value={<Badge variant="outline">{veg.varietyId}</Badge>} />
+            )}
           </CardContent>
         </Card>
 

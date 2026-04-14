@@ -79,6 +79,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["fennel".into(), "broccoli".into(), "cabbage".into()],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "zucchini".into(),
@@ -145,6 +146,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["potato".into()],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "carrot".into(),
@@ -212,6 +214,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["dill".into(), "fennel".into()],
             beginner_friendly: true,
             category: Category::Root,
+            variety_id: None,
         },
         Vegetable {
             id: "basil".into(),
@@ -262,6 +265,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["sage".into(), "thyme".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "lettuce".into(),
@@ -339,6 +343,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["parsley".into(), "celery".into()],
             beginner_friendly: true,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "radish".into(),
@@ -416,6 +421,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["hyssop".into()],
             beginner_friendly: true,
             category: Category::Root,
+            variety_id: None,
         },
         Vegetable {
             id: "onion".into(),
@@ -482,6 +488,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["green-bean".into(), "pea".into(), "garlic".into()],
             beginner_friendly: true,
             category: Category::Bulb,
+            variety_id: None,
         },
         Vegetable {
             id: "garlic".into(),
@@ -548,6 +555,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["onion".into(), "green-bean".into(), "pea".into()],
             beginner_friendly: true,
             category: Category::Bulb,
+            variety_id: None,
         },
         Vegetable {
             id: "leek".into(),
@@ -609,6 +617,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["green-bean".into(), "pea".into()],
             beginner_friendly: true,
             category: Category::Bulb,
+            variety_id: None,
         },
         Vegetable {
             id: "green-bean".into(),
@@ -680,6 +689,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             ],
             beginner_friendly: true,
             category: Category::Pod,
+            variety_id: None,
         },
         Vegetable {
             id: "cucumber".into(),
@@ -746,6 +756,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "potato".into(), "fennel".into()],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "pepper".into(),
@@ -796,6 +807,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["fennel".into(), "broccoli".into()],
             beginner_friendly: false,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "pea".into(),
@@ -862,6 +874,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["onion".into(), "garlic".into(), "fennel".into()],
             beginner_friendly: true,
             category: Category::Pod,
+            variety_id: None,
         },
         Vegetable {
             id: "cabbage".into(),
@@ -923,6 +936,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "strawberry".into(), "fennel".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "broccoli".into(),
@@ -984,6 +998,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "pepper".into(), "strawberry".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "parsley".into(),
@@ -1047,6 +1062,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["lettuce".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "thyme".into(),
@@ -1108,6 +1124,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["basil".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "rosemary".into(),
@@ -1160,6 +1177,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["cucumber".into(), "pumpkin".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "beet".into(),
@@ -1221,6 +1239,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["green-bean".into(), "mustard".into()],
             beginner_friendly: true,
             category: Category::Root,
+            variety_id: None,
         },
         Vegetable {
             id: "spinach".into(),
@@ -1284,6 +1303,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["beet".into(), "sorrel".into()],
             beginner_friendly: true,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "fennel".into(),
@@ -1342,6 +1362,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             ],
             beginner_friendly: false,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "eggplant".into(),
@@ -1381,6 +1402,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["fennel".into()],
             beginner_friendly: false,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "celery".into(),
@@ -1431,6 +1453,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["lettuce".into(), "garlic".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "potato".into(),
@@ -1492,6 +1515,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "cucumber".into(), "zucchini".into()],
             beginner_friendly: true,
             category: Category::Root,
+            variety_id: None,
         },
         Vegetable {
             id: "maïs".into(),
@@ -1553,6 +1577,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "celery".into()],
             beginner_friendly: true,
             category: Category::Pod,
+            variety_id: None,
         },
         Vegetable {
             id: "pumpkin".into(),
@@ -1614,6 +1639,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["potato".into(), "rosemary".into()],
             beginner_friendly: false,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "chive".into(),
@@ -1691,6 +1717,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["green-bean".into(), "pea".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "mint".into(),
@@ -1752,6 +1779,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["parsley".into()],
             beginner_friendly: true,
             category: Category::Herb,
+            variety_id: None,
         },
         Vegetable {
             id: "strawberry".into(),
@@ -1818,6 +1846,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["cabbage".into(), "fennel".into()],
             beginner_friendly: true,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "turnip".into(),
@@ -1881,6 +1910,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["mustard".into(), "radish".into()],
             beginner_friendly: true,
             category: Category::Root,
+            variety_id: None,
         },
         Vegetable {
             id: "cauliflower".into(),
@@ -1942,6 +1972,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["tomato".into(), "strawberry".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "red-pepper".into(),
@@ -1981,6 +2012,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["fennel".into()],
             beginner_friendly: false,
             category: Category::Fruit,
+            variety_id: None,
         },
         Vegetable {
             id: "asparagus".into(),
@@ -2042,6 +2074,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["onion".into(), "garlic".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
         Vegetable {
             id: "artichoke".into(),
@@ -2081,6 +2114,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
             bad_companions: vec!["green-bean".into(), "tomato".into()],
             beginner_friendly: false,
             category: Category::Leafy,
+            variety_id: None,
         },
     ]
 }
