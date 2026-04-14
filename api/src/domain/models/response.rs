@@ -151,9 +151,3 @@ pub struct CompanionInfo {
     pub id: String,
     pub name: String,
 }
-
-/// Error response returned for 4xx responses.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ErrorResponse {
-    pub error: String,
-}

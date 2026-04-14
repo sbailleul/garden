@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 pub mod garden;
-pub mod hateoas;
 pub mod request;
 pub mod response;
 pub mod variety;

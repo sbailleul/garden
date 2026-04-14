@@ -1,14 +1,13 @@
 use utoipa::OpenApi;
 
+use crate::adapters::inbound::http::hateoas::{
+    CompanionsApiResponse, ErrorResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
+    VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
+};
 use crate::domain::models::{
-    hateoas::{
-        CompanionsApiResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
-        VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
-    },
     request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry, SowingRecord},
     response::{
-        CompanionInfo, CompanionsResponse, ErrorResponse, PlanResponse, PlannedCell, SowingTask,
-        WeeklyPlan,
+        CompanionInfo, CompanionsResponse, PlanResponse, PlannedCell, SowingTask, WeeklyPlan,
     },
     variety::Variety,
     vegetable::{

@@ -1,21 +1,20 @@
 use actix_web::{get, http::Method, web, HttpRequest, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::domain::models::hateoas::{CompanionsApiResponse, VegetableApiResponse};
-#[allow(unused_imports)]
-use crate::domain::models::response::ErrorResponse;
+use crate::adapters::inbound::http::hateoas::{
+    CompanionsApiResponse, ErrorResponse, VegetableApiResponse,
+};
 
 use crate::{
-    adapters::inbound::http::localization::parse_locale,
+    adapters::inbound::http::{
+        hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
+        localization::parse_locale,
+    },
     application::{
         ports::vegetable_repository::VegetableRepository,
         use_cases::vegetables::{GetCompanionsUseCase, GetVegetableUseCase, ListVegetablesUseCase},
     },
-    domain::models::{
-        hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
-        response::CompanionsResponse,
-        vegetable::Vegetable,
-    },
+    domain::models::{response::CompanionsResponse, vegetable::Vegetable},
 };
 
 /// GET /api/vegetables

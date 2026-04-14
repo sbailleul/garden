@@ -1,38 +1,18 @@
 use actix_web::{http::Method, post, web, HttpRequest, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
-use crate::domain::models::hateoas::PlanApiResponse;
-#[allow(unused_imports)]
-use crate::domain::models::response::ErrorResponse;
+use crate::adapters::inbound::http::hateoas::{ErrorResponse, PlanApiResponse};
 
 use crate::{
+    adapters::inbound::http::{
+        hateoas::{link, ApiResponse},
+        localization::parse_locale,
+    },
     application::{
         ports::vegetable_repository::VegetableRepository, use_cases::plan_garden::PlanGardenUseCase,
     },
-    domain::models::{
-        hateoas::{link, ApiResponse},
-        request::PlanRequest,
-    },
+    domain::models::request::PlanRequest,
 };
-
-fn parse_locale(req: &HttpRequest) -> String {
-    req.headers()
-        .get("accept-language")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| {
-            s.split(',').next().map(|tag| {
-                tag.split(';')
-                    .next()
-                    .unwrap_or(tag)
-                    .split('-')
-                    .next()
-                    .unwrap_or(tag)
-                    .trim()
-                    .to_lowercase()
-            })
-        })
-        .unwrap_or_else(|| "en".to_string())
-}
 
 /// POST /api/plan
 /// Generates an optimised garden plan based on the provided constraints.
@@ -40,6 +20,9 @@ fn parse_locale(req: &HttpRequest) -> String {
     post,
     path = "/api/plan",
     tag = "plan",
+    params(
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
+    ),
     request_body(
         content = PlanRequest,
         description = "Planning constraints and grid layout",

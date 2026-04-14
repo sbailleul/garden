@@ -85,6 +85,16 @@ Every API response must include a `_links` object following the HAL convention. 
 
 The `_links` key is exempt from camelCase renaming and must be serialised literally as `_links` using `#[serde(rename = "_links")]`.
 
+## Localisation
+
+Locale-aware routes read the `Accept-Language` request header via `parse_locale` from `adapters::inbound::http::localization`. Every `#[utoipa::path]` macro on such a route **must** include the following entry in its `params(...)` block:
+
+```rust
+("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
+```
+
+A route is locale-aware when its handler calls `parse_locale(&req)`.
+
 ## Client synchronisation
 
 Any time an API route or response model changes, the client must be updated in the same task. This includes:
