@@ -29,6 +29,16 @@ Shared helpers (`build_app_postgres`, `test_pool`, `null_layout`, etc.) live in 
 
 When a feature involves database access (e.g. a new outbound adapter, a new repository method, or a new query), add database integration tests in `tests/postgres_repository.rs`. These tests run against a real PostgreSQL instance and must cover the new behaviour end-to-end (insert, fetch, edge cases). Only add database tests when the feature actually touches the persistence layer; pure domain or in-memory logic does not require them.
 
+## Migrations
+
+Every migration file `migrations/V{n}__{name}.sql` must be paired with a companion rollback file `migrations/V{n}__{name}.down.sql`. The down file must reverse **exactly** the changes made by its up counterpart:
+
+- `CREATE TABLE` → `DROP TABLE IF EXISTS`
+- `ALTER TABLE ... ADD COLUMN` → `ALTER TABLE ... DROP COLUMN IF EXISTS`
+- `INSERT` seed data → `DELETE` the same rows (or `DELETE FROM` the table)
+
+Down files are not run by the embedded refinery runner; they are applied manually (or via a future CLI) to roll back a specific migration version. Always write the down steps in the reverse order of the up steps so that foreign-key constraints are satisfied.
+
 ## Bruno collection
 
 The Bruno collection in `bruno/` must always reflect the current state of the API. Any time an endpoint is added, modified or removed — request bodies, query parameters, assertions and test scripts must be updated accordingly.
