@@ -5,11 +5,11 @@ use crate::domain::models::{
     garden::GardenGrid,
     request::{PlanRequest, PreferenceEntry, SowingRecord},
     response::{PlanResponse, SowingTask},
-    vegetable::{Month, Vegetable},
+    variety::{Month, Variety},
     warnings::Warnings,
 };
 use crate::domain::services::allocation::build_placement_queue;
-use crate::domain::services::filter::filter_vegetables;
+use crate::domain::services::filter::filter_varieties;
 use crate::domain::services::grid::{
     count_grid_occupancy, initialize_grid, validate_layout, GridOccupancy, GridSize,
 };
@@ -20,9 +20,9 @@ use crate::domain::services::placement::{
 use crate::domain::services::response::{build_reason, build_weekly_plan, merge_consecutive_plans};
 use crate::domain::services::schedule::weeks_for_period;
 
-/// One pre-germinated batch of a single vegetable ready to transplant on `plant_date`.
+/// One pre-germinated batch of a single variety ready to transplant on `plant_date`.
 struct SownBatch {
-    vegetable: Vegetable,
+    variety: Variety,
     plant_date: NaiveDate,
     seeds_sown: u32,
 }
@@ -33,18 +33,18 @@ struct SownBatch {
 fn compute_sown_batches(
     sown: &HashMap<String, Vec<SowingRecord>>,
     planning_start: NaiveDate,
-    lookup: &impl Fn(&str) -> Option<Vegetable>,
+    lookup: &impl Fn(&str) -> Option<Variety>,
 ) -> Vec<SownBatch> {
     let mut batches = Vec::new();
     for (id, records) in sown {
-        if let Some(vegetable) = lookup(id) {
+        if let Some(variety) = lookup(id) {
             for record in records {
                 let plant_date = record
                     .sowing_date
-                    .map(|d| d + Duration::days(vegetable.days_to_plant as i64))
+                    .map(|d| d + Duration::days(variety.days_to_plant as i64))
                     .unwrap_or(planning_start);
                 batches.push(SownBatch {
-                    vegetable: vegetable.clone(),
+                    variety: variety.clone(),
                     plant_date,
                     seeds_sown: record.seeds_sown,
                 });
@@ -54,11 +54,11 @@ fn compute_sown_batches(
     batches
 }
 
-/// For each planning week, returns the list of vegetables to sow that week
+/// For each planning week, returns the list of varieties to sow that week
 /// so they will be ready to transplant during a future planning week.
 fn compute_sowing_tasks_by_week(
     weeks: &[crate::domain::models::request::Period],
-    base_candidates: &[Vegetable],
+    base_candidates: &[Variety],
     request: &PlanRequest,
 ) -> Vec<Vec<SowingTask>> {
     weeks
@@ -69,7 +69,7 @@ fn compute_sowing_tasks_by_week(
             let mut seen_ids: HashSet<String> = HashSet::new();
             for future_week in weeks.iter().skip(w_idx) {
                 let future_month = Month::from_u32(future_week.start.month());
-                let future_candidates = filter_vegetables(base_candidates, request, future_month);
+                let future_candidates = filter_varieties(base_candidates, request, future_month);
                 for veg in &future_candidates {
                     if veg.days_to_plant > 0 {
                         let sow_date = future_week.start - Duration::days(veg.days_to_plant as i64);
@@ -105,7 +105,7 @@ impl Warnings {
     /// Planner warning text when non-blocked cells remain empty.
     fn empty_cells_not_filled(empty_cells: usize) -> String {
         format!(
-            "{empty_cells} empty cell(s): not enough compatible vegetables to fill the entire grid."
+            "{empty_cells} empty cell(s): not enough compatible varieties to fill the entire grid."
         )
     }
 }
@@ -115,16 +115,16 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
         .cells
         .iter()
         .flat_map(|r| r.iter())
-        .filter(|c| c.vegetable.is_none() && !c.blocked)
+        .filter(|c| c.variety.is_none() && !c.blocked)
         .count();
     (empty > 0).then(|| Warnings::empty_cells_not_filled(empty))
 }
 
 /// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
 pub fn plan_garden(
-    base_candidates: Vec<Vegetable>,
+    base_candidates: Vec<Variety>,
     request: &PlanRequest,
-    lookup: impl Fn(&str) -> Option<Vegetable>,
+    lookup: impl Fn(&str) -> Option<Variety>,
 ) -> Result<PlanResponse, String> {
     let mut warnings = Warnings::new();
 
@@ -159,7 +159,7 @@ pub fn plan_garden(
         harvest_plants(&mut grid, week_idx);
 
         // Filter candidates for the current week's month.
-        let week_candidates = filter_vegetables(
+        let week_candidates = filter_varieties(
             &base_candidates,
             request,
             Month::from_u32(week.start.month()),
@@ -171,20 +171,20 @@ pub fn plan_garden(
 
         // Aggregate all sown batches whose plant_date has arrived by this week.
         let mut active_sown_counts: HashMap<String, u32> = HashMap::new();
-        let mut sown_vegetable_map: HashMap<String, Vegetable> = HashMap::new();
+        let mut sown_variety_map: HashMap<String, Variety> = HashMap::new();
         for batch in &sown_batches {
             if batch.plant_date <= week.start {
                 *active_sown_counts
-                    .entry(batch.vegetable.id.clone())
+                    .entry(batch.variety.id.clone())
                     .or_insert(0) += batch.seeds_sown;
-                sown_vegetable_map
-                    .entry(batch.vegetable.id.clone())
-                    .or_insert_with(|| batch.vegetable.clone());
+                sown_variety_map
+                    .entry(batch.variety.id.clone())
+                    .or_insert_with(|| batch.variety.clone());
             }
         }
 
-        // Sown vegetables ready this week that didn't pass the calendar filter — bypass it.
-        let sown_extra: Vec<Vegetable> = sown_vegetable_map
+        // Sown varieties ready this week that didn't pass the calendar filter — bypass it.
+        let sown_extra: Vec<Variety> = sown_variety_map
             .iter()
             .filter(|(id, _)| !week_candidates.iter().any(|c| &c.id == *id))
             .map(|(_, v)| v.clone())
@@ -199,7 +199,7 @@ pub fn plan_garden(
             })
             .collect();
 
-        let extended_candidates: Vec<Vegetable> =
+        let extended_candidates: Vec<Variety> =
             week_candidates.iter().cloned().chain(sown_extra).collect();
         let combined_prefs: Vec<PreferenceEntry> = sown_prefs
             .into_iter()
@@ -207,7 +207,7 @@ pub fn plan_garden(
             .collect();
 
         let week_score = if free_cells > 0 && !extended_candidates.is_empty() {
-            // Phase 1: place vegetables with an explicit quantity (in preference order).
+            // Phase 1: place varieties with an explicit quantity (in preference order).
             let (queue, placements_map) =
                 build_placement_queue(&extended_candidates, &combined_prefs, free_cells);
             let pw = PlacementWeek {

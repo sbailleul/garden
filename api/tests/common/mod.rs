@@ -24,12 +24,12 @@ pub async fn build_app_postgres() -> actix_web::App<
     >,
 > {
     let pool = migrated_pool().await;
-    let repo: Box<dyn VegetableRepository> =
-        Box::new(PostgresVegetableRepository::new(pool.clone()));
-    let variety_repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool));
+    let repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool.clone()));
+    let vegetable_repo: Box<dyn VegetableRepository> =
+        Box::new(PostgresVegetableRepository::new(pool));
     App::new()
         .app_data(web::Data::new(repo))
-        .app_data(web::Data::new(variety_repo))
+        .app_data(web::Data::new(vegetable_repo))
         .configure(configure)
         .app_data(web::JsonConfig::default().error_handler(|err, _req| {
             let message = format!("{err}");

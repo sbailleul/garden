@@ -86,8 +86,8 @@ tests {
     expect(res.body._links.self.method).to.equal("POST");
   });
 
-  test("_links.vegetables points to /api/vegetables", function() {
-    expect(res.body._links.vegetables.href).to.equal("/api/vegetables");
-    expect(res.body._links.vegetables.method).to.equal("GET");
+  test("_links.varieties points to /api/varieties", function() {
+    expect(res.body._links.varieties.href).to.equal("/api/varieties");
+    expect(res.body._links.varieties.method).to.equal("GET");
   });
 }

@@ -341,7 +341,7 @@ export function PlanForm({ onSubmit, isPending, isError, error, result }: Props)
             <form.Field name="preferences">
               {(field) => (
                 <div className="space-y-1">
-                  <Label htmlFor="preferences">Preferred vegetable IDs (comma-separated)</Label>
+                  <Label htmlFor="preferences">Preferred variety IDs (comma-separated)</Label>
                   <Input
                     id="preferences"
                     placeholder="e.g. tomato, basil, carrot"

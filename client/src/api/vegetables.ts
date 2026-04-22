@@ -1,9 +1,5 @@
 import { apiClient } from "@/api/client";
-import type {
-  VegetablesApiResponse,
-  VegetableApiResponse,
-  CompanionsApiResponse,
-} from "@/api/types";
+import type { VegetablesApiResponse, VegetableApiResponse } from "@/api/types";
 
 export async function fetchVegetables(): Promise<VegetablesApiResponse> {
   const { data, error } = await apiClient.GET("/api/vegetables");
@@ -17,12 +13,4 @@ export async function fetchVegetable(id: string): Promise<VegetableApiResponse> 
   });
   if (error) throw new Error(JSON.stringify(error));
   return data as unknown as VegetableApiResponse;
-}
-
-export async function fetchCompanions(id: string): Promise<CompanionsApiResponse> {
-  const { data, error } = await apiClient.GET("/api/vegetables/{id}/companions", {
-    params: { path: { id } },
-  });
-  if (error) throw new Error(JSON.stringify(error));
-  return data;
 }

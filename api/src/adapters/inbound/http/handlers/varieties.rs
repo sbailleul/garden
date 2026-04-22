@@ -2,7 +2,7 @@ use actix_web::{get, http::Method, web, HttpRequest, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
 use crate::adapters::inbound::http::hateoas::{
-    ErrorResponse, VarietiesApiResponse, VarietyApiResponse,
+    CompanionsApiResponse, ErrorResponse, VarietyApiResponse,
 };
 
 use crate::{
@@ -12,9 +12,9 @@ use crate::{
     },
     application::{
         ports::variety_repository::VarietyRepository,
-        use_cases::varieties::{GetVarietyUseCase, ListVarietiesUseCase},
+        use_cases::varieties::{GetCompanionsUseCase, GetVarietyUseCase, ListVarietiesUseCase},
     },
-    domain::models::variety::Variety,
+    domain::models::{response::CompanionsResponse, variety::Variety},
 };
 
 /// GET /api/varieties
@@ -57,6 +57,10 @@ pub async fn list_varieties(
                         "self".into(),
                         link(format!("/api/varieties/{id}"), Method::GET),
                     );
+                    links.insert(
+                        "companions".into(),
+                        link(format!("/api/varieties/{id}/companions"), Method::GET),
+                    );
                     ApiResponse::new(v, links)
                 })
                 .collect();
@@ -83,12 +87,12 @@ pub async fn list_varieties(
     path = "/api/varieties/{id}",
     tag = "varieties",
     params(
-        ("id" = String, Path, description = "Variety identifier (e.g. `tomato`, `brassica`)"),
+        ("id" = String, Path, description = "Variety identifier (e.g. `tomato`, `basil`)"),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
         (status = 200, description = "Variety found", body = VarietyApiResponse),
-        (status = 404, description = "Variety not found", body = ErrorResponse),
+        (status = 404, description = "Variety not found",  body = ErrorResponse),
     )
 )]
 #[get("/varieties/{id}")]
@@ -117,8 +121,70 @@ pub async fn get_variety(
                 "self".into(),
                 link(format!("/api/varieties/{id}"), Method::GET),
             );
+            links.insert(
+                "companions".into(),
+                link(format!("/api/varieties/{id}/companions"), Method::GET),
+            );
             links.insert("collection".into(), link("/api/varieties", Method::GET));
             HttpResponse::Ok().json(ApiResponse::new(variety, links))
+        }
+    }
+}
+
+/// GET /api/varieties/{id}/companions
+/// Returns good and bad companions for a given variety.
+#[utoipa::path(
+    get,
+    path = "/api/varieties/{id}/companions",
+    tag = "varieties",
+    params(
+        ("id" = String, Path, description = "Variety identifier (e.g. `tomato`)"),
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
+    ),
+    responses(
+        (status = 200, description = "Companion planting info", body = CompanionsApiResponse),
+        (status = 404, description = "Variety not found",     body = ErrorResponse),
+    )
+)]
+#[get("/varieties/{id}/companions")]
+pub async fn get_companions(
+    req: HttpRequest,
+    path: web::Path<String>,
+    repo: web::Data<Box<dyn VarietyRepository>>,
+) -> impl Responder {
+    let locale = parse_locale(&req);
+    let id = path.into_inner();
+    match GetCompanionsUseCase::new(repo.as_ref().as_ref())
+        .execute(&id, &locale)
+        .await
+    {
+        Err(e) => {
+            log::error!("Failed to fetch companions for '{id}': {e}");
+            HttpResponse::InternalServerError()
+                .json(serde_json::json!({ "error": "Internal server error" }))
+        }
+        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Variety '{}' not found.", id)
+        })),
+        Ok(Some(data)) => {
+            let mut links = std::collections::HashMap::new();
+            links.insert(
+                "self".into(),
+                link(format!("/api/varieties/{id}/companions"), Method::GET),
+            );
+            links.insert(
+                "variety".into(),
+                link(format!("/api/varieties/{id}"), Method::GET),
+            );
+            HttpResponse::Ok().json(ApiResponse::new(
+                CompanionsResponse {
+                    id: data.variety.id,
+                    name: data.variety.name,
+                    good: data.good,
+                    bad: data.bad,
+                },
+                links,
+            ))
         }
     }
 }

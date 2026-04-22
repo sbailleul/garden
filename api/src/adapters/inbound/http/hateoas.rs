@@ -65,8 +65,8 @@ pub struct Pagination {
 /// Generic single-item response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    VegetableApiResponse   = ApiResponse<Vegetable>,
-    VarietyApiResponse     = ApiResponse<Variety>,
+    VarietyApiResponse   = ApiResponse<Variety>,
+    VegetableApiResponse     = ApiResponse<Vegetable>,
     PlanApiResponse        = ApiResponse<PlanResponse>,
     CompanionsApiResponse  = ApiResponse<CompanionsResponse>
 )]
@@ -87,8 +87,8 @@ impl<T> ApiResponse<T> {
 /// Generic paginated list response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    VegetablesApiResponse   = PaginatedResponse<VegetableApiResponse>,
-    VarietiesApiResponse    = PaginatedResponse<VarietyApiResponse>,
+    VarietiesApiResponse   = PaginatedResponse<VarietyApiResponse>,
+    VegetablesApiResponse    = PaginatedResponse<VegetableApiResponse>,
 )]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,

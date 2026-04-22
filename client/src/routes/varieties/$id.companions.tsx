@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-import { fetchCompanions } from "@/api/vegetables";
-import { CompanionList } from "@/components/vegetables/companion-list";
+import { fetchCompanions } from "@/api/varieties";
+import { CompanionList } from "@/components/varieties/companion-list";
 
-export const Route = createFileRoute("/vegetables/$id/companions")({
+export const Route = createFileRoute("/varieties/$id/companions")({
   loader: ({ context: { queryClient }, params }) =>
     queryClient.ensureQueryData({
       queryKey: ["companions", params.id],
@@ -24,8 +24,8 @@ function CompanionsPage() {
 
   return (
     <CompanionList
-      vegetableId={id}
-      vegetableName={name}
+      varietyId={id}
+      varietyName={name}
       good={good}
       bad={bad}
     />

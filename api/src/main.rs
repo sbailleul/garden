@@ -47,11 +47,11 @@ async fn main() -> std::io::Result<()> {
             .expect("Database migration failed");
     }
 
-    let repo: Box<dyn VegetableRepository> =
-        Box::new(PostgresVegetableRepository::new(pool.clone()));
+    let repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool.clone()));
     let repo_data = web::Data::new(repo);
-    let variety_repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool));
-    let variety_repo_data = web::Data::new(variety_repo);
+    let vegetable_repo: Box<dyn VegetableRepository> =
+        Box::new(PostgresVegetableRepository::new(pool));
+    let vegetable_repo_data = web::Data::new(vegetable_repo);
 
     let bind_addr = "0.0.0.0:8080";
     log::info!("Starting server on {bind_addr}");
@@ -66,7 +66,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(repo_data.clone())
-            .app_data(variety_repo_data.clone())
+            .app_data(vegetable_repo_data.clone())
             .configure(garden::adapters::inbound::http::routes::configure)
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("JSON deserialization error: {err}");

@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/vegetables/tomato/companions
+  url: {{baseUrl}}/api/varieties/tomato/companions
 }
 
 headers {
@@ -58,12 +58,12 @@ tests {
   });
 
   test("_links.self points to this companions endpoint", function() {
-    expect(res.body._links.self.href).to.equal("/api/vegetables/tomato/companions");
+    expect(res.body._links.self.href).to.equal("/api/varieties/tomato/companions");
     expect(res.body._links.self.method).to.equal("GET");
   });
 
-  test("_links.vegetable points back to the vegetable", function() {
-    expect(res.body._links.vegetable.href).to.equal("/api/vegetables/tomato");
-    expect(res.body._links.vegetable.method).to.equal("GET");
+  test("_links.variety points back to the variety", function() {
+    expect(res.body._links.variety.href).to.equal("/api/varieties/tomato");
+    expect(res.body._links.variety.method).to.equal("GET");
   });
 }

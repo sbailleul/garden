@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::domain::models::{vegetable::Lifecycle, Coordinate, Matrix};
+use crate::domain::models::{variety::Lifecycle, Coordinate, Matrix};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PlacedVegetable {
+pub struct PlacedVariety {
     pub id: String,
     pub name: String,
     pub reason: String,
@@ -17,7 +17,7 @@ pub struct PlacedVegetable {
     pub anchor: Coordinate,
     /// 0-based index of the week in which this plant was placed.
     pub planted_week: usize,
-    /// Days until this plant is ready to harvest (copied from the vegetable catalogue).
+    /// Days until this plant is ready to harvest (copied from the variety catalogue).
     pub days_to_harvest: u32,
     /// Calendar date when this plant is expected to be ready for harvest.
     pub estimated_harvest_date: chrono::NaiveDate,
@@ -29,7 +29,7 @@ pub struct PlacedVegetable {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Cell {
-    pub vegetable: Option<PlacedVegetable>,
+    pub variety: Option<PlacedVariety>,
     /// True when the cell is a path, alley or other non-plantable zone.
     pub blocked: bool,
 }
@@ -48,7 +48,7 @@ impl GardenGrid {
             .map(|_| {
                 (0..cols)
                     .map(|_| Cell {
-                        vegetable: None,
+                        variety: None,
                         blocked: false,
                     })
                     .collect()
@@ -57,14 +57,14 @@ impl GardenGrid {
         Self { rows, cols, cells }
     }
 
-    pub fn get_neighbors(&self, row: usize, col: usize) -> Vec<&PlacedVegetable> {
+    pub fn get_neighbors(&self, row: usize, col: usize) -> Vec<&PlacedVariety> {
         let mut neighbors = Vec::new();
         let directions: [(i32, i32); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
         for (dr, dc) in directions {
             let nr = row as i32 + dr;
             let nc = col as i32 + dc;
             if nr >= 0 && nr < self.rows as i32 && nc >= 0 && nc < self.cols as i32 {
-                if let Some(ref v) = self.cells[nr as usize][nc as usize].vegetable {
+                if let Some(ref v) = self.cells[nr as usize][nc as usize].variety {
                     neighbors.push(v);
                 }
             }
@@ -80,7 +80,7 @@ impl GardenGrid {
         for dr in 0..span {
             for dc in 0..span {
                 let cell = &self.cells[row + dr][col + dc];
-                if cell.vegetable.is_some() || cell.blocked {
+                if cell.variety.is_some() || cell.blocked {
                     return false;
                 }
             }
@@ -89,13 +89,9 @@ impl GardenGrid {
     }
 
     /// Returns all distinct already-placed neighbours on the perimeter of a `span × span` block.
-    pub fn get_block_neighbors(
-        &self,
-        coordinate: Coordinate,
-        span: usize,
-    ) -> Vec<&PlacedVegetable> {
+    pub fn get_block_neighbors(&self, coordinate: Coordinate, span: usize) -> Vec<&PlacedVariety> {
         let mut seen: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
-        let mut neighbors: Vec<&PlacedVegetable> = Vec::new();
+        let mut neighbors: Vec<&PlacedVariety> = Vec::new();
         let s = span as i32;
         let r0 = coordinate.row as i32;
         let c0 = coordinate.col as i32;
@@ -106,7 +102,7 @@ impl GardenGrid {
             }
             let key = (r as usize, c as usize);
             if seen.insert(key) {
-                if let Some(ref v) = self.cells[r as usize][c as usize].vegetable {
+                if let Some(ref v) = self.cells[r as usize][c as usize].variety {
                     neighbors.push(v);
                 }
             }

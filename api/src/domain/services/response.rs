@@ -2,7 +2,7 @@ use crate::domain::models::{
     garden::GardenGrid,
     request::Period,
     response::{PlannedCell, SowingTask, WeeklyPlan},
-    vegetable::Vegetable,
+    variety::Variety,
     Matrix,
 };
 
@@ -52,7 +52,7 @@ pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
         .map(|(row_idx, row)| {
             row.iter()
                 .enumerate()
-                .map(|(col_idx, cell)| match &cell.vegetable {
+                .map(|(col_idx, cell)| match &cell.variety {
                     Some(v)
                         if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) && v.span == 1 =>
                     {
@@ -86,13 +86,13 @@ pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
         .collect()
 }
 
-/// Generates a descriptive reason string for a planted vegetable.
-pub fn build_reason(vegetable: &Vegetable, neighbor_names: &[String], score: i32) -> String {
+/// Generates a descriptive reason string for a planted variety.
+pub fn build_reason(variety: &Variety, neighbor_names: &[String], score: i32) -> String {
     if neighbor_names.is_empty() {
         return format!(
             "First placed ({}{}) ",
-            vegetable.category,
-            if vegetable.beginner_friendly {
+            variety.category,
+            if variety.beginner_friendly {
                 ", beginner-friendly"
             } else {
                 ""
@@ -109,10 +109,10 @@ pub fn build_reason(vegetable: &Vegetable, neighbor_names: &[String], score: i32
     };
     format!(
         "{} {} {}{}",
-        vegetable.name,
+        variety.name,
         qualifier,
         neighbors_str,
-        if vegetable.beginner_friendly {
+        if variety.beginner_friendly {
             " (beginner-friendly)"
         } else {
             ""

@@ -51,7 +51,7 @@ pub enum PlannedCell {
 }
 
 impl PlannedCell {
-    /// Returns the vegetable id if this cell is an anchor (`SelfContained` or `Overflowing`).
+    /// Returns the variety id if this cell is an anchor (`SelfContained` or `Overflowing`).
     pub fn id(&self) -> Option<&str> {
         match self {
             Self::SelfContained { id, .. } | Self::Overflowing { id, .. } => Some(id),
@@ -94,14 +94,14 @@ impl PlannedCell {
     }
 }
 
-/// A vegetable that should be sown during a given planning week so it is
+/// A variety that should be sown during a given planning week so it is
 /// ready to transplant into the garden during a future week.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SowingTask {
-    /// Vegetable identifier.
+    /// Variety identifier.
     pub id: String,
-    /// Human-readable vegetable name.
+    /// Human-readable variety name.
     pub name: String,
     /// Start date of the target transplanting week.
     #[schema(value_type = String, format = Date, example = "2025-05-05")]
@@ -121,7 +121,7 @@ pub struct WeeklyPlan {
     pub grid: Matrix<PlannedCell>,
     /// Cumulative companion-planting score for plants placed **this week**.
     pub score: i32,
-    /// Vegetables to sow this week so they are ready to transplant during a
+    /// Varieties to sow this week so they are ready to transplant during a
     /// future planning week.
     pub sowing_tasks: Vec<SowingTask>,
 }

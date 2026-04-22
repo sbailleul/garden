@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import type { Vegetable } from "@/api/types";
+import type { Variety } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,14 +27,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const columnHelper = createColumnHelper<Vegetable>();
+const columnHelper = createColumnHelper<Variety>();
 
 const columns = [
   columnHelper.accessor("id", {
     header: "ID",
     cell: (info) => (
       <Link
-        to="/vegetables/$id"
+        to="/varieties/$id"
         params={{ id: info.getValue() }}
         className="text-primary underline-offset-4 hover:underline"
       >
@@ -66,10 +66,10 @@ const columns = [
 const CATEGORIES = ["Fruit", "Produce", "Herb", "Root", "Bulb", "Leafy", "Pod"] as const;
 
 type Props = {
-  vegetables: Vegetable[];
+  varieties: Variety[];
 };
 
-export function VegetableTable({ vegetables }: Props) {
+export function VarietyTable({ varieties }: Props) {
   const [nameFilter, setNameFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
@@ -79,7 +79,7 @@ export function VegetableTable({ vegetables }: Props) {
   ];
 
   const table = useReactTable({
-    data: vegetables,
+    data: varieties,
     columns,
     state: { columnFilters },
     getCoreRowModel: getCoreRowModel(),
@@ -130,7 +130,7 @@ export function VegetableTable({ vegetables }: Props) {
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center">
-                  No vegetables found.
+                  No varieties found.
                 </TableCell>
               </TableRow>
             ) : (
@@ -149,8 +149,8 @@ export function VegetableTable({ vegetables }: Props) {
       </div>
 
       <p className="text-muted-foreground text-sm">
-        {table.getRowModel().rows.length} vegetable
-        {table.getRowModel().rows.length !== 1 ? "s" : ""}
+        {table.getRowModel().rows.length}{" "}
+        {table.getRowModel().rows.length !== 1 ? "varieties" : "variety"}
       </p>
     </div>
   );

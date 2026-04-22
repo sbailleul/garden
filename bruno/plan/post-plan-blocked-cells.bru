@@ -37,7 +37,7 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("blocked row has no vegetable and type is blocked", function() {
+  test("blocked row has no variety and type is blocked", function() {
     var row = res.body.payload.weeks[0].grid[1];
     row.forEach(function(cell) {
       expect(cell.id).to.be.undefined;

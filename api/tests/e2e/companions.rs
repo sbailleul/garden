@@ -2,14 +2,14 @@ use crate::common::build_app_postgres;
 use actix_web::test;
 
 // ---------------------------------------------------------------------------
-// GET /api/vegetables/{id}/companions
+// GET /api/varieties/{id}/companions
 // ---------------------------------------------------------------------------
 
 #[actix_web::test]
 async fn test_get_companions_known_id_returns_200() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/tomato/companions")
+        .uri("/api/varieties/tomato/companions")
         .to_request();
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
@@ -19,7 +19,7 @@ async fn test_get_companions_known_id_returns_200() {
 async fn test_get_companions_returns_good_and_bad() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/tomato/companions")
+        .uri("/api/varieties/tomato/companions")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     assert!(
@@ -42,7 +42,7 @@ async fn test_get_companions_returns_good_and_bad() {
 async fn test_get_companions_unknown_id_returns_404() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/nonexistent-vegetable/companions")
+        .uri("/api/varieties/nonexistent-variety/companions")
         .to_request();
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 404);
@@ -52,7 +52,7 @@ async fn test_get_companions_unknown_id_returns_404() {
 async fn test_get_companions_unknown_id_returns_error_message() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/nonexistent-vegetable/companions")
+        .uri("/api/varieties/nonexistent-variety/companions")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let error_msg = body.get("error").and_then(|v| v.as_str()).unwrap_or("");
@@ -66,7 +66,7 @@ async fn test_get_companions_unknown_id_returns_error_message() {
 async fn test_get_companions_returns_links() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/tomato/companions")
+        .uri("/api/varieties/tomato/companions")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let links = body
@@ -74,12 +74,12 @@ async fn test_get_companions_returns_links() {
         .expect("Companions response must have _links");
     assert_eq!(
         links["self"]["href"].as_str().unwrap(),
-        "/api/vegetables/tomato/companions"
+        "/api/varieties/tomato/companions"
     );
     assert_eq!(links["self"]["method"].as_str().unwrap(), "GET");
     assert_eq!(
-        links["vegetable"]["href"].as_str().unwrap(),
-        "/api/vegetables/tomato"
+        links["variety"]["href"].as_str().unwrap(),
+        "/api/varieties/tomato"
     );
-    assert_eq!(links["vegetable"]["method"].as_str().unwrap(), "GET");
+    assert_eq!(links["variety"]["method"].as_str().unwrap(), "GET");
 }

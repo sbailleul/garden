@@ -3,7 +3,7 @@ use chrono::{Duration, NaiveDate};
 use crate::domain::models::{
     garden::GardenGrid,
     request::LayoutCell,
-    vegetable::{Region, Vegetable},
+    variety::{Region, Variety},
     warnings::Warnings,
     Coordinate,
 };
@@ -34,16 +34,16 @@ pub fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<GridSize, String> {
 }
 
 /// Creates a blank grid and pre-fills it from the unified layout array:
-/// blocked zones (`true`) and pre-placed vegetables (`"id"`).
-/// Returns the grid and any warnings produced (e.g. unknown vegetable IDs).
-/// The `lookup` closure resolves a vegetable ID to a `Vegetable` without any I/O dependency.
+/// blocked zones (`true`) and pre-placed varieties (`"id"`).
+/// Returns the grid and any warnings produced (e.g. unknown variety IDs).
+/// The `lookup` closure resolves a variety ID to a `Variety` without any I/O dependency.
 pub fn initialize_grid(
     rows: usize,
     cols: usize,
     layout: &[Vec<LayoutCell>],
     planning_start: NaiveDate,
     region: &Region,
-    lookup: impl Fn(&str) -> Option<Vegetable>,
+    lookup: impl Fn(&str) -> Option<Variety>,
     warnings: &mut Warnings,
 ) -> GardenGrid {
     let mut grid = GardenGrid::new(rows, cols);
@@ -70,8 +70,8 @@ pub fn initialize_grid(
                             Some(effective_date),
                             planning_start,
                         );
-                        grid.cells[r][c].vegetable =
-                            Some(crate::domain::models::garden::PlacedVegetable {
+                        grid.cells[r][c].variety =
+                            Some(crate::domain::models::garden::PlacedVariety {
                                 id: v.id.clone(),
                                 name: v.name.clone(),
                                 reason: "Present in the existing layout.".into(),
@@ -86,7 +86,7 @@ pub fn initialize_grid(
                             });
                     } else {
                         warnings.add(format!(
-                            "Vegetable '{id}' not found in the database, skipped."
+                            "Variety '{id}' not found in the database, skipped."
                         ));
                     }
                 }
@@ -112,8 +112,8 @@ pub fn initialize_grid(
                             Some(effective_date),
                             planning_start,
                         );
-                        grid.cells[r][c].vegetable =
-                            Some(crate::domain::models::garden::PlacedVegetable {
+                        grid.cells[r][c].variety =
+                            Some(crate::domain::models::garden::PlacedVariety {
                                 id: v.id.clone(),
                                 name: v.name.clone(),
                                 reason: "Present in the existing layout.".into(),
@@ -128,7 +128,7 @@ pub fn initialize_grid(
                             });
                     } else {
                         warnings.add(format!(
-                            "Vegetable '{id}' not found in the database, skipped."
+                            "Variety '{id}' not found in the database, skipped."
                         ));
                     }
                 }
@@ -148,8 +148,8 @@ pub fn initialize_grid(
             col: covered_by_col,
         } = covered_by;
         if covered_by_row < rows && covered_by_col < cols {
-            if let Some(anchor_veg) = grid.cells[covered_by_row][covered_by_col].vegetable.clone() {
-                grid.cells[position_row][position_col].vegetable = Some(anchor_veg);
+            if let Some(anchor_veg) = grid.cells[covered_by_row][covered_by_col].variety.clone() {
+                grid.cells[position_row][position_col].variety = Some(anchor_veg);
             } else {
                 warnings.add(format!(
                     "Continuation cell [{position_row},{position_col}] references an unplanted anchor [{covered_by_row},{covered_by_col}], skipped."
@@ -168,7 +168,7 @@ pub fn initialize_grid(
 /// Returns `GridOccupancy(occupied, blocked)` cell counts for the given grid.
 pub fn count_grid_occupancy(grid: &GardenGrid) -> GridOccupancy {
     let flat = || grid.cells.iter().flat_map(|r| r.iter());
-    let occupied = flat().filter(|c| c.vegetable.is_some()).count();
+    let occupied = flat().filter(|c| c.variety.is_some()).count();
     let blocked = flat().filter(|c| c.blocked).count();
     GridOccupancy(occupied, blocked)
 }

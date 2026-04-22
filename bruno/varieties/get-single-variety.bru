@@ -1,11 +1,11 @@
 meta {
-  name: Get Single Vegetable
+  name: Get Single Variety
   type: http
   seq: 3
 }
 
 get {
-  url: {{baseUrl}}/api/vegetables/tomato
+  url: {{baseUrl}}/api/varieties/tomato
 }
 
 headers {
@@ -37,18 +37,18 @@ tests {
     expect(res.body.payload.lifecycle).to.be.oneOf(["Annual", "Biennial", "Perennial"]);
   });
 
-  test("_links.self points to this vegetable", function() {
-    expect(res.body._links.self.href).to.equal("/api/vegetables/tomato");
+  test("_links.self points to this variety", function() {
+    expect(res.body._links.self.href).to.equal("/api/varieties/tomato");
     expect(res.body._links.self.method).to.equal("GET");
   });
 
   test("_links.companions points to companions endpoint", function() {
-    expect(res.body._links.companions.href).to.equal("/api/vegetables/tomato/companions");
+    expect(res.body._links.companions.href).to.equal("/api/varieties/tomato/companions");
     expect(res.body._links.companions.method).to.equal("GET");
   });
 
-  test("_links.collection points to vegetable list", function() {
-    expect(res.body._links.collection.href).to.equal("/api/vegetables");
+  test("_links.collection points to variety list", function() {
+    expect(res.body._links.collection.href).to.equal("/api/varieties");
     expect(res.body._links.collection.method).to.equal("GET");
   });
 }

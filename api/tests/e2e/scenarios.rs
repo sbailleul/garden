@@ -42,7 +42,7 @@ async fn scenario_small_summer_garden() {
         .any(|id| placed.contains(&id.to_string()));
     assert!(
         found_typical,
-        "Summer garden must contain at least one typical vegetable: {:?}. Found: {:?}",
+        "Summer garden must contain at least one typical variety: {:?}. Found: {:?}",
         typical_summer, placed
     );
 
@@ -50,7 +50,7 @@ async fn scenario_small_summer_garden() {
     for id in &advanced_vegs {
         assert!(
             !placed.contains(&id.to_string()),
-            "Advanced vegetable '{}' must not appear in a beginner garden",
+            "Advanced variety '{}' must not appear in a beginner garden",
             id
         );
     }
@@ -90,7 +90,7 @@ async fn scenario_spring_cool_climate() {
     for id in &summer_only_vegs {
         assert!(
             !placed.contains(&id.to_string()),
-            "Summer-only vegetable '{}' must not appear in a spring garden",
+            "Summer-only variety '{}' must not appear in a spring garden",
             id
         );
     }
@@ -143,7 +143,7 @@ async fn scenario_existing_tomatoes_add_companions() {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario 4: Winter garden → only season-appropriate vegetables
+// Scenario 4: Winter garden → only season-appropriate varieties
 // ---------------------------------------------------------------------------
 
 #[actix_web::test]
@@ -176,7 +176,7 @@ async fn scenario_winter_garden() {
         .any(|id| placed.contains(&id.to_string()));
     assert!(
         found_winter,
-        "Winter vegetables must be present: {:?}",
+        "Winter varieties must be present: {:?}",
         winter_vegs
     );
 }
@@ -274,7 +274,7 @@ async fn scenario_sowing_tasks_computed_per_week() {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario 7: Explicit exclusions — excluded vegetables must never be placed
+// Scenario 7: Explicit exclusions — excluded varieties must never be placed
 // ---------------------------------------------------------------------------
 
 #[actix_web::test]
@@ -304,7 +304,7 @@ async fn scenario_exclusions_prevent_placement() {
                 if let Some(id) = cell["id"].as_str() {
                     assert!(
                         !excluded.contains(&id),
-                        "Excluded vegetable '{id}' must not appear in the plan"
+                        "Excluded variety '{id}' must not appear in the plan"
                     );
                 }
             }

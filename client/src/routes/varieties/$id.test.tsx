@@ -23,9 +23,9 @@ function renderAt(path: string) {
   );
 }
 
-describe("Vegetable detail", () => {
-  it("renders vegetable name and latin name", async () => {
-    renderAt("/vegetables/tomato");
+describe("Variety detail", () => {
+  it("renders variety name and latin name", async () => {
+    renderAt("/varieties/tomato");
 
     await waitFor(() => {
       expect(screen.getByText("Tomato")).toBeInTheDocument();
@@ -34,21 +34,21 @@ describe("Vegetable detail", () => {
   });
 
   it("shows a link to companions", async () => {
-    renderAt("/vegetables/tomato");
+    renderAt("/varieties/tomato");
 
     await waitFor(() => {
       expect(screen.getByText(/view companions/i)).toBeInTheDocument();
     });
   });
 
-  it("shows an error state when vegetable is not found", async () => {
+  it("shows an error state when variety is not found", async () => {
     worker.use(
-      http.get("/api/vegetables/:id", () =>
+      http.get("/api/varieties/:id", () =>
         HttpResponse.json({ error: "Not found" }, { status: 404 }),
       ),
     );
 
-    renderAt("/vegetables/unknown-id");
+    renderAt("/varieties/unknown-id");
 
     await waitFor(() => {
       // Router should show an error or the page should surface the rejection

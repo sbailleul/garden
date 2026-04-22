@@ -1,6 +1,6 @@
 use chrono::{Datelike, NaiveDate};
 
-use crate::domain::models::vegetable::{Region, Vegetable};
+use crate::domain::models::variety::{Region, Variety};
 
 /// Size of one grid cell in centimetres
 pub const CELL_SIZE_CM: u32 = 30;
@@ -23,7 +23,7 @@ pub fn plants_per_cell(spacing_cm: u32) -> u32 {
     }
 }
 
-/// Adjusts `days_to_harvest` for pre-placed vegetables based on user-provided
+/// Adjusts `days_to_harvest` for pre-placed varieties based on user-provided
 /// planting date and planning start.
 ///
 /// Formula requested by product:
@@ -42,17 +42,17 @@ pub fn adjusted_days_to_harvest(
     }
 }
 
-/// Infers the planting date for a pre-placed vegetable from its regional calendar.
+/// Infers the planting date for a pre-placed variety from its regional calendar.
 ///
 /// Selects the most recent planting month (outdoor preferred, indoor as fallback)
 /// that falls on or before `planning_start`. Falls back to `planning_start` when
 /// no suitable calendar entry exists for the given region.
 pub fn infer_planted_date(
-    vegetable: &Vegetable,
+    variety: &Variety,
     region: &Region,
     planning_start: NaiveDate,
 ) -> NaiveDate {
-    let inferred = vegetable
+    let inferred = variety
         .calendars
         .iter()
         .find(|c| &c.region == region)
@@ -94,12 +94,13 @@ mod tests {
 
     #[test]
     fn test_infer_planted_date_picks_most_recent_before_planning_start() {
-        use crate::domain::models::vegetable::{
+        use crate::domain::models::variety::{
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
-            Vegetable,
+            Variety,
         };
-        let veg = Vegetable {
+        let veg = Variety {
             id: "tomato".into(),
+            vegetable_id: "tomato".into(),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -123,7 +124,6 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
-            variety_id: None,
         };
 
         // Planning starts in June: most recent planting month on/before June is May
@@ -134,12 +134,13 @@ mod tests {
 
     #[test]
     fn test_infer_planted_date_falls_back_to_previous_year() {
-        use crate::domain::models::vegetable::{
+        use crate::domain::models::variety::{
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
-            Vegetable,
+            Variety,
         };
-        let veg = Vegetable {
+        let veg = Variety {
             id: "tomato".into(),
+            vegetable_id: "tomato".into(),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -163,7 +164,6 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
-            variety_id: None,
         };
 
         // Planning starts in March: all 2026 planting months (Apr, May) are in the future
@@ -175,12 +175,13 @@ mod tests {
 
     #[test]
     fn test_infer_planted_date_returns_planning_start_for_unknown_region() {
-        use crate::domain::models::vegetable::{
+        use crate::domain::models::variety::{
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
-            Vegetable,
+            Variety,
         };
-        let veg = Vegetable {
+        let veg = Variety {
             id: "tomato".into(),
+            vegetable_id: "tomato".into(),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -204,7 +205,6 @@ mod tests {
             bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
-            variety_id: None,
         };
 
         let planning_start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();

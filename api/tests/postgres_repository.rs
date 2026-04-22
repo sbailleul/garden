@@ -6,21 +6,21 @@
 mod common;
 
 use common::test_pool;
-use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
-use garden::application::ports::vegetable_repository::VegetableRepository;
+use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
+use garden::application::ports::variety_repository::VarietyRepository;
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn test_get_all_returns_vegetables() {
+async fn test_get_all_returns_varieties() {
     let pool = test_pool().await;
-    let repo = PostgresVegetableRepository::new(pool);
-    let vegetables = repo.get_all("en").await.expect("get_all failed");
-    assert!(!vegetables.is_empty(), "expected at least one vegetable");
+    let repo = PostgresVarietyRepository::new(pool);
+    let varieties = repo.get_all("en").await.expect("get_all failed");
+    assert!(!varieties.is_empty(), "expected at least one variety");
     assert!(
-        vegetables.iter().any(|v| v.id == "tomato"),
+        varieties.iter().any(|v| v.id == "tomato"),
         "tomato should be present"
     );
 }
@@ -28,9 +28,9 @@ async fn test_get_all_returns_vegetables() {
 #[tokio::test]
 async fn test_get_all_returns_french_names() {
     let pool = test_pool().await;
-    let repo = PostgresVegetableRepository::new(pool);
-    let vegetables = repo.get_all("fr").await.expect("get_all failed");
-    let tomato = vegetables
+    let repo = PostgresVarietyRepository::new(pool);
+    let varieties = repo.get_all("fr").await.expect("get_all failed");
+    let tomato = varieties
         .iter()
         .find(|v| v.id == "tomato")
         .expect("tomato not found");
@@ -38,9 +38,9 @@ async fn test_get_all_returns_french_names() {
 }
 
 #[tokio::test]
-async fn test_get_by_id_returns_vegetable() {
+async fn test_get_by_id_returns_variety() {
     let pool = test_pool().await;
-    let repo = PostgresVegetableRepository::new(pool);
+    let repo = PostgresVarietyRepository::new(pool);
     let result = repo
         .get_by_id("carrot", "en")
         .await
@@ -53,7 +53,7 @@ async fn test_get_by_id_returns_vegetable() {
 #[tokio::test]
 async fn test_get_by_id_unknown_returns_none() {
     let pool = test_pool().await;
-    let repo = PostgresVegetableRepository::new(pool);
+    let repo = PostgresVarietyRepository::new(pool);
     let result = repo
         .get_by_id("does-not-exist", "en")
         .await
@@ -64,10 +64,10 @@ async fn test_get_by_id_unknown_returns_none() {
 #[tokio::test]
 async fn test_locale_fallback_to_en() {
     let pool = test_pool().await;
-    let repo = PostgresVegetableRepository::new(pool);
+    let repo = PostgresVarietyRepository::new(pool);
     // "de" has no translations; should fall back to English name
-    let vegetables = repo.get_all("de").await.expect("get_all failed");
-    let tomato = vegetables
+    let varieties = repo.get_all("de").await.expect("get_all failed");
+    let tomato = varieties
         .iter()
         .find(|v| v.id == "tomato")
         .expect("tomato not found");

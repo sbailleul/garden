@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 
 const LINKS = [
-  { to: "/vegetables", label: "Vegetables" },
+  { to: "/varieties", label: "Varieties" },
   { to: "/plan", label: "Plan Garden" },
 ] as const;
 

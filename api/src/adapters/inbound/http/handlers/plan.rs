@@ -9,7 +9,7 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::vegetable_repository::VegetableRepository, use_cases::plan_garden::PlanGardenUseCase,
+        ports::variety_repository::VarietyRepository, use_cases::plan_garden::PlanGardenUseCase,
     },
     domain::models::request::PlanRequest,
 };
@@ -37,7 +37,7 @@ use crate::{
 pub async fn post_plan(
     req: HttpRequest,
     body: web::Json<PlanRequest>,
-    repo: web::Data<Box<dyn VegetableRepository>>,
+    repo: web::Data<Box<dyn VarietyRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let request = body.into_inner();
@@ -46,7 +46,7 @@ pub async fn post_plan(
         Ok(response) => {
             let mut links = std::collections::HashMap::new();
             links.insert("self".into(), link("/api/plan", Method::POST));
-            links.insert("vegetables".into(), link("/api/vegetables", Method::GET));
+            links.insert("varieties".into(), link("/api/varieties", Method::GET));
             HttpResponse::Ok().json(ApiResponse::new(response, links))
         }
         Err(e) => HttpResponse::BadRequest().json(serde_json::json!({ "error": e })),

@@ -1,17 +1,17 @@
 import { http, HttpResponse } from "msw";
 
 import type {
-  Vegetable,
   Variety,
-  VarietiesApiResponse,
-  VarietyApiResponse,
+  Vegetable,
   VegetablesApiResponse,
   VegetableApiResponse,
+  VarietiesApiResponse,
+  VarietyApiResponse,
   CompanionsApiResponse,
   PlanApiResponse,
 } from "@/api/types";
 
-const TOMATO: Vegetable = {
+const TOMATO: Variety = {
   id: "tomato",
   name: "Tomato",
   latinName: "Solanum lycopersicum",
@@ -25,7 +25,6 @@ const TOMATO: Vegetable = {
   sunRequirement: ["FullSun"],
   goodCompanions: ["basil"],
   badCompanions: ["fennel"],
-  varietyId: "tomato",
   calendars: [
     {
       region: "Temperate",
@@ -35,7 +34,7 @@ const TOMATO: Vegetable = {
   ],
 };
 
-const BASIL: Vegetable = {
+const BASIL: Variety = {
   id: "basil",
   name: "Basil",
   latinName: "Ocimum basilicum",
@@ -49,7 +48,6 @@ const BASIL: Vegetable = {
   sunRequirement: ["FullSun"],
   goodCompanions: ["tomato"],
   badCompanions: [],
-  varietyId: "basil",
   calendars: [
     {
       region: "Temperate",
@@ -61,20 +59,20 @@ const BASIL: Vegetable = {
 
 const SELF_LINK = (path: string) => ({ href: path, method: "GET" });
 
-const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
-  payload: v as VegetableApiResponse["payload"],
+const varietyResponse = (v: Variety): VarietyApiResponse => ({
+  payload: v as VarietyApiResponse["payload"],
   _links: {
-    self: SELF_LINK(`/api/vegetables/${v.id}`),
-    companions: SELF_LINK(`/api/vegetables/${v.id}/companions`),
-    collection: SELF_LINK("/api/vegetables"),
+    self: SELF_LINK(`/api/varieties/${v.id}`),
+    companions: SELF_LINK(`/api/varieties/${v.id}/companions`),
+    collection: SELF_LINK("/api/varieties"),
   },
 });
 
-const VEGETABLES_RESPONSE: VegetablesApiResponse = {
-  payload: [TOMATO, BASIL].map(vegetableResponse),
+const VEGETABLES_RESPONSE: VarietiesApiResponse = {
+  payload: [TOMATO, BASIL].map(varietyResponse),
   pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
   _links: {
-    self: SELF_LINK("/api/vegetables"),
+    self: SELF_LINK("/api/varieties"),
   },
 };
 
@@ -86,8 +84,8 @@ const COMPANIONS_RESPONSE: CompanionsApiResponse = {
     bad: [{ id: "fennel", name: "Fennel" }],
   },
   _links: {
-    self: SELF_LINK("/api/vegetables/tomato/companions"),
-    vegetable: SELF_LINK("/api/vegetables/tomato"),
+    self: SELF_LINK("/api/varieties/tomato/companions"),
+    variety: SELF_LINK("/api/varieties/tomato"),
   },
 };
 
@@ -121,49 +119,49 @@ const PLAN_RESPONSE: PlanApiResponse = {
   },
   _links: {
     self: { href: "/api/plan", method: "POST" },
-    vegetables: SELF_LINK("/api/vegetables"),
+    varieties: SELF_LINK("/api/varieties"),
   },
 };
 
-const VEGETABLE_MAP: Record<string, Vegetable> = {
+const VEGETABLE_MAP: Record<string, Variety> = {
   tomato: TOMATO,
   basil: BASIL,
 };
 
-const TOMATO_VARIETY: Variety = { id: "tomato", name: "Tomato" };
-const BASIL_VARIETY: Variety = { id: "basil", name: "Basil" };
+const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato" };
+const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil" };
 
-const varietyResponse = (v: Variety): VarietyApiResponse => ({
+const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v,
   _links: {
-    self: SELF_LINK(`/api/varieties/${v.id}`),
-    collection: SELF_LINK("/api/varieties"),
+    self: SELF_LINK(`/api/vegetables/${v.id}`),
+    collection: SELF_LINK("/api/vegetables"),
   },
 });
 
-const VARIETIES_RESPONSE: VarietiesApiResponse = {
-  payload: [TOMATO_VARIETY, BASIL_VARIETY].map(varietyResponse),
+const VARIETIES_RESPONSE: VegetablesApiResponse = {
+  payload: [TOMATO_VARIETY, BASIL_VARIETY].map(vegetableResponse),
   pagination: { page: 1, perPage: 100, total: 2, totalPages: 1 },
-  _links: { self: SELF_LINK("/api/varieties") },
+  _links: { self: SELF_LINK("/api/vegetables") },
 };
 
-const VARIETY_MAP: Record<string, Variety> = {
+const VARIETY_MAP: Record<string, Vegetable> = {
   tomato: TOMATO_VARIETY,
   basil: BASIL_VARIETY,
 };
 
 export const handlers = [
-  http.get("/api/vegetables", () => HttpResponse.json(VEGETABLES_RESPONSE)),
+  http.get("/api/varieties", () => HttpResponse.json(VEGETABLES_RESPONSE)),
 
-  http.get("/api/vegetables/:id", ({ params }) => {
+  http.get("/api/varieties/:id", ({ params }) => {
     const veg = VEGETABLE_MAP[params['id']as string];
     if (!veg) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return HttpResponse.json(vegetableResponse(veg));
+    return HttpResponse.json(varietyResponse(veg));
   }),
 
-  http.get("/api/vegetables/:id/companions", ({ params }) => {
+  http.get("/api/varieties/:id/companions", ({ params }) => {
     if (params['id'] !== "tomato") {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -172,13 +170,13 @@ export const handlers = [
 
   http.post("/api/plan", () => HttpResponse.json(PLAN_RESPONSE)),
 
-  http.get("/api/varieties", () => HttpResponse.json(VARIETIES_RESPONSE)),
+  http.get("/api/vegetables", () => HttpResponse.json(VARIETIES_RESPONSE)),
 
-  http.get("/api/varieties/:id", ({ params }) => {
-    const variety = VARIETY_MAP[params["id"] as string];
-    if (!variety) {
+  http.get("/api/vegetables/:id", ({ params }) => {
+    const vegetable = VARIETY_MAP[params["id"] as string];
+    if (!vegetable) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return HttpResponse.json(varietyResponse(variety));
+    return HttpResponse.json(vegetableResponse(vegetable));
   }),
 ];

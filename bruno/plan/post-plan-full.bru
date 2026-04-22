@@ -62,7 +62,7 @@ tests {
     expect(res.body.payload.weeks[0].score).to.be.a("number").that.is.gte(0);
   });
 
-  test("grid contains at least one preferred vegetable", function() {
+  test("grid contains at least one preferred variety", function() {
     var placed = [];
     res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {
@@ -74,7 +74,7 @@ tests {
     expect(found).to.be.true;
   });
 
-  test("only beginner-friendly vegetables are placed", function() {
+  test("only beginner-friendly varieties are placed", function() {
     var advanced = ["pepper", "fennel", "eggplant", "celery", "asparagus", "artichoke", "cauliflower", "broccoli", "cabbage"];
     res.body.payload.weeks[0].grid.forEach(function(row) {
       row.forEach(function(cell) {

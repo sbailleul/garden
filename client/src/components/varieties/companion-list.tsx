@@ -5,26 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
-  vegetableId: string;
-  vegetableName: string;
+  varietyId: string;
+  varietyName: string;
   good: CompanionInfo[];
   bad: CompanionInfo[];
 };
 
-export function CompanionList({ vegetableId, vegetableName, good, bad }: Props) {
+export function CompanionList({ varietyId, varietyName, good, bad }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Link
-          to="/vegetables/$id"
-          params={{ id: vegetableId }}
+          to="/varieties/$id"
+          params={{ id: varietyId }}
           className="text-muted-foreground text-sm hover:underline"
         >
-          ← {vegetableName}
+          ← {varietyName}
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold">Companions for {vegetableName}</h1>
+      <h1 className="text-2xl font-bold">Companions for {varietyName}</h1>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -37,7 +37,7 @@ export function CompanionList({ vegetableId, vegetableName, good, bad }: Props) 
             ) : (
               <div className="flex flex-wrap gap-2">
                 {good.map((c) => (
-                  <Link key={c.id} to="/vegetables/$id" params={{ id: c.id }}>
+                  <Link key={c.id} to="/varieties/$id" params={{ id: c.id }}>
                     <Badge variant="success">{c.name}</Badge>
                   </Link>
                 ))}
@@ -56,7 +56,7 @@ export function CompanionList({ vegetableId, vegetableName, good, bad }: Props) 
             ) : (
               <div className="flex flex-wrap gap-2">
                 {bad.map((c) => (
-                  <Link key={c.id} to="/vegetables/$id" params={{ id: c.id }}>
+                  <Link key={c.id} to="/varieties/$id" params={{ id: c.id }}>
                     <Badge variant="destructive">{c.name}</Badge>
                   </Link>
                 ))}

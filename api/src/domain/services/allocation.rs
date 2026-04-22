@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use crate::domain::models::{request::PreferenceEntry, vegetable::Vegetable};
+use crate::domain::models::{request::PreferenceEntry, variety::Variety};
 use crate::domain::services::helpers::cell_span;
 
-/// Distributes cells for vegetables that have an explicit `quantity` preference.
-/// Returns a map of `id -> cell count` only for those vegetables; everything else
+/// Distributes cells for varieties that have an explicit `quantity` preference.
+/// Returns a map of `id -> cell count` only for those varieties; everything else
 /// (auto-fill candidates) is handled by a separate iterative fill phase.
 pub fn compute_explicit_allocation(
-    candidates: &[Vegetable],
+    candidates: &[Variety],
     preferences: &[PreferenceEntry],
     available: usize,
 ) -> HashMap<String, usize> {
@@ -30,14 +30,14 @@ pub fn compute_explicit_allocation(
 }
 
 /// Converts explicit-preference allocations into an ordered placement queue
-/// (each vegetable repeated by its allocated count) and a per-vegetable placement cap.
-/// Vegetables without an explicit quantity are not in the queue; they are handled
+/// (each variety repeated by its allocated count) and a per-variety placement cap.
+/// Varieties without an explicit quantity are not in the queue; they are handled
 /// by the iterative fill phase.
 pub fn build_placement_queue<'a>(
-    candidates: &'a [Vegetable],
+    candidates: &'a [Variety],
     preferences: &[PreferenceEntry],
     free_cells: usize,
-) -> (Vec<&'a Vegetable>, HashMap<String, usize>) {
+) -> (Vec<&'a Variety>, HashMap<String, usize>) {
     let allocation = compute_explicit_allocation(candidates, preferences, free_cells);
 
     // Convert cell allocations -> placement counts (one placement = span^2 cells).
@@ -56,8 +56,8 @@ pub fn build_placement_queue<'a>(
         })
         .collect();
 
-    // Expand: repeat each vegetable in preference order by its placement count.
-    let queue: Vec<&Vegetable> = preferences
+    // Expand: repeat each variety in preference order by its placement count.
+    let queue: Vec<&Variety> = preferences
         .iter()
         .filter_map(|p| candidates.iter().find(|v| v.id == p.id))
         .flat_map(|v| {
@@ -71,13 +71,13 @@ pub fn build_placement_queue<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::test_fixtures::get_vegetable_by_id;
+    use crate::domain::test_fixtures::get_variety_by_id;
 
     #[test]
     fn test_compute_explicit_allocation_honours_quantities() {
-        let basil = get_vegetable_by_id("basil").unwrap();
-        let tomato = get_vegetable_by_id("tomato").unwrap();
-        let carrot = get_vegetable_by_id("carrot").unwrap();
+        let basil = get_variety_by_id("basil").unwrap();
+        let tomato = get_variety_by_id("tomato").unwrap();
+        let carrot = get_variety_by_id("carrot").unwrap();
         let candidates = vec![basil, tomato, carrot];
         let preferences = vec![
             PreferenceEntry {

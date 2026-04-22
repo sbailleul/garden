@@ -26,9 +26,9 @@ function renderAt(path: string) {
   );
 }
 
-describe("Vegetable catalogue", () => {
-  it("renders a table with vegetable rows from MSW fixture", async () => {
-    renderAt("/vegetables");
+describe("Variety catalogue", () => {
+  it("renders a table with variety rows from MSW fixture", async () => {
+    renderAt("/varieties");
 
     await waitFor(() => {
       expect(screen.getByText("Tomato")).toBeInTheDocument();
@@ -37,16 +37,16 @@ describe("Vegetable catalogue", () => {
   });
 
   it("shows row count below table", async () => {
-    renderAt("/vegetables");
+    renderAt("/varieties");
 
     await waitFor(() => {
-      expect(screen.getByText(/2 vegetables/i)).toBeInTheDocument();
+      expect(screen.getByText(/2 varieties/i)).toBeInTheDocument();
     });
   });
 
   it("filters rows by name", async () => {
     const user = userEvent.setup();
-    renderAt("/vegetables");
+    renderAt("/varieties");
 
     await waitFor(() => screen.getAllByText("Tomato").length > 0);
 

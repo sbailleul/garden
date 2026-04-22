@@ -224,7 +224,7 @@ async fn test_post_plan_blocked_cells_never_planted() {
 
     let row1 = body["payload"]["weeks"][0]["grid"][1].as_array().unwrap();
     for cell in row1 {
-        assert!(cell["id"].is_null(), "Blocked cell must have no vegetable");
+        assert!(cell["id"].is_null(), "Blocked cell must have no variety");
         assert_eq!(
             cell["type"], "Blocked",
             "Blocked cell must have type='Blocked'"
@@ -306,8 +306,8 @@ async fn test_post_plan_returns_links() {
     assert_eq!(links["self"]["href"].as_str().unwrap(), "/api/plan");
     assert_eq!(links["self"]["method"].as_str().unwrap(), "POST");
     assert_eq!(
-        links["vegetables"]["href"].as_str().unwrap(),
-        "/api/vegetables"
+        links["varieties"]["href"].as_str().unwrap(),
+        "/api/varieties"
     );
-    assert_eq!(links["vegetables"]["method"].as_str().unwrap(), "GET");
+    assert_eq!(links["varieties"]["method"].as_str().unwrap(), "GET");
 }

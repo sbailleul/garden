@@ -1,11 +1,11 @@
 meta {
-  name: Get All Vegetables
+  name: Get All Varieties
   type: http
   seq: 1
 }
 
 get {
-  url: {{baseUrl}}/api/vegetables
+  url: {{baseUrl}}/api/varieties
 }
 
 headers {
@@ -37,11 +37,11 @@ tests {
   });
 
   test("response has collection _links", function() {
-    expect(res.body._links.self.href).to.equal("/api/vegetables");
+    expect(res.body._links.self.href).to.equal("/api/varieties");
     expect(res.body._links.self.method).to.equal("GET");
   });
 
-  test("each vegetable has required fields", function() {
+  test("each variety has required fields", function() {
     res.body.payload.forEach(function(v) {
       expect(v.payload).to.have.property("id");
       expect(v.payload).to.have.property("name");
@@ -59,11 +59,11 @@ tests {
     });
   });
 
-  test("each vegetable has _links with self and companions", function() {
+  test("each variety has _links with self and companions", function() {
     res.body.payload.forEach(function(v) {
-      expect(v._links.self.href).to.equal("/api/vegetables/" + v.payload.id);
+      expect(v._links.self.href).to.equal("/api/varieties/" + v.payload.id);
       expect(v._links.self.method).to.equal("GET");
-      expect(v._links.companions.href).to.equal("/api/vegetables/" + v.payload.id + "/companions");
+      expect(v._links.companions.href).to.equal("/api/varieties/" + v.payload.id + "/companions");
       expect(v._links.companions.method).to.equal("GET");
     });
   });

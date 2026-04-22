@@ -1,0 +1,51 @@
+{
+  "scraped_at": "2026-04-22T21:06:59.702731860+00:00",
+  "groups": [
+    {
+      "name_fr": "Bulbes",
+      "name_en": "Bulbs",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/bulbes",
+      "url_en": "https://kokopelli-semences.fr/en/c/seeds/vegetable-seeds/bulbs",
+      "slug_fr": "bulbes",
+      "vegetables": []
+    },
+    {
+      "name_fr": "Engrais Verts",
+      "name_en": "Green manure",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/engrais-verts",
+      "url_en": "https://kokopelli-semences.fr/en/c/seeds/vegetable-seeds/green-manure",
+      "slug_fr": "engrais-verts",
+      "vegetables": []
+    },
+    {
+      "name_fr": "Légumes-Feuilles",
+      "name_en": "Leafy Vegetables",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/legumes-feuilles",
+      "url_en": "https://kokopelli-semences.fr/en/c/seeds/vegetable-seeds/leafy-vegetables",
+      "slug_fr": "legumes-feuilles",
+      "vegetables": []
+    },
+    {
+      "name_fr": "Légumes-Fruits",
+      "name_en": "Vegetables",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/legumes-fruits",
+      "url_en": "https://kokopelli-semences.fr/en/c/seeds/vegetable-seeds/vegetables",
+      "slug_fr": "legumes-fruits",
+      "vegetables": []
+    },
+    {
+      "name_fr": "Légumes-Racines",
+      "name_en": "Roots vegetables",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/legumes-racines",
+      "url_en": "https://kokopelli-semences.fr/en/c/seeds/vegetable-seeds/roots-vegetables",
+      "slug_fr": "legumes-racines",
+      "vegetables": []
+    },
+    {
+      "name_fr": "Plantes à Grains",
+      "url_fr": "https://kokopelli-semences.fr/fr/c/semences/potageres/plantes-a-grains",
+      "slug_fr": "plantes-a-grains",
+      "vegetables": []
+    }
+  ]
+}

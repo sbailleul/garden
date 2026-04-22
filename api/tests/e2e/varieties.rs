@@ -46,6 +46,18 @@ async fn test_get_varieties_items_have_required_fields() {
             item["payload"].get("name").is_some(),
             "Each variety must have a 'name' field"
         );
+        assert!(
+            item["payload"].get("calendars").is_some(),
+            "Each variety must have a 'calendars' field"
+        );
+        assert!(
+            item["payload"].get("goodCompanions").is_some(),
+            "Each variety must have 'goodCompanions'"
+        );
+        assert!(
+            item["payload"].get("badCompanions").is_some(),
+            "Each variety must have 'badCompanions'"
+        );
     }
 }
 
@@ -62,24 +74,12 @@ async fn test_get_varieties_items_have_links() {
             format!("/api/varieties/{id}")
         );
         assert_eq!(links["self"]["method"].as_str().unwrap(), "GET");
+        assert_eq!(
+            links["companions"]["href"].as_str().unwrap(),
+            format!("/api/varieties/{id}/companions")
+        );
+        assert_eq!(links["companions"]["method"].as_str().unwrap(), "GET");
     }
-}
-
-#[actix_web::test]
-async fn test_get_varieties_french_locale() {
-    let app = test::init_service(build_app_postgres().await).await;
-    let req = test::TestRequest::get()
-        .uri("/api/varieties")
-        .insert_header(("Accept-Language", "fr"))
-        .to_request();
-    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    let tomato = body["payload"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|item| item["payload"]["id"].as_str() == Some("tomato"))
-        .expect("tomato variety must be present");
-    assert_eq!(tomato["payload"]["name"].as_str().unwrap(), "Tomate");
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +87,7 @@ async fn test_get_varieties_french_locale() {
 // ---------------------------------------------------------------------------
 
 #[actix_web::test]
-async fn test_get_single_variety_returns_200() {
+async fn test_get_variety_by_id_returns_200() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
         .uri("/api/varieties/tomato")
@@ -97,18 +97,17 @@ async fn test_get_single_variety_returns_200() {
 }
 
 #[actix_web::test]
-async fn test_get_single_variety_fields() {
+async fn test_get_variety_by_id_unknown_returns_404() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties/brassica")
+        .uri("/api/varieties/nonexistent-variety")
         .to_request();
-    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    assert_eq!(body["payload"]["id"].as_str().unwrap(), "brassica");
-    assert_eq!(body["payload"]["name"].as_str().unwrap(), "Brassica");
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 404);
 }
 
 #[actix_web::test]
-async fn test_get_single_variety_links() {
+async fn test_get_variety_by_id_returns_links() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
         .uri("/api/varieties/tomato")
@@ -121,80 +120,13 @@ async fn test_get_single_variety_links() {
     );
     assert_eq!(links["self"]["method"].as_str().unwrap(), "GET");
     assert_eq!(
+        links["companions"]["href"].as_str().unwrap(),
+        "/api/varieties/tomato/companions"
+    );
+    assert_eq!(links["companions"]["method"].as_str().unwrap(), "GET");
+    assert_eq!(
         links["collection"]["href"].as_str().unwrap(),
         "/api/varieties"
     );
-}
-
-#[actix_web::test]
-async fn test_get_single_variety_not_found() {
-    let app = test::init_service(build_app_postgres().await).await;
-    let req = test::TestRequest::get()
-        .uri("/api/varieties/does-not-exist")
-        .to_request();
-    let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), 404);
-}
-
-#[actix_web::test]
-async fn test_get_single_variety_french_locale() {
-    let app = test::init_service(build_app_postgres().await).await;
-    let req = test::TestRequest::get()
-        .uri("/api/varieties/pepper")
-        .insert_header(("Accept-Language", "fr"))
-        .to_request();
-    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    assert_eq!(body["payload"]["name"].as_str().unwrap(), "Poivron");
-}
-
-// ---------------------------------------------------------------------------
-// Variety grouping — pepper and red-pepper share the same variety
-// ---------------------------------------------------------------------------
-
-#[actix_web::test]
-async fn test_pepper_and_red_pepper_share_variety() {
-    let app = test::init_service(build_app_postgres().await).await;
-
-    let req_pepper = test::TestRequest::get()
-        .uri("/api/vegetables/pepper")
-        .to_request();
-    let body_pepper: serde_json::Value = test::call_and_read_body_json(&app, req_pepper).await;
-    let pepper_variety = body_pepper["payload"]["varietyId"].as_str();
-
-    let req_red = test::TestRequest::get()
-        .uri("/api/vegetables/red-pepper")
-        .to_request();
-    let body_red: serde_json::Value = test::call_and_read_body_json(&app, req_red).await;
-    let red_variety = body_red["payload"]["varietyId"].as_str();
-
-    assert_eq!(
-        pepper_variety,
-        Some("pepper"),
-        "pepper vegetable must have varietyId = 'pepper'"
-    );
-    assert_eq!(
-        red_variety,
-        Some("pepper"),
-        "red-pepper vegetable must have varietyId = 'pepper'"
-    );
-    assert_eq!(
-        pepper_variety, red_variety,
-        "pepper and red-pepper must share the same variety"
-    );
-}
-
-#[actix_web::test]
-async fn test_brassica_groups_three_vegetables() {
-    let app = test::init_service(build_app_postgres().await).await;
-    for veg_id in ["cabbage", "broccoli", "cauliflower"] {
-        let req = test::TestRequest::get()
-            .uri(&format!("/api/vegetables/{veg_id}"))
-            .to_request();
-        let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(
-            body["payload"]["varietyId"].as_str(),
-            Some("brassica"),
-            "{veg_id} must have varietyId = 'brassica'"
-        );
-    }
+    assert_eq!(links["collection"]["method"].as_str().unwrap(), "GET");
 }

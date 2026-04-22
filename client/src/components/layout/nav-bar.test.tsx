@@ -21,9 +21,9 @@ function renderAtPath(path: string) {
 }
 
 describe("NavBar", () => {
-  it("renders the Vegetables link", async () => {
-    renderAtPath("/vegetables");
-    expect(await screen.findByRole("link", { name: /vegetables/i })).toBeInTheDocument();
+  it("renders the Varieties link", async () => {
+    renderAtPath("/varieties");
+    expect(await screen.findByRole("link", { name: /varieties/i })).toBeInTheDocument();
   });
 
   it("renders the Plan Garden link", async () => {

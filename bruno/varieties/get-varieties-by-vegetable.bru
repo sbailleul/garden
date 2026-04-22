@@ -1,0 +1,47 @@
+meta {
+  name: Get Varieties by Vegetable
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/vegetables/pepper/varieties
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: en
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload: isArray
+  res.body.pagination: isDefined
+  res.body._links.self.href: isDefined
+  res.body._links.vegetable.href: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("payload is non-empty array", function() {
+    expect(res.body.payload).to.be.an("array").that.is.not.empty;
+  });
+
+  test("each item has id and vegetableId", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload).to.have.property("id");
+      expect(item.payload).to.have.property("vegetableId", "pepper");
+    });
+  });
+
+  test("self link points to correct route", function() {
+    expect(res.body._links.self.href).to.equal("/api/vegetables/pepper/varieties");
+  });
+
+  test("vegetable link points to parent", function() {
+    expect(res.body._links.vegetable.href).to.equal("/api/vegetables/pepper");
+  });
+}
