@@ -1,13 +1,15 @@
-use crate::application::ports::{variety_repository::VarietyRepository, Page, RepositoryError};
-use crate::domain::models::variety::Variety;
+use crate::application::ports::{
+    variety_response_repository::{VarietyResponse, VarietyResponseRepository},
+    Page, RepositoryError,
+};
 
 /// Use case: list all varieties from the catalogue.
 pub struct ListVarietiesUseCase<'a> {
-    repo: &'a dyn VarietyRepository,
+    repo: &'a dyn VarietyResponseRepository,
 }
 
 impl<'a> ListVarietiesUseCase<'a> {
-    pub fn new(repo: &'a dyn VarietyRepository) -> Self {
+    pub fn new(repo: &'a dyn VarietyResponseRepository) -> Self {
         Self { repo }
     }
 
@@ -16,18 +18,18 @@ impl<'a> ListVarietiesUseCase<'a> {
         locale: &str,
         page: usize,
         size: usize,
-    ) -> Result<Page<Variety>, RepositoryError> {
+    ) -> Result<Page<VarietyResponse>, RepositoryError> {
         self.repo.list_page(locale, page, size).await
     }
 }
 
 /// Use case: list all varieties that belong to a given vegetable.
 pub struct ListVarietiesByVegetableUseCase<'a> {
-    repo: &'a dyn VarietyRepository,
+    repo: &'a dyn VarietyResponseRepository,
 }
 
 impl<'a> ListVarietiesByVegetableUseCase<'a> {
-    pub fn new(repo: &'a dyn VarietyRepository) -> Self {
+    pub fn new(repo: &'a dyn VarietyResponseRepository) -> Self {
         Self { repo }
     }
 
@@ -37,7 +39,7 @@ impl<'a> ListVarietiesByVegetableUseCase<'a> {
         locale: &str,
         page: usize,
         size: usize,
-    ) -> Result<Page<Variety>, RepositoryError> {
+    ) -> Result<Page<VarietyResponse>, RepositoryError> {
         self.repo
             .list_page_by_vegetable_id(vegetable_id, locale, page, size)
             .await
@@ -46,11 +48,11 @@ impl<'a> ListVarietiesByVegetableUseCase<'a> {
 
 /// Use case: retrieve a single variety by identifier.
 pub struct GetVarietyUseCase<'a> {
-    repo: &'a dyn VarietyRepository,
+    repo: &'a dyn VarietyResponseRepository,
 }
 
 impl<'a> GetVarietyUseCase<'a> {
-    pub fn new(repo: &'a dyn VarietyRepository) -> Self {
+    pub fn new(repo: &'a dyn VarietyResponseRepository) -> Self {
         Self { repo }
     }
 
@@ -58,7 +60,7 @@ impl<'a> GetVarietyUseCase<'a> {
         &self,
         id: &str,
         locale: &str,
-    ) -> Result<Option<Variety>, RepositoryError> {
+    ) -> Result<Option<VarietyResponse>, RepositoryError> {
         self.repo.get_by_id(id, locale).await
     }
 }

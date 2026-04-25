@@ -1,5 +1,6 @@
 use utoipa::OpenApi;
 
+use crate::adapters::inbound::http::dto::VarietyResponse;
 use crate::adapters::inbound::http::hateoas::{
     CompanionsApiResponse, ErrorResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
     VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
@@ -11,7 +12,6 @@ use crate::domain::models::{
     },
     variety::{
         CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
-        Variety,
     },
     vegetable::Vegetable,
     Coordinate,
@@ -40,8 +40,8 @@ use crate::domain::models::{
             SoilType, SunExposure, Region, Category, Lifecycle, Level, Month,
             // Variety calendar
             CalendarWindow, RegionCalendar,
-            // Variety
-            Variety,
+            // Variety response DTO
+            VarietyResponse,
             // Vegetable
             Vegetable,
             // Plan request

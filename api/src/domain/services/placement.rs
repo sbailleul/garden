@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use chrono::NaiveDate;
 
-use crate::domain::models::{
-    garden::GardenGrid, variety::Variety, vegetable::Vegetable, Coordinate,
-};
+use crate::domain::models::{garden::GardenGrid, variety::Variety, Coordinate};
 use crate::domain::services::companion::companion_score;
 use crate::domain::services::helpers::{cell_span, plants_per_cell};
 
@@ -15,10 +13,9 @@ pub fn find_best_block(
     variety: &Variety,
     rows: usize,
     cols: usize,
-    veg_lookup: &impl Fn(&str) -> Option<Vegetable>,
 ) -> Option<(Coordinate, i32)> {
     let span = cell_span(variety.spacing_cm) as usize;
-    let vegetable = veg_lookup(&variety.vegetable_id);
+    let vegetable = &variety.vegetable;
     let mut best: Option<(Coordinate, i32)> = None;
 
     for r in 0..=rows.saturating_sub(span) {
@@ -26,16 +23,13 @@ pub fn find_best_block(
             if !grid.is_block_free(r, c, span) {
                 continue;
             }
-            let score = match &vegetable {
-                None => 0,
-                Some(veg) => {
-                    let neighbor_veg_ids: Vec<&str> = grid
-                        .get_block_neighbors(Coordinate { row: r, col: c }, span)
-                        .iter()
-                        .map(|v| v.vegetable_id.as_str())
-                        .collect();
-                    companion_score(veg, &neighbor_veg_ids)
-                }
+            let score = {
+                let neighbor_veg_ids: Vec<&str> = grid
+                    .get_block_neighbors(Coordinate { row: r, col: c }, span)
+                    .iter()
+                    .map(|v| v.vegetable_id.as_str())
+                    .collect();
+                companion_score(vegetable, &neighbor_veg_ids)
             };
             if best.is_none_or(|(_, s)| score > s) {
                 best = Some((Coordinate { row: r, col: c }, score));
@@ -62,7 +56,7 @@ pub fn fill_block(
             grid.cells[coordinate.row + dr][coordinate.col + dc].variety =
                 Some(crate::domain::models::garden::PlacedVariety {
                     id: variety.id.clone(),
-                    vegetable_id: variety.vegetable_id.clone(),
+                    vegetable_id: variety.vegetable.id.clone(),
                     name: variety.name.clone(),
                     reason: reason.to_owned(),
                     plants_per_cell: ppc,
@@ -94,7 +88,6 @@ pub fn place_candidates(
     placements_map: &HashMap<String, usize>,
     week: &PlacementWeek,
     build_reason_fn: impl Fn(&Variety, &[String], i32) -> String,
-    veg_lookup: &impl Fn(&str) -> Option<Vegetable>,
 ) -> i32 {
     let mut global_score: i32 = 0;
 
@@ -117,7 +110,7 @@ pub fn place_candidates(
 
         let span = cell_span(variety.spacing_cm) as usize;
 
-        match find_best_block(grid, variety, week.rows, week.cols, veg_lookup) {
+        match find_best_block(grid, variety, week.rows, week.cols) {
             None if span == 1 => {
                 break 'outer; // no free single cell - grid is full
             }
@@ -162,7 +155,6 @@ pub fn fill_remaining_cells(
     candidates: &[Variety],
     week: &PlacementWeek,
     build_reason_fn: impl Fn(&Variety, &[String], i32) -> String,
-    veg_lookup: &impl Fn(&str) -> Option<Vegetable>,
 ) -> i32 {
     let mut total_score: i32 = 0;
 
@@ -170,7 +162,7 @@ pub fn fill_remaining_cells(
         let mut placements_this_pass = 0usize;
 
         for variety in candidates {
-            match find_best_block(grid, variety, week.rows, week.cols, veg_lookup) {
+            match find_best_block(grid, variety, week.rows, week.cols) {
                 None => continue,
                 Some((coordinate, score)) => {
                     let span = cell_span(variety.spacing_cm) as usize;

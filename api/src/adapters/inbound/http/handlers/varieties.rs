@@ -11,10 +11,9 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::variety_repository::VarietyRepository,
+        ports::variety_response_repository::{VarietyResponse, VarietyResponseRepository},
         use_cases::varieties::{GetVarietyUseCase, ListVarietiesUseCase},
     },
-    domain::models::variety::Variety,
 };
 
 /// GET /api/varieties
@@ -37,7 +36,7 @@ use crate::{
 pub async fn list_varieties(
     req: HttpRequest,
     query: web::Query<PaginationParams>,
-    repo: web::Data<Box<dyn VarietyRepository>>,
+    repo: web::Data<Box<dyn VarietyResponseRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let page = query.page.max(1);
@@ -53,7 +52,7 @@ pub async fn list_varieties(
         }
         Ok(result) => {
             let pagination = result.to_pagination(page, size);
-            let items: Vec<ApiResponse<Variety>> = result
+            let items: Vec<ApiResponse<VarietyResponse>> = result
                 .items
                 .into_iter()
                 .map(|v| {
@@ -100,7 +99,7 @@ pub async fn list_varieties(
 pub async fn get_variety(
     req: HttpRequest,
     path: web::Path<String>,
-    repo: web::Data<Box<dyn VarietyRepository>>,
+    repo: web::Data<Box<dyn VarietyResponseRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let id = path.into_inner();
@@ -117,6 +116,7 @@ pub async fn get_variety(
             "error": format!("Variety '{}' not found.", id)
         })),
         Ok(Some(variety)) => {
+            let vegetable_id = variety.vegetable_id.clone();
             let mut links = std::collections::HashMap::new();
             links.insert(
                 "self".into(),
@@ -125,7 +125,7 @@ pub async fn get_variety(
             links.insert(
                 "companions".into(),
                 link(
-                    format!("/api/vegetables/{}/companions", variety.vegetable_id),
+                    format!("/api/vegetables/{vegetable_id}/companions"),
                     Method::GET,
                 ),
             );

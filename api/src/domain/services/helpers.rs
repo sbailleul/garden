@@ -98,9 +98,16 @@ mod tests {
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
             Variety,
         };
+        use crate::domain::models::vegetable::Vegetable;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable_id: "tomato".into(),
+            vegetable: Vegetable {
+                id: "tomato".into(),
+                name: "Tomato".into(),
+                variety_ids: vec!["tomato".into()],
+                good_companions: vec![],
+                bad_companions: vec![],
+            },
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -136,9 +143,16 @@ mod tests {
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
             Variety,
         };
+        use crate::domain::models::vegetable::Vegetable;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable_id: "tomato".into(),
+            vegetable: Vegetable {
+                id: "tomato".into(),
+                name: "Tomato".into(),
+                variety_ids: vec!["tomato".into()],
+                good_companions: vec![],
+                bad_companions: vec![],
+            },
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -175,9 +189,16 @@ mod tests {
             CalendarWindow, Category, Lifecycle, Month, RegionCalendar, SoilType, SunExposure,
             Variety,
         };
+        use crate::domain::models::vegetable::Vegetable;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable_id: "tomato".into(),
+            vegetable: Vegetable {
+                id: "tomato".into(),
+                name: "Tomato".into(),
+                variety_ids: vec!["tomato".into()],
+                good_companions: vec![],
+                bad_companions: vec![],
+            },
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {

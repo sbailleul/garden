@@ -4,8 +4,10 @@ use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod};
 use tokio_postgres::NoTls;
 
 use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
+use garden::adapters::outbound::postgres::variety_response_repository::PostgresVarietyResponseRepository;
 use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
 use garden::application::ports::variety_repository::VarietyRepository;
+use garden::application::ports::variety_response_repository::VarietyResponseRepository;
 use garden::application::ports::vegetable_repository::VegetableRepository;
 
 mod embedded {
@@ -49,6 +51,9 @@ async fn main() -> std::io::Result<()> {
 
     let repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool.clone()));
     let repo_data = web::Data::new(repo);
+    let variety_response_repo: Box<dyn VarietyResponseRepository> =
+        Box::new(PostgresVarietyResponseRepository::new(pool.clone()));
+    let variety_response_repo_data = web::Data::new(variety_response_repo);
     let vegetable_repo: Box<dyn VegetableRepository> =
         Box::new(PostgresVegetableRepository::new(pool));
     let vegetable_repo_data = web::Data::new(vegetable_repo);
@@ -66,6 +71,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(repo_data.clone())
+            .app_data(variety_response_repo_data.clone())
             .app_data(vegetable_repo_data.clone())
             .configure(garden::adapters::inbound::http::routes::configure)
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {

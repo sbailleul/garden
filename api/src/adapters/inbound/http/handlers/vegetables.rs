@@ -12,7 +12,10 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::{variety_repository::VarietyRepository, vegetable_repository::VegetableRepository},
+        ports::{
+            variety_response_repository::{VarietyResponse, VarietyResponseRepository},
+            vegetable_repository::VegetableRepository,
+        },
         use_cases::{
             varieties::ListVarietiesByVegetableUseCase,
             vegetables::{
@@ -20,7 +23,7 @@ use crate::{
             },
         },
     },
-    domain::models::{response::CompanionsResponse, variety::Variety, vegetable::Vegetable},
+    domain::models::{response::CompanionsResponse, vegetable::Vegetable},
 };
 
 /// GET /api/vegetables
@@ -157,7 +160,7 @@ pub async fn get_varieties_by_vegetable(
     path: web::Path<String>,
     query: web::Query<PaginationParams>,
     vegetable_repo: web::Data<Box<dyn VegetableRepository>>,
-    variety_repo: web::Data<Box<dyn VarietyRepository>>,
+    variety_repo: web::Data<Box<dyn VarietyResponseRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let id = path.into_inner();
@@ -193,11 +196,12 @@ pub async fn get_varieties_by_vegetable(
         }
         Ok(result) => {
             let pagination = result.to_pagination(page, size);
-            let items: Vec<ApiResponse<Variety>> = result
+            let items: Vec<ApiResponse<VarietyResponse>> = result
                 .items
                 .into_iter()
                 .map(|v| {
                     let vid = v.id.clone();
+                    let vegetable_id = v.vegetable_id.clone();
                     let mut links = std::collections::HashMap::new();
                     links.insert(
                         "self".into(),
@@ -206,7 +210,7 @@ pub async fn get_varieties_by_vegetable(
                     links.insert(
                         "companions".into(),
                         link(
-                            format!("/api/vegetables/{}/companions", v.vegetable_id),
+                            format!("/api/vegetables/{vegetable_id}/companions"),
                             Method::GET,
                         ),
                     );

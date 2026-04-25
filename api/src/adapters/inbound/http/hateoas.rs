@@ -6,9 +6,9 @@ use utoipa::ToSchema;
 
 use crate::application::ports::Page;
 
+use crate::adapters::inbound::http::dto::VarietyResponse;
 use crate::domain::models::{
     response::{CompanionsResponse, PlanResponse},
-    variety::Variety,
     vegetable::Vegetable,
 };
 
@@ -96,7 +96,7 @@ impl Default for PaginationParams {
 /// Generic single-item response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
-    VarietyApiResponse   = ApiResponse<Variety>,
+    VarietyApiResponse   = ApiResponse<VarietyResponse>,
     VegetableApiResponse     = ApiResponse<Vegetable>,
     PlanApiResponse        = ApiResponse<PlanResponse>,
     CompanionsApiResponse  = ApiResponse<CompanionsResponse>

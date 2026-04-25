@@ -3,6 +3,8 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::domain::models::vegetable::Vegetable;
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "PascalCase")]
 pub enum Season {
@@ -156,11 +158,11 @@ pub enum Lifecycle {
     Perennial,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Variety {
     pub id: String,
-    pub vegetable_id: String,
+    pub vegetable: Vegetable,
     pub name: String,
     pub latin_name: String,
     /// Per-region sowing and planting calendars.

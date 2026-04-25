@@ -3,8 +3,10 @@
 use actix_web::{web, App};
 use garden::adapters::inbound::http::routes::configure;
 use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
+use garden::adapters::outbound::postgres::variety_response_repository::PostgresVarietyResponseRepository;
 use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
 use garden::application::ports::variety_repository::VarietyRepository;
+use garden::application::ports::variety_response_repository::VarietyResponseRepository;
 use garden::application::ports::vegetable_repository::VegetableRepository;
 
 pub mod db;
@@ -25,10 +27,13 @@ pub async fn build_app_postgres() -> actix_web::App<
 > {
     let pool = migrated_pool().await;
     let repo: Box<dyn VarietyRepository> = Box::new(PostgresVarietyRepository::new(pool.clone()));
+    let variety_response_repo: Box<dyn VarietyResponseRepository> =
+        Box::new(PostgresVarietyResponseRepository::new(pool.clone()));
     let vegetable_repo: Box<dyn VegetableRepository> =
         Box::new(PostgresVegetableRepository::new(pool));
     App::new()
         .app_data(web::Data::new(repo))
+        .app_data(web::Data::new(variety_response_repo))
         .app_data(web::Data::new(vegetable_repo))
         .configure(configure)
         .app_data(web::JsonConfig::default().error_handler(|err, _req| {
