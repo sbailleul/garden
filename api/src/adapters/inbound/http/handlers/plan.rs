@@ -9,7 +9,8 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::variety_repository::VarietyRepository, use_cases::plan_garden::PlanGardenUseCase,
+        ports::{variety_repository::VarietyRepository, vegetable_repository::VegetableRepository},
+        use_cases::plan_garden::PlanGardenUseCase,
     },
     domain::models::request::PlanRequest,
 };
@@ -38,10 +39,11 @@ pub async fn post_plan(
     req: HttpRequest,
     body: web::Json<PlanRequest>,
     repo: web::Data<Box<dyn VarietyRepository>>,
+    vegetable_repo: web::Data<Box<dyn VegetableRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let request = body.into_inner();
-    let use_case = PlanGardenUseCase::new(repo.as_ref().as_ref());
+    let use_case = PlanGardenUseCase::new(repo.as_ref().as_ref(), vegetable_repo.as_ref().as_ref());
     match use_case.execute(&request, &locale).await {
         Ok(response) => {
             let mut links = std::collections::HashMap::new();

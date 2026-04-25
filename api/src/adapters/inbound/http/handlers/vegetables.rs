@@ -2,22 +2,25 @@ use actix_web::{get, http::Method, web, HttpRequest, HttpResponse, Responder};
 // Types referenced only in #[utoipa::path] attributes — used at proc-macro expansion time.
 #[allow(unused_imports)]
 use crate::adapters::inbound::http::hateoas::{
-    ErrorResponse, VarietiesApiResponse, VegetableApiResponse, VegetablesApiResponse,
+    CompanionsApiResponse, ErrorResponse, VarietiesApiResponse, VegetableApiResponse,
+    VegetablesApiResponse,
 };
 
 use crate::{
     adapters::inbound::http::{
-        hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
+        hateoas::{link, ApiResponse, IntoHttpPagination, PaginatedResponse, PaginationParams},
         localization::parse_locale,
     },
     application::{
         ports::{variety_repository::VarietyRepository, vegetable_repository::VegetableRepository},
         use_cases::{
             varieties::ListVarietiesByVegetableUseCase,
-            vegetables::{GetVegetableUseCase, ListVegetablesUseCase},
+            vegetables::{
+                GetVegetableCompanionsUseCase, GetVegetableUseCase, ListVegetablesUseCase,
+            },
         },
     },
-    domain::models::{variety::Variety, vegetable::Vegetable},
+    domain::models::{response::CompanionsResponse, variety::Variety, vegetable::Vegetable},
 };
 
 /// GET /api/vegetables
@@ -27,6 +30,8 @@ use crate::{
     path = "/api/vegetables",
     tag = "vegetables",
     params(
+        ("page" = Option<usize>, Query, description = "Page number (1-based, default: 1)."),
+        ("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
@@ -37,11 +42,14 @@ use crate::{
 #[get("/vegetables")]
 pub async fn list_vegetables(
     req: HttpRequest,
+    query: web::Query<PaginationParams>,
     repo: web::Data<Box<dyn VegetableRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
+    let page = query.page.max(1);
+    let size = query.size.max(1);
     match ListVegetablesUseCase::new(repo.as_ref().as_ref())
-        .execute(&locale)
+        .execute(&locale, page, size)
         .await
     {
         Err(e) => {
@@ -49,9 +57,10 @@ pub async fn list_vegetables(
             HttpResponse::InternalServerError()
                 .json(serde_json::json!({ "error": "Internal server error" }))
         }
-        Ok(vegetables) => {
-            let total = vegetables.len();
-            let items: Vec<ApiResponse<Vegetable>> = vegetables
+        Ok(result) => {
+            let pagination = result.to_pagination(page, size);
+            let items: Vec<ApiResponse<Vegetable>> = result
+                .items
                 .into_iter()
                 .map(|v| {
                     let id = v.id.clone();
@@ -60,21 +69,16 @@ pub async fn list_vegetables(
                         "self".into(),
                         link(format!("/api/vegetables/{id}"), Method::GET),
                     );
+                    links.insert(
+                        "companions".into(),
+                        link(format!("/api/vegetables/{id}/companions"), Method::GET),
+                    );
                     ApiResponse::new(v, links)
                 })
                 .collect();
             let mut collection_links = std::collections::HashMap::new();
             collection_links.insert("self".into(), link("/api/vegetables", Method::GET));
-            HttpResponse::Ok().json(PaginatedResponse::new(
-                items,
-                collection_links,
-                Pagination {
-                    page: 1,
-                    per_page: total,
-                    total,
-                    total_pages: 1,
-                },
-            ))
+            HttpResponse::Ok().json(PaginatedResponse::new(items, collection_links, pagination))
         }
     }
 }
@@ -120,6 +124,10 @@ pub async fn get_vegetable(
                 "self".into(),
                 link(format!("/api/vegetables/{id}"), Method::GET),
             );
+            links.insert(
+                "companions".into(),
+                link(format!("/api/vegetables/{id}/companions"), Method::GET),
+            );
             links.insert("collection".into(), link("/api/vegetables", Method::GET));
             HttpResponse::Ok().json(ApiResponse::new(vegetable, links))
         }
@@ -134,6 +142,8 @@ pub async fn get_vegetable(
     tag = "vegetables",
     params(
         ("id" = String, Path, description = "Vegetable identifier (e.g. `pepper`, `brassica`)"),
+        ("page" = Option<usize>, Query, description = "Page number (1-based, default: 1)."),
+        ("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
@@ -145,11 +155,14 @@ pub async fn get_vegetable(
 pub async fn get_varieties_by_vegetable(
     req: HttpRequest,
     path: web::Path<String>,
+    query: web::Query<PaginationParams>,
     vegetable_repo: web::Data<Box<dyn VegetableRepository>>,
     variety_repo: web::Data<Box<dyn VarietyRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let id = path.into_inner();
+    let page = query.page.max(1);
+    let size = query.size.max(1);
 
     // 404 if the vegetable doesn't exist
     match GetVegetableUseCase::new(vegetable_repo.as_ref().as_ref())
@@ -170,7 +183,7 @@ pub async fn get_varieties_by_vegetable(
     }
 
     match ListVarietiesByVegetableUseCase::new(variety_repo.as_ref().as_ref())
-        .execute(&id, &locale)
+        .execute(&id, &locale, page, size)
         .await
     {
         Err(e) => {
@@ -178,9 +191,10 @@ pub async fn get_varieties_by_vegetable(
             HttpResponse::InternalServerError()
                 .json(serde_json::json!({ "error": "Internal server error" }))
         }
-        Ok(varieties) => {
-            let total = varieties.len();
-            let items: Vec<ApiResponse<Variety>> = varieties
+        Ok(result) => {
+            let pagination = result.to_pagination(page, size);
+            let items: Vec<ApiResponse<Variety>> = result
+                .items
                 .into_iter()
                 .map(|v| {
                     let vid = v.id.clone();
@@ -191,7 +205,10 @@ pub async fn get_varieties_by_vegetable(
                     );
                     links.insert(
                         "companions".into(),
-                        link(format!("/api/varieties/{vid}/companions"), Method::GET),
+                        link(
+                            format!("/api/vegetables/{}/companions", v.vegetable_id),
+                            Method::GET,
+                        ),
                     );
                     ApiResponse::new(v, links)
                 })
@@ -205,15 +222,64 @@ pub async fn get_varieties_by_vegetable(
                 "vegetable".into(),
                 link(format!("/api/vegetables/{id}"), Method::GET),
             );
-            HttpResponse::Ok().json(PaginatedResponse::new(
-                items,
-                collection_links,
-                Pagination {
-                    page: 1,
-                    per_page: total,
-                    total,
-                    total_pages: 1,
+            HttpResponse::Ok().json(PaginatedResponse::new(items, collection_links, pagination))
+        }
+    }
+}
+
+/// GET /api/vegetables/{id}/companions
+/// Returns good and bad companions for a given vegetable.
+#[utoipa::path(
+    get,
+    path = "/api/vegetables/{id}/companions",
+    tag = "vegetables",
+    params(
+        ("id" = String, Path, description = "Vegetable identifier (e.g. `tomato`, `brassica`)"),
+        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
+    ),
+    responses(
+        (status = 200, description = "Companion planting info", body = CompanionsApiResponse),
+        (status = 404, description = "Vegetable not found",    body = ErrorResponse),
+    )
+)]
+#[get("/vegetables/{id}/companions")]
+pub async fn get_companions(
+    req: HttpRequest,
+    path: web::Path<String>,
+    repo: web::Data<Box<dyn VegetableRepository>>,
+) -> impl Responder {
+    let locale = parse_locale(&req);
+    let id = path.into_inner();
+    match GetVegetableCompanionsUseCase::new(repo.as_ref().as_ref())
+        .execute(&id, &locale)
+        .await
+    {
+        Err(e) => {
+            log::error!("Failed to fetch companions for vegetable '{id}': {e}");
+            HttpResponse::InternalServerError()
+                .json(serde_json::json!({ "error": "Internal server error" }))
+        }
+        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Vegetable '{}' not found.", id)
+        })),
+        Ok(Some(data)) => {
+            let mut links = std::collections::HashMap::new();
+            links.insert(
+                "self".into(),
+                link(format!("/api/vegetables/{id}/companions"), Method::GET),
+            );
+            links.insert(
+                "vegetable".into(),
+                link(format!("/api/vegetables/{id}"), Method::GET),
+            );
+            HttpResponse::Ok().json(ApiResponse::new(
+                CompanionsResponse {
+                    id: data.vegetable.id,
+                    name: data.vegetable.name,
+                    good: data.good,
+                    bad: data.bad,
                 },
+                links,
             ))
         }
     }

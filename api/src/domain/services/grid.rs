@@ -73,6 +73,7 @@ pub fn initialize_grid(
                         grid.cells[r][c].variety =
                             Some(crate::domain::models::garden::PlacedVariety {
                                 id: v.id.clone(),
+                                vegetable_id: v.vegetable_id.clone(),
                                 name: v.name.clone(),
                                 reason: "Present in the existing layout.".into(),
                                 plants_per_cell: ppc,
@@ -115,6 +116,7 @@ pub fn initialize_grid(
                         grid.cells[r][c].variety =
                             Some(crate::domain::models::garden::PlacedVariety {
                                 id: v.id.clone(),
+                                vegetable_id: v.vegetable_id.clone(),
                                 name: v.name.clone(),
                                 reason: "Present in the existing layout.".into(),
                                 plants_per_cell: ppc,

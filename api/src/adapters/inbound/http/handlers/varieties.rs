@@ -7,14 +7,14 @@ use crate::adapters::inbound::http::hateoas::{
 
 use crate::{
     adapters::inbound::http::{
-        hateoas::{link, ApiResponse, PaginatedResponse, Pagination},
+        hateoas::{link, ApiResponse, IntoHttpPagination, PaginatedResponse, PaginationParams},
         localization::parse_locale,
     },
     application::{
         ports::variety_repository::VarietyRepository,
-        use_cases::varieties::{GetCompanionsUseCase, GetVarietyUseCase, ListVarietiesUseCase},
+        use_cases::varieties::{GetVarietyUseCase, ListVarietiesUseCase},
     },
-    domain::models::{response::CompanionsResponse, variety::Variety},
+    domain::models::variety::Variety,
 };
 
 /// GET /api/varieties
@@ -24,6 +24,8 @@ use crate::{
     path = "/api/varieties",
     tag = "varieties",
     params(
+        ("page" = Option<usize>, Query, description = "Page number (1-based, default: 1)."),
+        ("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
@@ -34,11 +36,14 @@ use crate::{
 #[get("/varieties")]
 pub async fn list_varieties(
     req: HttpRequest,
+    query: web::Query<PaginationParams>,
     repo: web::Data<Box<dyn VarietyRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
+    let page = query.page.max(1);
+    let size = query.size.max(1);
     match ListVarietiesUseCase::new(repo.as_ref().as_ref())
-        .execute(&locale)
+        .execute(&locale, page, size)
         .await
     {
         Err(e) => {
@@ -46,12 +51,14 @@ pub async fn list_varieties(
             HttpResponse::InternalServerError()
                 .json(serde_json::json!({ "error": "Internal server error" }))
         }
-        Ok(varieties) => {
-            let total = varieties.len();
-            let items: Vec<ApiResponse<Variety>> = varieties
+        Ok(result) => {
+            let pagination = result.to_pagination(page, size);
+            let items: Vec<ApiResponse<Variety>> = result
+                .items
                 .into_iter()
                 .map(|v| {
                     let id = v.id.clone();
+                    let vegetable_id = v.vegetable_id.clone();
                     let mut links = std::collections::HashMap::new();
                     links.insert(
                         "self".into(),
@@ -59,23 +66,17 @@ pub async fn list_varieties(
                     );
                     links.insert(
                         "companions".into(),
-                        link(format!("/api/varieties/{id}/companions"), Method::GET),
+                        link(
+                            format!("/api/vegetables/{vegetable_id}/companions"),
+                            Method::GET,
+                        ),
                     );
                     ApiResponse::new(v, links)
                 })
                 .collect();
             let mut collection_links = std::collections::HashMap::new();
             collection_links.insert("self".into(), link("/api/varieties", Method::GET));
-            HttpResponse::Ok().json(PaginatedResponse::new(
-                items,
-                collection_links,
-                Pagination {
-                    page: 1,
-                    per_page: total,
-                    total,
-                    total_pages: 1,
-                },
-            ))
+            HttpResponse::Ok().json(PaginatedResponse::new(items, collection_links, pagination))
         }
     }
 }
@@ -123,68 +124,13 @@ pub async fn get_variety(
             );
             links.insert(
                 "companions".into(),
-                link(format!("/api/varieties/{id}/companions"), Method::GET),
+                link(
+                    format!("/api/vegetables/{}/companions", variety.vegetable_id),
+                    Method::GET,
+                ),
             );
             links.insert("collection".into(), link("/api/varieties", Method::GET));
             HttpResponse::Ok().json(ApiResponse::new(variety, links))
-        }
-    }
-}
-
-/// GET /api/varieties/{id}/companions
-/// Returns good and bad companions for a given variety.
-#[utoipa::path(
-    get,
-    path = "/api/varieties/{id}/companions",
-    tag = "varieties",
-    params(
-        ("id" = String, Path, description = "Variety identifier (e.g. `tomato`)"),
-        ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
-    ),
-    responses(
-        (status = 200, description = "Companion planting info", body = CompanionsApiResponse),
-        (status = 404, description = "Variety not found",     body = ErrorResponse),
-    )
-)]
-#[get("/varieties/{id}/companions")]
-pub async fn get_companions(
-    req: HttpRequest,
-    path: web::Path<String>,
-    repo: web::Data<Box<dyn VarietyRepository>>,
-) -> impl Responder {
-    let locale = parse_locale(&req);
-    let id = path.into_inner();
-    match GetCompanionsUseCase::new(repo.as_ref().as_ref())
-        .execute(&id, &locale)
-        .await
-    {
-        Err(e) => {
-            log::error!("Failed to fetch companions for '{id}': {e}");
-            HttpResponse::InternalServerError()
-                .json(serde_json::json!({ "error": "Internal server error" }))
-        }
-        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({
-            "error": format!("Variety '{}' not found.", id)
-        })),
-        Ok(Some(data)) => {
-            let mut links = std::collections::HashMap::new();
-            links.insert(
-                "self".into(),
-                link(format!("/api/varieties/{id}/companions"), Method::GET),
-            );
-            links.insert(
-                "variety".into(),
-                link(format!("/api/varieties/{id}"), Method::GET),
-            );
-            HttpResponse::Ok().json(ApiResponse::new(
-                CompanionsResponse {
-                    id: data.variety.id,
-                    name: data.variety.name,
-                    good: data.good,
-                    bad: data.bad,
-                },
-                links,
-            ))
         }
     }
 }

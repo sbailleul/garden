@@ -3,6 +3,14 @@ pub mod vegetable_repository;
 
 use std::fmt;
 
+/// A page of results returned by a paginated repository method.
+pub struct Page<T> {
+    /// Items in the current page.
+    pub items: Vec<T>,
+    /// Total number of items across all pages.
+    pub total: usize,
+}
+
 /// Shared error type for all outbound repository ports.
 #[derive(Debug)]
 pub enum RepositoryError {

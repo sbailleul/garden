@@ -1,36 +1,36 @@
-use crate::domain::models::variety::Variety;
+use crate::domain::models::vegetable::Vegetable;
 
 pub const GOOD_COMPANION_SCORE: i32 = 2;
 pub const BAD_COMPANION_SCORE: i32 = -3;
 
-/// Calculates the companion score of a variety against its neighbours.
+/// Calculates the companion score of a vegetable against its neighbours.
 /// +2 per good companion, -3 per bad companion.
-pub fn companion_score(variety: &Variety, neighbor_ids: &[&str]) -> i32 {
+pub fn companion_score(vegetable: &Vegetable, neighbor_vegetable_ids: &[&str]) -> i32 {
     let mut score = 0;
-    for neighbor_id in neighbor_ids {
-        if variety.good_companions.iter().any(|c| c == neighbor_id) {
+    for neighbor_id in neighbor_vegetable_ids {
+        if vegetable.good_companions.iter().any(|c| c == neighbor_id) {
             score += GOOD_COMPANION_SCORE;
         }
-        if variety.bad_companions.iter().any(|c| c == neighbor_id) {
+        if vegetable.bad_companions.iter().any(|c| c == neighbor_id) {
             score += BAD_COMPANION_SCORE;
         }
     }
     score
 }
 
-/// Returns true if the two varieties are compatible (neither appears in the other's bad_companions list).
+/// Returns true if the two vegetables are compatible (neither appears in the other's bad_companions list).
 #[cfg(test)]
-pub fn is_compatible(a: &Variety, b: &Variety) -> bool {
+pub fn is_compatible(a: &Vegetable, b: &Vegetable) -> bool {
     !a.bad_companions.iter().any(|c| c == &b.id) && !b.bad_companions.iter().any(|c| c == &a.id)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::test_fixtures::get_variety_by_id;
+    use crate::domain::test_fixtures::get_vegetable_by_id;
 
-    fn get(id: &str) -> Variety {
-        get_variety_by_id(id).unwrap_or_else(|| panic!("Variety '{}' not found", id))
+    fn get(id: &str) -> Vegetable {
+        get_vegetable_by_id(id).unwrap_or_else(|| panic!("Vegetable '{}' not found", id))
     }
 
     #[test]
@@ -60,7 +60,7 @@ mod tests {
         let lettuce = get("lettuce");
         // thyme is neither good nor bad for lettuce
         let score = companion_score(&lettuce, &["thyme"]);
-        assert_eq!(score, 0, "Neutral varieties must give a score of 0");
+        assert_eq!(score, 0, "Neutral vegetables must give a score of 0");
     }
 
     #[test]

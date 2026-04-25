@@ -6,6 +6,7 @@ use crate::domain::models::{
     request::{PlanRequest, PreferenceEntry, SowingRecord},
     response::{PlanResponse, SowingTask},
     variety::{Month, Variety},
+    vegetable::Vegetable,
     warnings::Warnings,
 };
 use crate::domain::services::allocation::build_placement_queue;
@@ -125,6 +126,7 @@ pub fn plan_garden(
     base_candidates: Vec<Variety>,
     request: &PlanRequest,
     lookup: impl Fn(&str) -> Option<Variety>,
+    veg_lookup: impl Fn(&str) -> Option<Vegetable>,
 ) -> Result<PlanResponse, String> {
     let mut warnings = Warnings::new();
 
@@ -216,10 +218,23 @@ pub fn plan_garden(
                 week_idx,
                 week_start: week.start,
             };
-            let score_p1 = place_candidates(&mut grid, &queue, &placements_map, &pw, build_reason);
+            let score_p1 = place_candidates(
+                &mut grid,
+                &queue,
+                &placements_map,
+                &pw,
+                build_reason,
+                &veg_lookup,
+            );
 
             // Phase 2: iteratively fill every remaining free cell.
-            let score_p2 = fill_remaining_cells(&mut grid, &extended_candidates, &pw, build_reason);
+            let score_p2 = fill_remaining_cells(
+                &mut grid,
+                &extended_candidates,
+                &pw,
+                build_reason,
+                &veg_lookup,
+            );
 
             score_p1 + score_p2
         } else {

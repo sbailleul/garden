@@ -13,6 +13,7 @@ import type {
 
 const TOMATO: Variety = {
   id: "tomato",
+  vegetableId: "tomato",
   name: "Tomato",
   latinName: "Solanum lycopersicum",
   category: "Fruit",
@@ -23,8 +24,6 @@ const TOMATO: Variety = {
   beginnerFriendly: true,
   soilTypes: ["Loamy"],
   sunRequirement: ["FullSun"],
-  goodCompanions: ["basil"],
-  badCompanions: ["fennel"],
   calendars: [
     {
       region: "Temperate",
@@ -36,6 +35,7 @@ const TOMATO: Variety = {
 
 const BASIL: Variety = {
   id: "basil",
+  vegetableId: "basil",
   name: "Basil",
   latinName: "Ocimum basilicum",
   category: "Herb",
@@ -46,8 +46,6 @@ const BASIL: Variety = {
   beginnerFriendly: true,
   soilTypes: ["Loamy"],
   sunRequirement: ["FullSun"],
-  goodCompanions: ["tomato"],
-  badCompanions: [],
   calendars: [
     {
       region: "Temperate",
@@ -63,7 +61,7 @@ const varietyResponse = (v: Variety): VarietyApiResponse => ({
   payload: v as VarietyApiResponse["payload"],
   _links: {
     self: SELF_LINK(`/api/varieties/${v.id}`),
-    companions: SELF_LINK(`/api/varieties/${v.id}/companions`),
+    companions: SELF_LINK(`/api/vegetables/${v.vegetableId}/companions`),
     collection: SELF_LINK("/api/varieties"),
   },
 });
@@ -84,8 +82,8 @@ const COMPANIONS_RESPONSE: CompanionsApiResponse = {
     bad: [{ id: "fennel", name: "Fennel" }],
   },
   _links: {
-    self: SELF_LINK("/api/varieties/tomato/companions"),
-    variety: SELF_LINK("/api/varieties/tomato"),
+    self: SELF_LINK("/api/vegetables/tomato/companions"),
+    vegetable: SELF_LINK("/api/vegetables/tomato"),
   },
 };
 
@@ -128,13 +126,14 @@ const VEGETABLE_MAP: Record<string, Variety> = {
   basil: BASIL,
 };
 
-const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato" };
-const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil" };
+const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
+const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
 
 const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v,
   _links: {
     self: SELF_LINK(`/api/vegetables/${v.id}`),
+    companions: SELF_LINK(`/api/vegetables/${v.id}/companions`),
     collection: SELF_LINK("/api/vegetables"),
   },
 });
@@ -161,7 +160,7 @@ export const handlers = [
     return HttpResponse.json(varietyResponse(veg));
   }),
 
-  http.get("/api/varieties/:id/companions", ({ params }) => {
+  http.get("/api/vegetables/:id/companions", ({ params }) => {
     if (params['id'] !== "tomato") {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }

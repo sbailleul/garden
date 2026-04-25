@@ -64,7 +64,8 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/varieties/{id}/companions": {
+    "/api/varieties/{id}/companions"?: never;
+    "/api/vegetables/{id}/companions": {
         parameters: {
             query?: never;
             header?: never;
@@ -72,8 +73,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * GET /api/varieties/{id}/companions
-         * @description Returns good and bad companions for a given variety.
+         * GET /api/vegetables/{id}/companions
+         * @description Returns good and bad companions for a given vegetable.
          */
         get: operations["get_companions"];
         put?: never;
@@ -427,7 +428,6 @@ export interface components {
             payload: components["schemas"]["VarietyApiResponse"][];
         };
         Variety: {
-            badCompanions: string[];
             beginnerFriendly: boolean;
             /**
              * @description Per-region sowing and planting calendars.
@@ -446,7 +446,6 @@ export interface components {
              * @description Approximate number of days from sowing a seed to being ready for transplanting outdoors.
              */
             daysToPlant: number;
-            goodCompanions: string[];
             id: string;
             latinName: string;
             lifecycle: components["schemas"]["Lifecycle"];
@@ -455,6 +454,7 @@ export interface components {
             /** Format: int32 */
             spacingCm: number;
             sunRequirement: components["schemas"]["SunExposure"][];
+            vegetableId: string;
         };
         /** @description Generic single-item response envelope. */
         VarietyApiResponse: {
@@ -469,6 +469,8 @@ export interface components {
          *     For example, the `"pepper"` vegetable contains both `"pepper"` and `"red-pepper"`.
          */
         Vegetable: {
+            badCompanions: string[];
+            goodCompanions: string[];
             id: string;
             name: string;
             varietyIds: string[];
@@ -620,7 +622,7 @@ export interface operations {
                 "Accept-Language"?: string | null;
             };
             path: {
-                /** @description Variety identifier (e.g. `tomato`) */
+                /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
                 id: string;
             };
             cookie?: never;
@@ -636,7 +638,7 @@ export interface operations {
                     "application/json": components["schemas"]["CompanionsApiResponse"];
                 };
             };
-            /** @description Variety not found */
+            /** @description Vegetable not found */
             404: {
                 headers: {
                     [name: string]: unknown;

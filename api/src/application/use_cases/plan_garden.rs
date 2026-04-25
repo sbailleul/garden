@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
-use crate::application::ports::variety_repository::VarietyRepository;
-use crate::domain::models::{request::PlanRequest, response::PlanResponse, variety::Variety};
+use crate::application::ports::{
+    variety_repository::VarietyRepository, vegetable_repository::VegetableRepository,
+};
+use crate::domain::models::{
+    request::PlanRequest, response::PlanResponse, variety::Variety, vegetable::Vegetable,
+};
 use crate::domain::services::{filter::filter_candidates_base, planner::plan_garden};
 
 /// Use case: generate an optimised garden plan.
@@ -14,11 +18,18 @@ use crate::domain::services::{filter::filter_candidates_base, planner::plan_gard
 /// 4. Delegate planning to the domain service.
 pub struct PlanGardenUseCase<'a> {
     repo: &'a dyn VarietyRepository,
+    vegetable_repo: &'a dyn VegetableRepository,
 }
 
 impl<'a> PlanGardenUseCase<'a> {
-    pub fn new(repo: &'a dyn VarietyRepository) -> Self {
-        Self { repo }
+    pub fn new(
+        repo: &'a dyn VarietyRepository,
+        vegetable_repo: &'a dyn VegetableRepository,
+    ) -> Self {
+        Self {
+            repo,
+            vegetable_repo,
+        }
     }
 
     pub async fn execute(
@@ -27,8 +38,20 @@ impl<'a> PlanGardenUseCase<'a> {
         locale: &str,
     ) -> Result<PlanResponse, String> {
         let db = self.repo.get_all(locale).await.map_err(|e| e.to_string())?;
+        let veg_db = self
+            .vegetable_repo
+            .get_all(locale)
+            .await
+            .map_err(|e| e.to_string())?;
         let candidates = filter_candidates_base(&db, request);
         let lookup: HashMap<String, Variety> = db.into_iter().map(|v| (v.id.clone(), v)).collect();
-        plan_garden(candidates, request, |id| lookup.get(id).cloned())
+        let veg_lookup: HashMap<String, Vegetable> =
+            veg_db.into_iter().map(|v| (v.id.clone(), v)).collect();
+        plan_garden(
+            candidates,
+            request,
+            |id| lookup.get(id).cloned(),
+            |id| veg_lookup.get(id).cloned(),
+        )
     }
 }

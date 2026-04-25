@@ -117,6 +117,81 @@ Any time an API route or response model changes, the client must be updated in t
 
 Never leave the client in a state where it references fields or endpoints that no longer exist in the API, or omits newly added required fields.
 
+## Pagination
+
+Endpoints that return collections must support pagination via `page` and `size` query parameters.
+
+- **`page`** — 1-based page number (default: `1`).
+- **`size`** — number of items per page (default: `20`).
+
+### Query params wiring
+
+Each paginated handler extracts `web::Query<PaginationParams>` (defined in `adapters::inbound::http::hateoas`). The `page` and `size` values are clamped to a minimum of `1` before use:
+
+```rust
+let page = query.page.max(1);
+let size = query.size.max(1);
+```
+
+Every `#[utoipa::path]` macro on a paginated route must include these entries in its `params(...)` block:
+
+```rust
+("page" = Option<usize>, Query, description = "Page number (1-based, default: 1)."),
+("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
+```
+
+### SQL-level pagination
+
+Pagination must be pushed down to the database — never slice in application memory with `.skip().take()`. Use `LIMIT` and `OFFSET` in the SQL query:
+
+- `LIMIT` = `size as i64`
+- `OFFSET` = `((page - 1) * size) as i64`
+
+The total item count must be retrieved in the same query using `COUNT(*) OVER() AS total_count` (a window function). Read the count from the first row, defaulting to `0` if the result set is empty.
+
+When the main query uses `GROUP BY` (e.g. the vegetable repository), wrap it in a subquery before applying the window function and `LIMIT`/`OFFSET`, since window functions cannot coexist with `GROUP BY` at the same level:
+
+```sql
+SELECT COUNT(*) OVER() AS total_count, id, name, ...
+FROM (
+    SELECT v.id, ... FROM vegetables v ... GROUP BY v.id, ...
+    ORDER BY v.id
+) sub
+LIMIT $2 OFFSET $3
+```
+
+### Port traits
+
+Each collection-fetching port trait must expose a dedicated paginated method alongside the existing `get_all` (which fetches all rows and must not be changed, as it is used by the planning use case):
+
+- `VarietyRepository`: `list_page(locale, page, size) -> Result<Page<Variety>, RepositoryError>` and `list_page_by_vegetable_id(vegetable_id, locale, page, size) -> Result<Page<Variety>, RepositoryError>`
+- `VegetableRepository`: `list_page(locale, page, size) -> Result<Page<Vegetable>, RepositoryError>`
+
+### `Page<T>` struct
+
+Paginated repository methods return `Page<T>` (defined in `application/ports/mod.rs`):
+
+```rust
+pub struct Page<T> {
+    pub items: Vec<T>,
+    pub total: usize,  // total items across all pages, from COUNT(*) OVER()
+}
+```
+
+### Response shape
+
+Paginated responses use `PaginatedResponse` with a `Pagination` block:
+
+```json
+{
+  "items": [...],
+  "pagination": { "page": 1, "perPage": 20, "total": 42, "totalPages": 3 },
+  "_links": { "self": { "href": "/api/vegetables", "method": "GET" } }
+}
+```
+
+`total` and `totalPages` must reflect the full dataset, not just the current page. `totalPages` is computed as `total.div_ceil(size).max(1)`.
+
 ## Client UI tests
 
 Every new client feature must be covered by at least one UI test. Tests use **Vitest** and **React Testing Library** and live in a `.test.tsx` file co-located with the component or route being tested (e.g. `src/components/vegetables/vegetable-table.test.tsx`, `src/routes/vegetables/index.test.tsx`).

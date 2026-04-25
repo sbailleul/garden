@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::application::ports::RepositoryError;
+use crate::application::ports::{Page, RepositoryError};
 use crate::domain::models::variety::Variety;
 
 /// Outbound port: provides access to the variety catalogue.
@@ -16,4 +16,17 @@ pub trait VarietyRepository: Send + Sync {
         vegetable_id: &str,
         locale: &str,
     ) -> Result<Vec<Variety>, RepositoryError>;
+    async fn list_page(
+        &self,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError>;
+    async fn list_page_by_vegetable_id(
+        &self,
+        vegetable_id: &str,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError>;
 }

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use deadpool_postgres::Pool;
 use serde_json::Value as JsonValue;
 
-use crate::application::ports::{variety_repository::VarietyRepository, RepositoryError};
+use crate::application::ports::{variety_repository::VarietyRepository, Page, RepositoryError};
 use crate::domain::models::variety::{
     CalendarWindow, Category, Lifecycle, RegionCalendar, SoilType, SunExposure, Variety,
 };
@@ -39,8 +39,6 @@ fn row_to_variety(row: &tokio_postgres::Row) -> Result<Variety, RepositoryError>
 
     let soil_types_raw: Vec<String> = row.try_get("soil_types")?;
     let sun_requirement_raw: Vec<String> = row.try_get("sun_requirement")?;
-    let good_companions: Vec<String> = row.try_get("good_companions")?;
-    let bad_companions: Vec<String> = row.try_get("bad_companions")?;
 
     let category_str: String = row.try_get("category")?;
     let lifecycle_str: String = row.try_get("lifecycle")?;
@@ -58,8 +56,6 @@ fn row_to_variety(row: &tokio_postgres::Row) -> Result<Variety, RepositoryError>
         beginner_friendly: row.try_get("beginner_friendly")?,
         soil_types: parse_enum_vec::<SoilType>(&soil_types_raw)?,
         sun_requirement: parse_enum_vec::<SunExposure>(&sun_requirement_raw)?,
-        good_companions,
-        bad_companions,
         calendars,
     })
 }
@@ -82,8 +78,6 @@ const SELECT_COLUMNS: &str = r#"
         v.beginner_friendly,
         v.soil_types,
         v.sun_requirement,
-        v.good_companions,
-        v.bad_companions,
         v.calendars
     FROM varieties v
     LEFT JOIN variety_translations t_req
@@ -123,6 +117,63 @@ impl VarietyRepository for PostgresVarietyRepository {
             .query(query.as_str(), &[&locale, &vegetable_id])
             .await?;
         rows.iter().map(row_to_variety).collect()
+    }
+
+    async fn list_page(
+        &self,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError> {
+        let client = self.pool.get().await?;
+        let limit = size as i64;
+        let offset = ((page - 1) * size) as i64;
+        let query = format!(
+            "SELECT COUNT(*) OVER() AS total_count, sub.*
+             FROM ({SELECT_COLUMNS} ORDER BY v.id) sub
+             LIMIT $2 OFFSET $3"
+        );
+        let rows = client
+            .query(query.as_str(), &[&locale, &limit, &offset])
+            .await?;
+        let total = rows
+            .first()
+            .map(|r| r.try_get::<_, i64>("total_count").unwrap_or(0) as usize)
+            .unwrap_or(0);
+        let items = rows
+            .iter()
+            .map(row_to_variety)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Page { items, total })
+    }
+
+    async fn list_page_by_vegetable_id(
+        &self,
+        vegetable_id: &str,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError> {
+        let client = self.pool.get().await?;
+        let limit = size as i64;
+        let offset = ((page - 1) * size) as i64;
+        let query = format!(
+            "SELECT COUNT(*) OVER() AS total_count, sub.*
+             FROM ({SELECT_COLUMNS} WHERE v.vegetable_id = $2 ORDER BY v.id) sub
+             LIMIT $3 OFFSET $4"
+        );
+        let rows = client
+            .query(query.as_str(), &[&locale, &vegetable_id, &limit, &offset])
+            .await?;
+        let total = rows
+            .first()
+            .map(|r| r.try_get::<_, i64>("total_count").unwrap_or(0) as usize)
+            .unwrap_or(0);
+        let items = rows
+            .iter()
+            .map(row_to_variety)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Page { items, total })
     }
 }
 

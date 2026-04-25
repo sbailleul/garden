@@ -1,0 +1,195 @@
+   Compiling kokopelli-scrapper v0.1.0 (/root/garden/kokopelli-scrapper)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running `/root/garden/target/debug/kokopelli-scrapper`
+[group] Bulbes
+  [collect/bulbes] 2 listing page(s)
+  [collect/bulbes] page 1 → 36 varieties so far
+  [collect/bulbes] page 2 → 40 varieties so far
+  [discover/bulbes] visiting 40 product pages for breadcrumbs
+  [discover/bulbes] vegetable: Oignons (oignons)
+  [discover/bulbes] vegetable: Bulbes de Safran (crocus-a-safran)
+  [discover/bulbes] vegetable: Bulbes d'ail (ail-bulbes)
+  [discover/bulbes] vegetable: Pommes de Terre (pdt)
+  [discover/bulbes] vegetable: Chayottes (chayotte)
+  [discover/bulbes] vegetable: Ail (ail)
+  [bulbes/oignons] 27 varieties | EN veg name: Some("Onions")
+  [bulbes/crocus-a-safran] 1 varieties | EN veg name: Some("Saffron Crocus")
+  [bulbes/ail-bulbes] 1 varieties | EN veg name: Some("Garlic bulbs")
+  [bulbes/pdt] 9 varieties | EN veg name: Some("Potatoes")
+  [bulbes/chayotte] 1 varieties | EN veg name: Some("Chayottes")
+  [bulbes/ail] 1 varieties | EN veg name: None
+[group] Engrais Verts
+  [collect/engrais-verts] 2 listing page(s)
+  [collect/engrais-verts] page 1 → 36 varieties so far
+  [collect/engrais-verts] page 2 → 68 varieties so far
+  [discover/engrais-verts] visiting 68 product pages for breadcrumbs
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0606-Apache-Red-Sugarcane
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0600-A-Balais
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0611-Rox-Orange
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0800-Japonais
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0607-Santa-Fe-Red
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0002-Blanche-Jaune
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0617-White-Mountain-Apache
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/E0151-urtica-dioica
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/F0257-A-Feuilles-de-Tanaisie
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0001-Cultivee
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0604-Mennonite
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0612-White-African-Sugar
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/F0349-Cultive
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0005-Rouge-Incarnat
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0006-Blanc
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0007-D-Ete
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0008-D-Hiver
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0009-Cornicule
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0010-Jaune
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0602-Black-Amber-Cane
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0805-Purple-Majesty
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0012-Camelina-sativa
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0013-Sainfoin
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0925-Rudukes
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0928-Aukses
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0927-Jester
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0937-Nerum-Boer
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0939-Hell-s-Canyon
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0916-Dwarf-Mayo
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0941-Indian-Red-Popping
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0952-Coral
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0953-Red-s-Red-Sweet
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0059-Legumineuse-Meteil-Seigle
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0974-De-Tartarie
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0973-Rouge
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0063-Seigle-et-Vesce
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0951-Ba-Ye-Qi
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/L0876-Black-Beluga
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/L0877-Badil
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0075-Croissance-Rapide
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0078-Plantes-Compagnes-et-Utiles
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0077-Special-Automne-et-Hiver
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0079-Special-Carbone-Azote
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0076-Special-Printemps-et-Ete
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0070-Special-Sol-Vivant
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0081-Paturage-Pour-Les-Abeilles
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/V0003-Commun
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0613-Honey-Drip
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0614-Tohono-O-Odham-Sugarcane
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0616-Tunisien
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0802-White-Wonder
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0803-Himalayan-Finger
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0608-Tarahumara-Popping
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0801-Lime-Spray
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0618-Mountain-Pima
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0030-Engrais-Verts
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0061-Onavas-Red
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0915-Terra
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0920-Juosves
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0940-Iowa-Sweet
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0942-Allu-Jola-Popping
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/L0454-Verte
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/M0060-Legumineuse-Meteil-Epeautre
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/F1702-Consoude-Officinale
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/G0979-Purple-Valley
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/L0739-Alta-Anoia
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/F1973-Sunrise
+  [discover/engrais-verts] no breadcrumb for https://kokopelli-semences.fr/fr/p/F1959-Lupin-Blanc
+[group] Légumes-Feuilles
+  [collect/legumes-feuilles] 14 listing page(s)
+  [collect/legumes-feuilles] page 1 → 36 varieties so far
+  [collect/legumes-feuilles] page 2 → 72 varieties so far
+  [collect/legumes-feuilles] page 3 → 108 varieties so far
+  [collect/legumes-feuilles] page 4 → 144 varieties so far
+  [collect/legumes-feuilles] page 5 → 180 varieties so far
+  [collect/legumes-feuilles] page 6 → 216 varieties so far
+  [collect/legumes-feuilles] page 7 → 252 varieties so far
+  [collect/legumes-feuilles] page 8 → 288 varieties so far
+  [collect/legumes-feuilles] page 9 → 324 varieties so far
+  [collect/legumes-feuilles] page 10 → 360 varieties so far
+  [collect/legumes-feuilles] page 11 → 396 varieties so far
+  [collect/legumes-feuilles] page 12 → 432 varieties so far
+  [collect/legumes-feuilles] page 13 → 468 varieties so far
+  [collect/legumes-feuilles] page 14 → 497 varieties so far
+  [discover/legumes-feuilles] visiting 497 product pages for breadcrumbs
+  [discover/legumes-feuilles] vegetable: Laitues (laitues)
+  [discover/legumes-feuilles] vegetable: choux (choux-cabus)
+  [discover/legumes-feuilles] vegetable: Chicorées (chicorees)
+  [discover/legumes-feuilles] vegetable: Choux fleurs (choux-fleur)
+  [discover/legumes-feuilles] vegetable: L’épinard (epinards)
+  [discover/legumes-feuilles] vegetable: Poireau (poireau)
+  [discover/legumes-feuilles] vegetable: Roquette (roquette)
+  [discover/legumes-feuilles] vegetable: Tétragones (tetragones)
+  [discover/legumes-feuilles] vegetable: Fenouil (fenouil)
+  [discover/legumes-feuilles] vegetable: Mâches (maches)
+  [discover/legumes-feuilles] vegetable: Amarante à feuille (amarante-a-feuille)
+  [discover/legumes-feuilles] vegetable: Côtes de blette (cotes-de-blette)
+  [discover/legumes-feuilles] vegetable: Choux rouges (choux-rouge)
+  [discover/legumes-feuilles] vegetable: Choux de Bruxelles (choux-de-bruxelles)
+  [discover/legumes-feuilles] vegetable: Pourpiers (pourpiers)
+  [discover/legumes-feuilles] vegetable: Cresson (cresson)
+  [discover/legumes-feuilles] vegetable: Moutarde indienne (moutarde-indienne)
+  [discover/legumes-feuilles] vegetable: Moutarde japonaise (moutarde-japonaise)
+  [discover/legumes-feuilles] vegetable: Rhubarbe (rhubarbe)
+  [discover/legumes-feuilles] vegetable: Choux frisés / Kales (choux-frises)
+  [discover/legumes-feuilles] vegetable: Choux chinois (choux-de-chine)
+  [discover/legumes-feuilles] vegetable: Choux de Milan (choux-de-milan)
+  [discover/legumes-feuilles] vegetable: Cardons (cardons)
+  [discover/legumes-feuilles] vegetable: Plantains (plantains)
+  [discover/legumes-feuilles] vegetable: Choux brocolis (choux-brocolis)
+  [discover/legumes-feuilles] vegetable: Claytones de Cuba (claytones)
+  [discover/legumes-feuilles] vegetable: Cresson de Pará (cresson-de-para)
+  [discover/legumes-feuilles] vegetable: Chénopodes et compagnie (chenopodes)
+  [discover/legumes-feuilles] vegetable: Artichauts (artichauts)
+  [discover/legumes-feuilles] vegetable: Épazote (epazote)
+  [discover/legumes-feuilles] vegetable: Fedia (fedia)
+  [discover/legumes-feuilles] vegetable: Arroches (arroches)
+  [discover/legumes-feuilles] vegetable: Mescluns Kokopelli (mescluns)
+  [discover/legumes-feuilles] vegetable: Ficoïde (ficoide)
+  [discover/legumes-feuilles] vegetable: Céleri à côte (celeri-a-cote)
+  [discover/legumes-feuilles] vegetable: Baselles (baselles)
+  [discover/legumes-feuilles] vegetable: Laitues asperge (laitues-asperge)
+  [discover/legumes-feuilles] vegetable: Épinard vivace (%C3%A9pinard%20vivace)
+  [legumes-feuilles/laitues] 171 varieties | EN veg name: Some("Lettuces")
+  [legumes-feuilles/choux-cabus] 23 varieties | EN veg name: Some("Cabbage")
+  [legumes-feuilles/chicorees] 32 varieties | EN veg name: Some("Curly endive")
+  [legumes-feuilles/choux-fleur] 10 varieties | EN veg name: Some("Cauliflower")
+  [legumes-feuilles/epinards] 10 varieties | EN veg name: Some("Spinach")
+  [legumes-feuilles/poireau] 25 varieties | EN veg name: Some("Leek")
+  [legumes-feuilles/roquette] 4 varieties | EN veg name: Some("Roquette")
+  [legumes-feuilles/tetragones] 1 varieties | EN veg name: Some("Tetragonal")
+  [legumes-feuilles/fenouil] 9 varieties | EN veg name: Some("Fennel")
+  [legumes-feuilles/maches] 12 varieties | EN veg name: Some("Lamb's lettuce")
+  [legumes-feuilles/amarante-a-feuille] 14 varieties | EN veg name: Some("Leafy pigweed")
+  [legumes-feuilles/cotes-de-blette] 15 varieties | EN veg name: Some("Beets")
+  [legumes-feuilles/choux-rouge] 6 varieties | EN veg name: Some("Red cabbage")
+  [legumes-feuilles/choux-de-bruxelles] 7 varieties | EN veg name: Some("Brussels sprouts")
+  [legumes-feuilles/pourpiers] 2 varieties | EN veg name: Some("Purslane")
+  [legumes-feuilles/cresson] 3 varieties | EN veg name: Some("Watercress")
+  [legumes-feuilles/moutarde-indienne] 20 varieties | EN veg name: Some("Indian mustard")
+  [legumes-feuilles/moutarde-japonaise] 15 varieties | EN veg name: Some("Japanese mustard")
+  [legumes-feuilles/rhubarbe] 2 varieties | EN veg name: Some("Rhubarb")
+  [legumes-feuilles/choux-frises] 35 varieties | EN veg name: Some("Kale / Kales")
+  [legumes-feuilles/choux-de-chine] 9 varieties | EN veg name: Some("Chinese cabbage")
+  [legumes-feuilles/choux-de-milan] 8 varieties | EN veg name: Some("Cabbage of Milan")
+  [legumes-feuilles/cardons] 6 varieties | EN veg name: Some("Cardoons")
+  [legumes-feuilles/plantains] 1 varieties | EN veg name: Some("Plantains")
+  [legumes-feuilles/choux-brocolis] 17 varieties | EN veg name: Some("Broccoli")
+  [legumes-feuilles/claytones] 1 varieties | EN veg name: Some("Miner’s lettuce")
+  [legumes-feuilles/cresson-de-para] 3 varieties | EN veg name: Some("Pará watercress")
+  [legumes-feuilles/chenopodes] 5 varieties | EN veg name: Some("Lamb's Quarters and Company")
+  [legumes-feuilles/artichauts] 4 varieties | EN veg name: Some("Artichokes")
+  [legumes-feuilles/epazote] 3 varieties | EN veg name: Some("Nitrogen")
+  [legumes-feuilles/fedia] 1 varieties | EN veg name: Some("Fedia")
+  [legumes-feuilles/arroches] 8 varieties | EN veg name: Some("Arroch")
+  [legumes-feuilles/mescluns] 3 varieties | EN veg name: Some("Mescluns Kokopelli")
+  [legumes-feuilles/ficoide] 1 varieties | EN veg name: Some("Ficoid")
+  [legumes-feuilles/celeri-a-cote] 7 varieties | EN veg name: Some("Ribbed celery")
+  [legumes-feuilles/baselles] 1 varieties | EN veg name: Some("Baselles")
+  [legumes-feuilles/laitues-asperge] 2 varieties | EN veg name: Some("Lettuce Asparagus")
+  [legumes-feuilles/%C3%A9pinard%20vivace] 1 varieties | EN veg name: Some("Perennial spinach")
+[group] Légumes-Fruits
+  [collect/legumes-fruits] 38 listing page(s)
+  [collect/legumes-fruits] page 1 → 36 varieties so far
+  [collect/legumes-fruits] page 2 → 72 varieties so far
+  [collect/legumes-fruits] page 3 → 108 varieties so far
+  [collect/legumes-fruits] page 4 → 144 varieties so far
+  [collect/legumes-fruits] page 5 → 180 varieties so far
+  [collect/legumes-fruits] page 6 → 216 varieties so far
+  [collect/legumes-fruits] page 7 → 252 varieties so far

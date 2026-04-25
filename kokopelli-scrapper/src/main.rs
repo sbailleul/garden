@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -118,72 +118,19 @@ fn extract_last_page(doc: &Html) -> u32 {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 2: Discover vegetable URLs for a group
+// Phase 2: Discover vegetable URLs via product-page breadcrumbs
 // ---------------------------------------------------------------------------
 
-/// Returns a list of (slug, name_fr, url_fr) for vegetable sub-category pages
-/// found while paginatin a group page.
-async fn discover_vegetables(
-    client: &Client,
-    group_slug: &str,
-) -> Result<Vec<(String, String, String)>> {
-    let base_url = format!("{BASE_FR}/c/semences/potageres/{group_slug}");
-    // pattern we are looking for in anchor hrefs
-    let prefix = format!("/fr/c/semences/potageres/{group_slug}/");
-
-    let first_page = get_html(client, &base_url).await?;
-    let last = extract_last_page(&first_page);
-
-    let mut seen: HashSet<String> = HashSet::new();
-    let mut ordered: Vec<(String, String, String)> = Vec::new();
-
-    let process_page = |doc: Html,
-                        seen: &mut HashSet<String>,
-                        ordered: &mut Vec<(String, String, String)>| {
-        let Ok(sel) = Selector::parse("a[href]") else {
-            return;
-        };
-        for el in doc.select(&sel) {
-            let href = match el.value().attr("href") {
-                Some(h) => h,
-                None => continue,
-            };
-            if !href.starts_with(&prefix) {
-                continue;
-            }
-            // must be exactly one segment deeper (no further slash after the slug)
-            let tail = &href[prefix.len()..];
-            if tail.is_empty() || tail.contains('/') {
-                continue;
-            }
-            let slug = tail.split('?').next().unwrap_or(tail).to_string();
-            if seen.insert(slug.clone()) {
-                // try to grab the visible badge text next to this link
-                let name = el
-                    .text()
-                    .collect::<String>()
-                    .trim()
-                    .to_uppercase()
-                    .to_string();
-                let url = format!("https://kokopelli-semences.fr{href}");
-                ordered.push((slug, name, url));
-            }
-        }
-    };
-
-    process_page(first_page, &mut seen, &mut ordered);
-
-    for page in 2..=last {
-        let url = format!("{base_url}?page={page}");
-        let doc = get_html(client, &url).await?;
-        process_page(doc, &mut seen, &mut ordered);
-    }
-
-    Ok(ordered)
+/// Strips the Kokopelli origin from an href, returning the path.
+/// Works for both absolute (`https://kokopelli-semences.fr/fr/...`) and
+/// already-relative (`/fr/...`) href values.
+fn to_path(href: &str) -> &str {
+    href.strip_prefix("https://kokopelli-semences.fr")
+        .unwrap_or(href)
 }
 
 // ---------------------------------------------------------------------------
-// Phase 3a: Scrape FR varieties for a vegetable page
+// Phase 3a: Scrape FR variety details from a listing page
 // ---------------------------------------------------------------------------
 
 struct FrVariety {
@@ -193,33 +140,20 @@ struct FrVariety {
     maturity: Option<String>,
 }
 
-async fn scrape_fr_varieties(client: &Client, veg_url_fr: &str) -> Result<Vec<FrVariety>> {
-    let first_page = get_html(client, veg_url_fr).await?;
-    let last = extract_last_page(&first_page);
-    let mut varieties = scrape_fr_varieties_from_page(&first_page);
-
-    for page in 2..=last {
-        let url = format!("{}?page={page}", veg_url_fr);
-        let doc = get_html(client, &url).await?;
-        varieties.extend(scrape_fr_varieties_from_page(&doc));
-    }
-
-    Ok(varieties)
-}
-
 fn scrape_fr_varieties_from_page(doc: &Html) -> Vec<FrVariety> {
-    // Product cards: each is an <article> or similar container, but the most
-    // reliable cross-page selector is the short-name link to /fr/p/...
-    let Ok(link_sel) = Selector::parse(r#"a[href^="/fr/p/"]"#) else {
+    // Product cards have TWO links to the same URL per product:
+    //   1. Full title link:  "Oignon Rouge Long de Florence"  (first occurrence)
+    //   2. Buy-button link:  "Rouge Long de Florence"         (second occurrence)
+    // We want the SHORT variety name, so we keep-last: each duplicate URL
+    // overwrites the name_fr stored previously.
+    // hrefs may be absolute (https://kokopelli-semences.fr/fr/p/...) or relative.
+    let Ok(link_sel) = Selector::parse("a[href]") else {
         return vec![];
     };
-    // Maturity text lives in a sibling span with class like "maturity" or is
-    // a text node in a parent element. We use a broad selector and match by
-    // proximity: the closest text node containing a known maturity keyword.
     let maturity_keywords = ["Très Précoce", "Précoce", "Mi-Saison", "Tardive"];
 
-    // Collect all product links (short name, no duplicates)
-    let mut seen_urls: HashSet<String> = HashSet::new();
+    // url → index into `results`
+    let mut url_index: HashMap<String, usize> = HashMap::new();
     let mut results: Vec<FrVariety> = Vec::new();
 
     for el in doc.select(&link_sel) {
@@ -227,33 +161,37 @@ fn scrape_fr_varieties_from_page(doc: &Html) -> Vec<FrVariety> {
             Some(h) => h,
             None => continue,
         };
-        let abs_url = format!("https://kokopelli-semences.fr{href}");
-        if !seen_urls.insert(abs_url.clone()) {
+        let path = to_path(href);
+        if !path.starts_with("/fr/p/") {
             continue;
         }
-
+        let abs_url = if href.starts_with("http") {
+            href.to_string()
+        } else {
+            format!("https://kokopelli-semences.fr{href}")
+        };
         let name_fr = el.text().collect::<String>().trim().to_string();
         if name_fr.is_empty() {
             continue;
         }
 
-        // Product code: first path segment after /fr/p/ before the first '-'
-        // e.g. /fr/p/P2630-Bou-Tozzina → "P2630"
-        let product_code = href
+        if let Some(&idx) = url_index.get(&abs_url) {
+            // Second (or later) occurrence → shorter buy-button text preferred
+            if name_fr.len() < results[idx].name_fr.len() {
+                results[idx].name_fr = name_fr;
+            }
+            continue;
+        }
+
+        // First occurrence
+        let product_code = path
             .trim_start_matches("/fr/p/")
             .split('-')
             .next()
             .map(String::from);
-
-        // Maturity: look for known keywords in the text of the parent element tree.
-        // We walk up through the fragment using the raw element's parent in the
-        // element tree. Because `scraper` doesn't expose parent navigation directly,
-        // we search for the closest <span> or text node near this <a>.
-        // Pragmatic approach: look for a <span> inside the same product card.
-        // Cards contain the maturity as a text node. We search the whole page for
-        // the pattern by finding the maturity span immediately preceding this link.
         let maturity = find_maturity_near(doc, href, &maturity_keywords);
-
+        let idx = results.len();
+        url_index.insert(abs_url.clone(), idx);
         results.push(FrVariety {
             name_fr,
             url_fr: abs_url,
@@ -269,7 +207,6 @@ fn scrape_fr_varieties_from_page(doc: &Html) -> Vec<FrVariety> {
 /// looking for a known keyword within a window of text nodes around the
 /// product link href in the raw HTML.
 fn find_maturity_near(doc: &Html, href: &str, keywords: &[&str]) -> Option<String> {
-    // We serialise the fragment of HTML around the product and scan for keywords.
     let html_str = doc.html();
     let needle = format!("href=\"{href}\"");
     let pos = html_str.find(needle.as_str())?;
@@ -285,47 +222,126 @@ fn find_maturity_near(doc: &Html, href: &str, keywords: &[&str]) -> Option<Strin
     None
 }
 
-// ---------------------------------------------------------------------------
-// Phase 3b: Scrape EN variety names for a vegetable page
-// ---------------------------------------------------------------------------
-
-async fn scrape_en_variety_names(client: &Client, veg_url_en: &str) -> Result<Vec<(String, String)>> {
-    let first_page = get_html(client, veg_url_en).await?;
+/// Collects all FR variety details from all listing pages of a group.
+/// Group listing pages are server-side rendered (reqwest can see product links).
+async fn collect_fr_varieties_from_group(
+    client: &Client,
+    group_slug: &str,
+) -> Result<Vec<FrVariety>> {
+    let base_url = format!("{BASE_FR}/c/semences/potageres/{group_slug}");
+    let first_page = get_html(client, &base_url).await?;
     let last = extract_last_page(&first_page);
-    let mut names = scrape_en_names_from_page(&first_page);
+    eprintln!("  [collect/{group_slug}] {last} listing page(s)");
 
+    let mut varieties = scrape_fr_varieties_from_page(&first_page);
+    eprintln!(
+        "  [collect/{group_slug}] page 1 → {} varieties so far",
+        varieties.len()
+    );
     for page in 2..=last {
-        let url = format!("{}?page={page}", veg_url_en);
+        let url = format!("{base_url}?page={page}");
         let doc = get_html(client, &url).await?;
-        names.extend(scrape_en_names_from_page(&doc));
+        let page_vars = scrape_fr_varieties_from_page(&doc);
+        varieties.extend(page_vars);
+        eprintln!(
+            "  [collect/{group_slug}] page {page} → {} varieties so far",
+            varieties.len()
+        );
     }
 
-    Ok(names)
+    Ok(varieties)
 }
 
-fn scrape_en_names_from_page(doc: &Html) -> Vec<(String, String)> {
-    let Ok(link_sel) = Selector::parse(r#"a[href^="/en/p/"]"#) else {
-        return vec![];
+/// Extracts the vegetable sub-category from the breadcrumb of a product page.
+/// Returns `(slug, name_fr, url_fr)` for the last breadcrumb link whose path
+/// matches `/fr/c/semences/potageres/{group_slug}/{veg_slug}` exactly.
+fn extract_vegetable_from_breadcrumb(
+    doc: &Html,
+    veg_prefix: &str,
+) -> Option<(String, String, String)> {
+    let Ok(sel) = Selector::parse("a[href]") else {
+        return None;
     };
-    let mut seen: HashSet<String> = HashSet::new();
-    let mut results = Vec::new();
-
-    for el in doc.select(&link_sel) {
-        let href = match el.value().attr("href") {
-            Some(h) => h,
-            None => continue,
+    let mut result: Option<(String, String, String)> = None;
+    for el in doc.select(&sel) {
+        let Some(href) = el.value().attr("href") else {
+            continue;
         };
-        let abs_url = format!("https://kokopelli-semences.fr{href}");
-        if !seen.insert(abs_url.clone()) {
+        let path = to_path(href);
+        if !path.starts_with(veg_prefix) {
             continue;
         }
+        let tail = &path[veg_prefix.len()..];
+        if tail.is_empty() || tail.contains('/') {
+            continue;
+        }
+        let slug = tail.split('?').next().unwrap_or(tail).to_string();
         let name = el.text().collect::<String>().trim().to_string();
-        if name.is_empty() {
-            continue;
-        }
-        results.push((name, abs_url));
+        let abs_url = if href.starts_with("http") {
+            href.to_string()
+        } else {
+            format!("https://kokopelli-semences.fr{href}")
+        };
+        result = Some((slug, name, abs_url));
     }
-    results
+    result
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2+3: Discover vegetables and collect variety details in one pass
+// ---------------------------------------------------------------------------
+
+/// Visits each product page in the group to extract the vegetable breadcrumb
+/// and hreflang EN product URL, then groups the FR varieties by vegetable.
+///
+/// Returns: ordered list of `(veg_slug, veg_name_fr, veg_url_fr, varieties)`
+/// where each `varieties` element is `(FrVariety, Option<en_product_url>)`.
+async fn discover_vegetables_with_varieties(
+    client: &Client,
+    group_slug: &str,
+) -> Result<Vec<(String, String, String, Vec<(FrVariety, Option<String>)>)>> {
+    let veg_prefix = format!("/fr/c/semences/potageres/{group_slug}/");
+
+    // Step 1: collect all variety details from the group listing pages
+    // (these ARE server-side rendered — reqwest can see product links).
+    let all_varieties = collect_fr_varieties_from_group(client, group_slug).await?;
+    eprintln!(
+        "  [discover/{group_slug}] visiting {} product pages for breadcrumbs",
+        all_varieties.len()
+    );
+
+    // Step 2: visit each product page to get the vegetable breadcrumb and EN URL.
+    // veg_slug → index in `ordered`
+    let mut veg_index: HashMap<String, usize> = HashMap::new();
+    let mut ordered: Vec<(String, String, String, Vec<(FrVariety, Option<String>)>)> = Vec::new();
+
+    for variety in all_varieties {
+        let product_doc = get_html(client, &variety.url_fr).await?;
+
+        let veg = extract_vegetable_from_breadcrumb(&product_doc, &veg_prefix);
+        let en_url = extract_hreflang_en(&product_doc);
+
+        match veg {
+            Some((slug, name, url)) => {
+                if let Some(&idx) = veg_index.get(&slug) {
+                    ordered[idx].3.push((variety, en_url));
+                } else {
+                    eprintln!("  [discover/{group_slug}] vegetable: {name} ({slug})");
+                    let idx = ordered.len();
+                    veg_index.insert(slug.clone(), idx);
+                    ordered.push((slug, name, url, vec![(variety, en_url)]));
+                }
+            }
+            None => {
+                eprintln!(
+                    "  [discover/{group_slug}] no breadcrumb for {}",
+                    variety.url_fr
+                );
+            }
+        }
+    }
+
+    Ok(ordered)
 }
 
 // ---------------------------------------------------------------------------
@@ -351,7 +367,7 @@ async fn scrape_group(client: &Client, slug: &str, name_fr: &str) -> Result<Grou
     let url_fr = format!("{BASE_FR}/c/semences/potageres/{slug}");
     eprintln!("[group] {name_fr}");
 
-    // Parallel-friendly: fetch group page for hreflang
+    // Fetch group page for hreflang / EN group name
     let group_doc = get_html(client, &url_fr).await?;
     let url_en_opt = extract_hreflang_en(&group_doc);
     let name_en = if let Some(ref url_en) = url_en_opt {
@@ -367,62 +383,47 @@ async fn scrape_group(client: &Client, slug: &str, name_fr: &str) -> Result<Grou
         None
     };
 
-    // Discover vegetable sub-categories from FR listing pages
-    let veg_entries = discover_vegetables(client, slug).await?;
+    // Collect all varieties from group listing pages and assign each to its
+    // vegetable sub-category via the product-page breadcrumb.
+    // Also captures the hreflang EN product URL for each variety.
+    let veg_entries = discover_vegetables_with_varieties(client, slug).await?;
 
     let mut vegetables: Vec<Vegetable> = Vec::new();
 
-    for (veg_slug, veg_name_fr, veg_url_fr) in veg_entries {
-        // Scrape FR varieties
-        let fr_varieties = scrape_fr_varieties(client, &veg_url_fr).await?;
-
-        // Get EN url for this vegetable via hreflang on its FR page
+    for (veg_slug, veg_name_fr, veg_url_fr, var_entries) in veg_entries {
+        // Fetch the vegetable category page only for hreflang + EN name.
+        // (Product links on this page are JS-rendered, so we don't scrape them.)
         let veg_page_doc = get_html(client, &veg_url_fr).await?;
         let veg_url_en = extract_hreflang_en(&veg_page_doc);
-
-        // Get EN vegetable name and EN varieties
-        let (veg_name_en, en_map) = if let Some(ref url_en) = veg_url_en {
-            let name_en = fetch_en_vegetable_name(client, url_en).await?;
-            let en_names = scrape_en_variety_names(client, url_en).await?;
-            (name_en, en_names)
+        let veg_name_en = if let Some(ref url_en) = veg_url_en {
+            fetch_en_vegetable_name(client, url_en).await?
         } else {
-            (None, vec![])
+            None
         };
 
         eprintln!(
-            "  [{slug}/{veg_slug}] {} FR varieties | {} EN varieties",
-            fr_varieties.len(),
-            en_map.len()
+            "  [{slug}/{veg_slug}] {} varieties | EN veg name: {:?}",
+            var_entries.len(),
+            veg_name_en
         );
 
-        if !en_map.is_empty() && en_map.len() != fr_varieties.len() {
-            eprintln!(
-                "  WARNING: FR/EN count mismatch for {veg_slug}: {} vs {}",
-                fr_varieties.len(),
-                en_map.len()
-            );
-        }
-
-        // Build a position-indexed map for EN
-        let en_by_pos: HashMap<usize, &(String, String)> = en_map
-            .iter()
-            .enumerate()
-            .map(|(i, v)| (i, v))
-            .collect();
-
-        let varieties: Vec<Variety> = fr_varieties
+        // Build Variety list. EN variety name is derived from the EN product
+        // URL slug (no extra request needed).
+        let varieties: Vec<Variety> = var_entries
             .into_iter()
-            .enumerate()
-            .map(|(i, fr)| {
-                let (name_en, url_en) = en_by_pos
-                    .get(&i)
-                    .map(|(n, u)| (Some(n.clone()), Some(u.clone())))
-                    .unwrap_or((None, None));
+            .map(|(fr, en_url)| {
+                // /en/p/P4521-Long-Red-Florence  →  "Long Red Florence"
+                let name_en = en_url.as_ref().and_then(|url| {
+                    url.split("/en/p/")
+                        .nth(1)
+                        .and_then(|slug| slug.splitn(2, '-').nth(1))
+                        .map(|name_part| name_part.replace('-', " "))
+                });
                 Variety {
                     name_fr: fr.name_fr,
                     name_en,
                     url_fr: fr.url_fr,
-                    url_en,
+                    url_en: en_url,
                     product_code: fr.product_code,
                     maturity: fr.maturity,
                 }

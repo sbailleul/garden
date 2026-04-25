@@ -8,6 +8,11 @@ get {
   url: {{baseUrl}}/api/varieties
 }
 
+params:query {
+  page: 1
+  size: 20
+}
+
 headers {
   Accept: application/json
   Accept-Language: en
@@ -34,6 +39,8 @@ tests {
     expect(res.body.pagination).to.be.an("object");
     expect(res.body.pagination.total).to.be.a("number").that.is.gt(0);
     expect(res.body.pagination.page).to.equal(1);
+    expect(res.body.pagination.perPage).to.equal(20);
+    expect(res.body.pagination.totalPages).to.be.a("number").that.is.gte(1);
   });
 
   test("response has collection _links", function() {

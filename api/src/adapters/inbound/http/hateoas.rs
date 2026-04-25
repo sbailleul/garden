@@ -4,6 +4,8 @@ use actix_web::http::Method;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::application::ports::Page;
+
 use crate::domain::models::{
     response::{CompanionsResponse, PlanResponse},
     variety::Variety,
@@ -62,6 +64,35 @@ pub struct Pagination {
     pub total_pages: usize,
 }
 
+/// Query parameters accepted by paginated list endpoints.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct PaginationParams {
+    /// Page number (1-based). Defaults to `1`.
+    #[serde(default = "PaginationParams::default_page")]
+    pub page: usize,
+    /// Number of items per page. Defaults to `20`.
+    #[serde(default = "PaginationParams::default_size")]
+    pub size: usize,
+}
+
+impl PaginationParams {
+    fn default_page() -> usize {
+        1
+    }
+    fn default_size() -> usize {
+        20
+    }
+}
+
+impl Default for PaginationParams {
+    fn default() -> Self {
+        Self {
+            page: Self::default_page(),
+            size: Self::default_size(),
+        }
+    }
+}
+
 /// Generic single-item response envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[aliases(
@@ -105,6 +136,26 @@ impl<T> PaginatedResponse<T> {
             payload,
             links,
             pagination,
+        }
+    }
+}
+
+/// Extension trait that converts a `Page<T>` (application layer) into an HTTP
+/// `Pagination` metadata block, so handlers do not have to repeat the
+/// `total_pages` calculation.
+pub trait IntoHttpPagination {
+    fn to_pagination(&self, page: usize, size: usize) -> Pagination;
+}
+
+impl<T> IntoHttpPagination for Page<T> {
+    fn to_pagination(&self, page: usize, size: usize) -> Pagination {
+        let total = self.total;
+        let total_pages = total.div_ceil(size).max(1);
+        Pagination {
+            page,
+            per_page: size,
+            total,
+            total_pages,
         }
     }
 }

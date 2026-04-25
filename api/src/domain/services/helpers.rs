@@ -120,8 +120,6 @@ mod tests {
             days_to_harvest: 80,
             days_to_plant: 42,
             lifecycle: Lifecycle::Annual,
-            good_companions: vec![],
-            bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
         };
@@ -160,8 +158,6 @@ mod tests {
             days_to_harvest: 80,
             days_to_plant: 42,
             lifecycle: Lifecycle::Annual,
-            good_companions: vec![],
-            bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
         };
@@ -201,8 +197,6 @@ mod tests {
             days_to_harvest: 80,
             days_to_plant: 42,
             lifecycle: Lifecycle::Annual,
-            good_companions: vec![],
-            bad_companions: vec![],
             beginner_friendly: true,
             category: Category::Fruit,
         };

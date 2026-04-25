@@ -7,6 +7,7 @@ use crate::domain::models::{variety::Lifecycle, Coordinate, Matrix};
 #[serde(rename_all = "camelCase")]
 pub struct PlacedVariety {
     pub id: String,
+    pub vegetable_id: String,
     pub name: String,
     pub reason: String,
     /// Number of individual plants that fit in this 30 cm × 30 cm cell.

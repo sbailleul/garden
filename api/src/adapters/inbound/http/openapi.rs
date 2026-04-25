@@ -28,9 +28,9 @@ use crate::domain::models::{
     paths(
         crate::adapters::inbound::http::handlers::varieties::list_varieties,
         crate::adapters::inbound::http::handlers::varieties::get_variety,
-        crate::adapters::inbound::http::handlers::varieties::get_companions,
         crate::adapters::inbound::http::handlers::vegetables::list_vegetables,
         crate::adapters::inbound::http::handlers::vegetables::get_vegetable,
+        crate::adapters::inbound::http::handlers::vegetables::get_companions,
         crate::adapters::inbound::http::handlers::vegetables::get_varieties_by_vegetable,
         crate::adapters::inbound::http::handlers::plan::post_plan,
     ),

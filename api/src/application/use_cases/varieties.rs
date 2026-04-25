@@ -1,5 +1,5 @@
-use crate::application::ports::{variety_repository::VarietyRepository, RepositoryError};
-use crate::domain::models::{response::CompanionInfo, variety::Variety};
+use crate::application::ports::{variety_repository::VarietyRepository, Page, RepositoryError};
+use crate::domain::models::variety::Variety;
 
 /// Use case: list all varieties from the catalogue.
 pub struct ListVarietiesUseCase<'a> {
@@ -11,8 +11,13 @@ impl<'a> ListVarietiesUseCase<'a> {
         Self { repo }
     }
 
-    pub async fn execute(&self, locale: &str) -> Result<Vec<Variety>, RepositoryError> {
-        self.repo.get_all(locale).await
+    pub async fn execute(
+        &self,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError> {
+        self.repo.list_page(locale, page, size).await
     }
 }
 
@@ -30,8 +35,12 @@ impl<'a> ListVarietiesByVegetableUseCase<'a> {
         &self,
         vegetable_id: &str,
         locale: &str,
-    ) -> Result<Vec<Variety>, RepositoryError> {
-        self.repo.get_by_vegetable_id(vegetable_id, locale).await
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Variety>, RepositoryError> {
+        self.repo
+            .list_page_by_vegetable_id(vegetable_id, locale, page, size)
+            .await
     }
 }
 
@@ -51,59 +60,5 @@ impl<'a> GetVarietyUseCase<'a> {
         locale: &str,
     ) -> Result<Option<Variety>, RepositoryError> {
         self.repo.get_by_id(id, locale).await
-    }
-}
-
-/// Resolved companion data returned by [`GetCompanionsUseCase`].
-pub struct CompanionData {
-    pub variety: Variety,
-    pub good: Vec<CompanionInfo>,
-    pub bad: Vec<CompanionInfo>,
-}
-
-/// Use case: resolve good and bad companion information for a given variety.
-pub struct GetCompanionsUseCase<'a> {
-    repo: &'a dyn VarietyRepository,
-}
-
-impl<'a> GetCompanionsUseCase<'a> {
-    pub fn new(repo: &'a dyn VarietyRepository) -> Self {
-        Self { repo }
-    }
-
-    pub async fn execute(
-        &self,
-        id: &str,
-        locale: &str,
-    ) -> Result<Option<CompanionData>, RepositoryError> {
-        let variety = match self.repo.get_by_id(id, locale).await? {
-            None => return Ok(None),
-            Some(v) => v,
-        };
-        let all = self.repo.get_all(locale).await?;
-
-        let good = variety
-            .good_companions
-            .iter()
-            .filter_map(|cid| {
-                all.iter().find(|v| &v.id == cid).map(|v| CompanionInfo {
-                    id: v.id.clone(),
-                    name: v.name.clone(),
-                })
-            })
-            .collect();
-
-        let bad = variety
-            .bad_companions
-            .iter()
-            .filter_map(|cid| {
-                all.iter().find(|v| &v.id == cid).map(|v| CompanionInfo {
-                    id: v.id.clone(),
-                    name: v.name.clone(),
-                })
-            })
-            .collect();
-
-        Ok(Some(CompanionData { variety, good, bad }))
     }
 }

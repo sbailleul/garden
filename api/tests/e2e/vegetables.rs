@@ -69,7 +69,7 @@ async fn test_get_vegetables_items_have_links() {
 async fn test_get_vegetables_french_locale() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables")
+        .uri("/api/vegetables?size=50")
         .insert_header(("Accept-Language", "fr"))
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;

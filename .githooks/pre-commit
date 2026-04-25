@@ -11,26 +11,26 @@ cd "$(git rev-parse --show-toplevel)/api"
 echo "▶ cargo fmt --check"
 if ! cargo fmt -- --check; then
   cargo fmt
-  echo "❌ Formatting issues found. Run 'cargo fmt' then re-stage your changes."
+  echo "Formatting issues found. Run 'cargo fmt' then re-stage your changes."
   exit 1
 fi
 
 echo "▶ cargo clippy"
 if ! cargo clippy -- -D warnings; then
-  echo "❌ Clippy warnings found. Fix them then re-stage your changes."
+  echo "Clippy warnings found. Fix them then re-stage your changes."
   exit 1
 fi
 
 echo "▶ cargo build"
 if ! cargo build; then
-  echo "❌ Build failed."
+  echo "Build failed."
   exit 1
 fi
 
 echo "▶ cargo test"
 if ! cargo test; then
-  echo "❌ Tests failed."
+  echo "Tests failed."
   exit 1
 fi
 
-echo "✅ All checks passed."
+echo "All checks passed."

@@ -175,8 +175,6 @@ pub struct Variety {
     /// Approximate number of days from sowing a seed to being ready for transplanting outdoors.
     pub days_to_plant: u32,
     pub lifecycle: Lifecycle,
-    pub good_companions: Vec<String>,
-    pub bad_companions: Vec<String>,
     pub beginner_friendly: bool,
     pub category: Category,
 }
