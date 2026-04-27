@@ -1,4 +1,5 @@
 use std::fmt;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -162,7 +163,7 @@ pub enum Lifecycle {
 #[serde(rename_all = "camelCase")]
 pub struct Variety {
     pub id: String,
-    pub vegetable: Vegetable,
+    pub vegetable: Arc<Vegetable>,
     pub name: String,
     pub latin_name: String,
     /// Per-region sowing and planting calendars.

@@ -99,15 +99,16 @@ mod tests {
             Variety,
         };
         use crate::domain::models::vegetable::Vegetable;
+        use std::sync::Arc;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable: Vegetable {
+            vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],
-            },
+            }),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -144,15 +145,16 @@ mod tests {
             Variety,
         };
         use crate::domain::models::vegetable::Vegetable;
+        use std::sync::Arc;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable: Vegetable {
+            vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],
-            },
+            }),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
@@ -190,15 +192,16 @@ mod tests {
             Variety,
         };
         use crate::domain::models::vegetable::Vegetable;
+        use std::sync::Arc;
         let veg = Variety {
             id: "tomato".into(),
-            vegetable: Vegetable {
+            vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],
-            },
+            }),
             name: "Tomato".into(),
             latin_name: "Solanum lycopersicum".into(),
             calendars: vec![RegionCalendar {
