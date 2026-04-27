@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
 use crate::application::ports::{Page, RepositoryError};
-use crate::domain::models::request::{Level, PlanRequest};
 use crate::domain::models::variety::{Region, SoilType, SunExposure, Variety};
 
 /// Filters derived from a [`PlanRequest`] that can be pushed down to the
@@ -18,18 +17,6 @@ pub struct VarietyFilter {
     pub beginner_only: bool,
     /// Variety IDs that must be excluded from the result.
     pub exclusions: Vec<String>,
-}
-
-impl From<&PlanRequest> for VarietyFilter {
-    fn from(req: &PlanRequest) -> Self {
-        Self {
-            region: req.region.clone(),
-            sun: req.sun.clone(),
-            soil: req.soil.clone(),
-            beginner_only: matches!(req.level, Some(Level::Beginner)),
-            exclusions: req.exclusions.clone(),
-        }
-    }
 }
 
 /// Outbound port: provides access to the variety catalogue.

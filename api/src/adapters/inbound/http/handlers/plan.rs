@@ -9,9 +9,9 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::variety_repository::VarietyRepository, use_cases::plan_garden::PlanGardenUseCase,
+        models::request::PlanRequest, ports::variety_repository::VarietyRepository,
+        use_cases::plan_garden::PlanGardenUseCase,
     },
-    domain::models::request::PlanRequest,
 };
 
 /// POST /api/plan

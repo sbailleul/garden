@@ -1,5 +1,5 @@
 use crate::domain::models::{
-    request::{Level, PlanRequest},
+    request::{Level, PlanParams},
     variety::{Month, RegionCalendar, Variety},
 };
 
@@ -57,7 +57,7 @@ pub(crate) fn is_active_month(cal: &RegionCalendar, month: Month) -> bool {
 /// Internal helper: filters and sorts candidates, optionally restricting to a given month.
 fn filter_and_sort_internal(
     db: &[Variety],
-    request: &PlanRequest,
+    request: &PlanParams,
     month_filter: Option<Month>,
 ) -> Vec<Variety> {
     let preferences = request.preferences.clone().unwrap_or_default();
@@ -120,14 +120,14 @@ fn filter_and_sort_internal(
 /// Filters varieties by all request constraints **including** the calendar month
 /// (used to check against per-region sowing/planting windows), then sorts by
 /// priority (preferences first, then French consumption rank).
-pub fn filter_varieties(db: &[Variety], request: &PlanRequest, month: Month) -> Vec<Variety> {
+pub fn filter_varieties(db: &[Variety], request: &PlanParams, month: Month) -> Vec<Variety> {
     filter_and_sort_internal(db, request, Some(month))
 }
 
 /// Filters varieties by all request constraints **except** month,
 /// then sorts by priority. Used by the planner when month is applied
 /// per-week internally.
-pub fn filter_candidates_base(db: &[Variety], request: &PlanRequest) -> Vec<Variety> {
+pub fn filter_candidates_base(db: &[Variety], request: &PlanParams) -> Vec<Variety> {
     filter_and_sort_internal(db, request, None)
 }
 
@@ -135,15 +135,15 @@ pub fn filter_candidates_base(db: &[Variety], request: &PlanRequest) -> Vec<Vari
 mod tests {
     use super::*;
     use crate::domain::models::{
-        request::{LayoutCell, Level, Period, PlanRequest, PreferenceEntry},
+        request::{LayoutCell, Level, Period, PlanParams, PreferenceEntry},
         variety::{Month, Region, SoilType, SunExposure},
     };
     use crate::domain::test_fixtures::get_all_varieties;
     use chrono::{Duration, NaiveDate};
 
-    fn make_request_for_month(month: u32) -> PlanRequest {
+    fn make_request_for_month(month: u32) -> PlanParams {
         let start = NaiveDate::from_ymd_opt(2025, month, 1).unwrap();
-        PlanRequest {
+        PlanParams {
             // 2m × 3m → 7 cols × 10 rows
             layout: vec![vec![LayoutCell::Empty; 7]; 10],
             period: Some(Period {
@@ -189,7 +189,7 @@ mod tests {
     #[test]
     fn test_filter_by_beginner_excludes_advanced() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             level: Some(Level::Beginner),
             ..make_request_for_month(6)
         };
@@ -206,7 +206,7 @@ mod tests {
     #[test]
     fn test_filter_preferences_boost() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             preferences: Some(vec![PreferenceEntry {
                 id: "basil".into(),
                 quantity: None,
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn test_filter_by_soil() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             soil: Some(SoilType::Sandy),
             ..make_request_for_month(4)
         };
@@ -239,7 +239,7 @@ mod tests {
     #[test]
     fn test_filter_by_sun() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             sun: Some(SunExposure::Shade),
             ..make_request_for_month(4)
         };
@@ -256,7 +256,7 @@ mod tests {
     #[test]
     fn test_filter_by_region() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             region: Region::Mountain,
             ..make_request_for_month(5)
         };
@@ -274,7 +274,7 @@ mod tests {
     fn test_filter_empty_result_incompatible_constraints() {
         let db = get_all_varieties();
         // Shade + June + chalky soil + Mountain + beginner → very few varieties
-        let req = PlanRequest {
+        let req = PlanParams {
             sun: Some(SunExposure::Shade),
             soil: Some(SoilType::Chalky),
             region: Region::Mountain,
@@ -324,7 +324,7 @@ mod tests {
     #[test]
     fn test_exclusions_removes_varieties() {
         let db = get_all_varieties();
-        let req = PlanRequest {
+        let req = PlanParams {
             exclusions: vec!["tomato".to_string(), "basil".to_string()],
             ..make_request_for_month(6)
         };

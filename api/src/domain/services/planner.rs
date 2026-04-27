@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::domain::models::{
     garden::GardenGrid,
-    request::{PlanRequest, PreferenceEntry, SowingRecord},
+    request::{PlanParams, PreferenceEntry, SowingRecord},
     response::{PlanResponse, SowingTask},
     variety::{Month, Variety},
     warnings::Warnings,
@@ -59,7 +59,7 @@ fn compute_sown_batches(
 fn compute_sowing_tasks_by_week(
     weeks: &[crate::domain::models::request::Period],
     base_candidates: &[Variety],
-    request: &PlanRequest,
+    request: &PlanParams,
 ) -> Vec<Vec<SowingTask>> {
     weeks
         .iter()
@@ -123,7 +123,7 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
 /// Returns a warning string when non-blocked cells remain unplanted, otherwise `None`.
 pub fn plan_garden(
     base_candidates: Vec<Variety>,
-    request: &PlanRequest,
+    request: &PlanParams,
     lookup: impl Fn(&str) -> Option<Variety>,
 ) -> Result<PlanResponse, String> {
     let mut warnings = Warnings::new();
