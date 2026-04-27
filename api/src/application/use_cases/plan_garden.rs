@@ -44,4 +44,3 @@ impl<'a> PlanGardenUseCase<'a> {
         plan_garden(candidates, request, |id| lookup.get(id).cloned())
     }
 }
-
