@@ -1,5 +1,5 @@
 use crate::domain::models::{
-    request::{Level, PlanParams},
+    request::PlanParams,
     variety::{Month, RegionCalendar, Variety},
 };
 
@@ -61,43 +61,19 @@ fn filter_and_sort_internal(
     month_filter: Option<Month>,
 ) -> Vec<Variety> {
     let preferences = request.preferences.clone().unwrap_or_default();
-    let is_beginner = matches!(request.level, Some(Level::Beginner));
 
     let mut filtered: Vec<Variety> = db
         .iter()
         .filter(|v| {
-            // Filter by region and/or month via calendars
-            let region_match = match month_filter {
+            // Filter by region and/or month via calendars.
+            // sun / soil / level / exclusions are already handled at SQL level.
+            match month_filter {
                 Some(month) => v
                     .calendars
                     .iter()
                     .any(|c| c.region == request.region && is_active_month(c, month)),
                 None => v.calendars.iter().any(|c| c.region == request.region),
-            };
-            if !region_match {
-                return false;
             }
-            // Filter by sun exposure
-            if let Some(ref sun) = request.sun {
-                if !v.sun_requirement.contains(sun) {
-                    return false;
-                }
-            }
-            // Filter by soil type
-            if let Some(ref soil) = request.soil {
-                if !v.soil_types.contains(soil) {
-                    return false;
-                }
-            }
-            // Filter by skill level
-            if is_beginner && !v.beginner_friendly {
-                return false;
-            }
-            // Filter out explicitly excluded varieties
-            if request.exclusions.contains(&v.id) {
-                return false;
-            }
-            true
         })
         .cloned()
         .collect();
@@ -135,8 +111,8 @@ pub fn filter_candidates_base(db: &[Variety], request: &PlanParams) -> Vec<Varie
 mod tests {
     use super::*;
     use crate::domain::models::{
-        request::{LayoutCell, Level, Period, PlanParams, PreferenceEntry},
-        variety::{Month, Region, SoilType, SunExposure},
+        request::{LayoutCell, Period, PlanParams, PreferenceEntry},
+        variety::{Month, Region},
     };
     use crate::domain::test_fixtures::get_all_varieties;
     use chrono::{Duration, NaiveDate};
@@ -150,12 +126,8 @@ mod tests {
                 start,
                 end: start + Duration::days(6),
             }),
-            sun: None,
-            soil: None,
             region: Region::Temperate,
-            level: None,
             preferences: None,
-            exclusions: vec![],
             sown: std::collections::HashMap::new(),
         }
     }
@@ -187,23 +159,6 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_by_beginner_excludes_advanced() {
-        let db = get_all_varieties();
-        let req = PlanParams {
-            level: Some(Level::Beginner),
-            ..make_request_for_month(6)
-        };
-        let result = filter_varieties(&db, &req, Month::June);
-        for v in &result {
-            assert!(
-                v.beginner_friendly,
-                "Variety {} is not beginner-friendly",
-                v.id
-            );
-        }
-    }
-
-    #[test]
     fn test_filter_preferences_boost() {
         let db = get_all_varieties();
         let req = PlanParams {
@@ -216,40 +171,6 @@ mod tests {
         let result = filter_varieties(&db, &req, Month::June);
         if let Some(first) = result.first() {
             assert_eq!(first.id, "basil", "Basil (preferred) must be first");
-        }
-    }
-
-    #[test]
-    fn test_filter_by_soil() {
-        let db = get_all_varieties();
-        let req = PlanParams {
-            soil: Some(SoilType::Sandy),
-            ..make_request_for_month(4)
-        };
-        let result = filter_varieties(&db, &req, Month::April);
-        for v in &result {
-            assert!(
-                v.soil_types.contains(&SoilType::Sandy),
-                "Variety {} is not suited for sandy soil",
-                v.id
-            );
-        }
-    }
-
-    #[test]
-    fn test_filter_by_sun() {
-        let db = get_all_varieties();
-        let req = PlanParams {
-            sun: Some(SunExposure::Shade),
-            ..make_request_for_month(4)
-        };
-        let result = filter_varieties(&db, &req, Month::April);
-        for v in &result {
-            assert!(
-                v.sun_requirement.contains(&SunExposure::Shade),
-                "Variety {} does not tolerate shade",
-                v.id
-            );
         }
     }
 
@@ -267,29 +188,6 @@ mod tests {
                 "Variety {} has no Mountain calendar entry",
                 v.id
             );
-        }
-    }
-
-    #[test]
-    fn test_filter_empty_result_incompatible_constraints() {
-        let db = get_all_varieties();
-        // Shade + June + chalky soil + Mountain + beginner → very few varieties
-        let req = PlanParams {
-            sun: Some(SunExposure::Shade),
-            soil: Some(SoilType::Chalky),
-            region: Region::Mountain,
-            level: Some(Level::Beginner),
-            ..make_request_for_month(6)
-        };
-        let result = filter_varieties(&db, &req, Month::June);
-        for v in &result {
-            assert!(v
-                .calendars
-                .iter()
-                .any(|c| c.region == Region::Mountain && is_active_month(c, Month::June)));
-            assert!(v.sun_requirement.contains(&SunExposure::Shade));
-            assert!(v.soil_types.contains(&SoilType::Chalky));
-            assert!(v.beginner_friendly);
         }
     }
 
@@ -319,23 +217,5 @@ mod tests {
                 "Tomato (rank 1) must appear before carrot (rank 2); got positions {tp} vs {cp}"
             );
         }
-    }
-
-    #[test]
-    fn test_exclusions_removes_varieties() {
-        let db = get_all_varieties();
-        let req = PlanParams {
-            exclusions: vec!["tomato".to_string(), "basil".to_string()],
-            ..make_request_for_month(6)
-        };
-        let result = filter_varieties(&db, &req, Month::June);
-        assert!(
-            !result.iter().any(|v| v.id == "tomato"),
-            "Tomato must not appear in result when excluded"
-        );
-        assert!(
-            !result.iter().any(|v| v.id == "basil"),
-            "Basil must not appear in result when excluded"
-        );
     }
 }

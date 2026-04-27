@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
 
-use crate::domain::models::{
-    variety::{Region, SoilType, SunExposure},
-    Coordinate, Matrix,
-};
+use crate::domain::models::{variety::Region, Coordinate, Matrix};
 
 /// A single cell in the **request** layout grid.
 /// Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
@@ -94,20 +91,14 @@ pub struct SowingRecord {
     pub seeds_sown: u32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct PlanParams {
     /// Planning period (start and end dates).
     /// When omitted, defaults to the current Monday-to-Sunday week.
     pub period: Option<Period>,
-    pub sun: Option<SunExposure>,
-    pub soil: Option<SoilType>,
     pub region: Region,
-    pub level: Option<Level>,
     /// Preferred varieties with optional per-variety plant count.
     pub preferences: Option<Vec<PreferenceEntry>>,
-    /// Variety IDs to exclude from planning — these will never be auto-placed
-    /// regardless of other filters. Pre-placed cells in `layout` are not affected.
-    pub exclusions: Vec<String>,
     /// Varieties already sown from seed, keyed by variety id.
     /// Each entry is a list of sowing batches, each with an optional date and a seed count.
     /// Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`

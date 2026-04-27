@@ -46,12 +46,8 @@ impl From<&PlanRequest> for PlanParams {
     fn from(req: &PlanRequest) -> Self {
         Self {
             period: req.period.clone(),
-            sun: req.sun.clone(),
-            soil: req.soil.clone(),
             region: req.region.clone(),
-            level: req.level.clone(),
             preferences: req.preferences.clone(),
-            exclusions: req.exclusions.clone(),
             sown: req.sown.clone(),
             layout: req.layout.clone(),
         }
