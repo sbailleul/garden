@@ -4,10 +4,53 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 
 use crate::domain::models::{
-    request::{LayoutCell, Level, Period, PreferenceEntry, SowingRecord},
+    request::{Level, Period, PreferenceEntry, SowingRecord},
     variety::{Region, SoilType, SunExposure},
-    Matrix,
+    Coordinate, Matrix,
 };
+
+/// HTTP-facing layout cell, deserialized from the `layout` array in `POST /api/plan`.
+/// Pre-planted cells reference a variety by ID; the use case resolves IDs to [`Variety`]
+/// objects before passing the layout to the domain planner.
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(tag = "type")]
+pub enum LayoutCell {
+    /// A pre-planted cell that fits in one 30 cm × 30 cm grid cell.
+    #[serde(rename_all = "camelCase")]
+    SelfContained {
+        id: String,
+        /// Number of plants per cell. Computed from the variety's spacing if absent.
+        plants_per_cell: Option<u32>,
+        /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+        /// When provided, it is used to free the cell after harvest and compute
+        /// `estimatedHarvestDate` in the response.
+        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
+        planted_date: Option<chrono::NaiveDate>,
+    },
+    /// The top-left (anchor) cell of a pre-planted multi-cell block.
+    #[serde(rename_all = "camelCase")]
+    Overflowing {
+        id: String,
+        /// Number of plants per cell. Computed from the variety's spacing if absent.
+        plants_per_cell: Option<u32>,
+        /// Block width in grid cells. Computed from the variety's spacing if absent.
+        width_cells: Option<u32>,
+        /// Block length in grid cells. Computed from the variety's spacing if absent.
+        length_cells: Option<u32>,
+        /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+        /// When provided, it is used to free the cell after harvest and compute
+        /// `estimatedHarvestDate` in the response.
+        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
+        planted_date: Option<chrono::NaiveDate>,
+    },
+    /// A continuation cell of a multi-cell block (skipped — anchor handles placement).
+    #[serde(rename_all = "camelCase")]
+    Overflowed { covered_by: Coordinate },
+    /// Free, unoccupied, non-blocked cell.
+    Empty,
+    /// Non-plantable zone (path, alley, obstacle).
+    Blocked,
+}
 
 /// HTTP-facing planning request, deserialized from the `POST /api/plan` body.
 ///
@@ -40,4 +83,29 @@ pub struct PlanRequest {
     /// `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).
     #[schema(value_type = Vec<Vec<LayoutCell>>)]
     pub layout: Matrix<LayoutCell>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn test_layout_cell_selfcontained_planted_date_deserializes_from_camel_case() {
+        let json = r#"{"type": "SelfContained","id":"tomato","plantedDate":"2025-05-01"}"#;
+        let cell: LayoutCell = serde_json::from_str(json).expect("should deserialize");
+
+        match cell {
+            LayoutCell::SelfContained {
+                id, planted_date, ..
+            } => {
+                assert_eq!(id, "tomato");
+                assert_eq!(
+                    planted_date,
+                    Some(NaiveDate::from_ymd_opt(2025, 5, 1).unwrap())
+                );
+            }
+            other => panic!("expected SelfContained, got {other:?}"),
+        }
+    }
 }

@@ -7,28 +7,21 @@ use crate::domain::models::{
     Coordinate, Matrix,
 };
 
-/// A single cell in the **request** layout grid.
-/// Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
-/// relevant for input: `id` for pre-planted cells, nothing for `Empty`/`Blocked`.
-#[derive(Debug, Clone, Deserialize, ToSchema)]
-#[serde(tag = "type")]
+/// A single cell in the **domain** layout grid.
+/// Pre-planted cells carry a resolved [`Variety`]; `Empty`/`Blocked` carry no data.
+#[derive(Debug, Clone)]
 pub enum LayoutCell {
     /// A pre-planted cell that fits in one 30 cm × 30 cm grid cell.
-    #[serde(rename_all = "camelCase")]
     SelfContained {
-        id: String,
+        variety: Variety,
         /// Number of plants per cell. Computed from the variety's spacing if absent.
         plants_per_cell: Option<u32>,
         /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
-        /// When provided, it is used to free the cell after harvest and compute
-        /// `estimatedHarvestDate` in the response.
-        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
         planted_date: Option<NaiveDate>,
     },
     /// The top-left (anchor) cell of a pre-planted multi-cell block.
-    #[serde(rename_all = "camelCase")]
     Overflowing {
-        id: String,
+        variety: Variety,
         /// Number of plants per cell. Computed from the variety's spacing if absent.
         plants_per_cell: Option<u32>,
         /// Block width in grid cells. Computed from the variety's spacing if absent.
@@ -36,13 +29,9 @@ pub enum LayoutCell {
         /// Block length in grid cells. Computed from the variety's spacing if absent.
         length_cells: Option<u32>,
         /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
-        /// When provided, it is used to free the cell after harvest and compute
-        /// `estimatedHarvestDate` in the response.
-        #[schema(value_type = Option<String>, format = Date, example = "2025-05-01")]
         planted_date: Option<NaiveDate>,
     },
     /// A continuation cell of a multi-cell block (skipped — anchor handles placement).
-    #[serde(rename_all = "camelCase")]
     Overflowed { covered_by: Coordinate },
     /// Free, unoccupied, non-blocked cell.
     Empty,
@@ -120,28 +109,4 @@ pub struct PlanParams {
     pub sown: Vec<SownEntry>,
     /// Combined grid layout — defines dimensions and pre-filled cells.
     pub layout: Matrix<LayoutCell>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_layout_cell_selfcontained_planted_date_deserializes_from_camel_case() {
-        let json = r#"{"type": "SelfContained","id":"tomato","plantedDate":"2025-05-01"}"#;
-        let cell: LayoutCell = serde_json::from_str(json).expect("should deserialize");
-
-        match cell {
-            LayoutCell::SelfContained {
-                id, planted_date, ..
-            } => {
-                assert_eq!(id, "tomato");
-                assert_eq!(
-                    planted_date,
-                    Some(NaiveDate::from_ymd_opt(2025, 5, 1).unwrap())
-                );
-            }
-            other => panic!("expected SelfContained, got {other:?}"),
-        }
-    }
 }

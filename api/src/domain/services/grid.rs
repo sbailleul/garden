@@ -1,11 +1,7 @@
 use chrono::{Duration, NaiveDate};
 
 use crate::domain::models::{
-    garden::GardenGrid,
-    request::LayoutCell,
-    variety::{Region, Variety},
-    warnings::Warnings,
-    Coordinate,
+    garden::GardenGrid, request::LayoutCell, variety::Region, warnings::Warnings, Coordinate,
 };
 use crate::domain::services::helpers::{
     adjusted_days_to_harvest, cell_span, infer_planted_date, plants_per_cell,
@@ -34,16 +30,14 @@ pub fn validate_layout(layout: &[Vec<LayoutCell>]) -> Result<GridSize, String> {
 }
 
 /// Creates a blank grid and pre-fills it from the unified layout array:
-/// blocked zones (`true`) and pre-placed varieties (`"id"`).
-/// Returns the grid and any warnings produced (e.g. unknown variety IDs).
-/// The `lookup` closure resolves a variety ID to a `Variety` without any I/O dependency.
+/// blocked zones (`true`) and pre-placed varieties (enriched `Variety` objects).
+/// Returns the grid and any warnings produced (e.g. out-of-bounds continuation cells).
 pub fn initialize_grid(
     rows: usize,
     cols: usize,
     layout: &[Vec<LayoutCell>],
     planning_start: NaiveDate,
     region: &Region,
-    lookup: impl Fn(&str) -> Option<Variety>,
     warnings: &mut Warnings,
 ) -> GardenGrid {
     let mut grid = GardenGrid::new(rows, cols);
@@ -57,82 +51,68 @@ pub fn initialize_grid(
                     grid.cells[r][c].blocked = true;
                 }
                 LayoutCell::SelfContained {
-                    id,
+                    variety,
                     plants_per_cell: ppc_input,
                     planted_date,
                 } => {
-                    if let Some(v) = lookup(id) {
-                        let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
-                        let effective_date = planted_date
-                            .unwrap_or_else(|| infer_planted_date(&v, region, planning_start));
-                        let adjusted_days = adjusted_days_to_harvest(
-                            v.days_to_harvest,
-                            Some(effective_date),
-                            planning_start,
-                        );
-                        grid.cells[r][c].variety =
-                            Some(crate::domain::models::garden::PlacedVariety {
-                                id: v.id.clone(),
-                                vegetable_id: v.vegetable.id.clone(),
-                                name: v.name.clone(),
-                                reason: "Present in the existing layout.".into(),
-                                plants_per_cell: ppc,
-                                span: 1,
-                                anchor: Coordinate { row: r, col: c },
-                                planted_week: 0,
-                                days_to_harvest: adjusted_days,
-                                estimated_harvest_date: effective_date
-                                    + Duration::days(adjusted_days as i64),
-                                lifecycle: v.lifecycle.clone(),
-                            });
-                    } else {
-                        warnings.add(format!(
-                            "Variety '{id}' not found in the database, skipped."
-                        ));
-                    }
+                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(variety.spacing_cm));
+                    let effective_date = planted_date
+                        .unwrap_or_else(|| infer_planted_date(variety, region, planning_start));
+                    let adjusted_days = adjusted_days_to_harvest(
+                        variety.days_to_harvest,
+                        Some(effective_date),
+                        planning_start,
+                    );
+                    grid.cells[r][c].variety = Some(crate::domain::models::garden::PlacedVariety {
+                        id: variety.id.clone(),
+                        vegetable_id: variety.vegetable.id.clone(),
+                        name: variety.name.clone(),
+                        reason: "Present in the existing layout.".into(),
+                        plants_per_cell: ppc,
+                        span: 1,
+                        anchor: Coordinate { row: r, col: c },
+                        planted_week: 0,
+                        days_to_harvest: adjusted_days,
+                        estimated_harvest_date: effective_date
+                            + Duration::days(adjusted_days as i64),
+                        lifecycle: variety.lifecycle.clone(),
+                    });
                 }
                 LayoutCell::Overflowed { covered_by } => {
                     deferred.push(DeferredCell(Coordinate { row: r, col: c }, *covered_by));
                 }
                 LayoutCell::Overflowing {
-                    id,
+                    variety,
                     plants_per_cell: ppc_input,
                     width_cells,
                     length_cells,
                     planted_date,
                 } => {
-                    if let Some(v) = lookup(id) {
-                        let span = cell_span(v.spacing_cm);
-                        let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(v.spacing_cm));
-                        let w = width_cells.unwrap_or(span);
-                        let l = length_cells.unwrap_or(span);
-                        let effective_date = planted_date
-                            .unwrap_or_else(|| infer_planted_date(&v, region, planning_start));
-                        let adjusted_days = adjusted_days_to_harvest(
-                            v.days_to_harvest,
-                            Some(effective_date),
-                            planning_start,
-                        );
-                        grid.cells[r][c].variety =
-                            Some(crate::domain::models::garden::PlacedVariety {
-                                id: v.id.clone(),
-                                vegetable_id: v.vegetable.id.clone(),
-                                name: v.name.clone(),
-                                reason: "Present in the existing layout.".into(),
-                                plants_per_cell: ppc,
-                                span: w.max(l),
-                                anchor: Coordinate { row: r, col: c },
-                                planted_week: 0,
-                                days_to_harvest: adjusted_days,
-                                estimated_harvest_date: effective_date
-                                    + Duration::days(adjusted_days as i64),
-                                lifecycle: v.lifecycle.clone(),
-                            });
-                    } else {
-                        warnings.add(format!(
-                            "Variety '{id}' not found in the database, skipped."
-                        ));
-                    }
+                    let span = cell_span(variety.spacing_cm);
+                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(variety.spacing_cm));
+                    let w = width_cells.unwrap_or(span);
+                    let l = length_cells.unwrap_or(span);
+                    let effective_date = planted_date
+                        .unwrap_or_else(|| infer_planted_date(variety, region, planning_start));
+                    let adjusted_days = adjusted_days_to_harvest(
+                        variety.days_to_harvest,
+                        Some(effective_date),
+                        planning_start,
+                    );
+                    grid.cells[r][c].variety = Some(crate::domain::models::garden::PlacedVariety {
+                        id: variety.id.clone(),
+                        vegetable_id: variety.vegetable.id.clone(),
+                        name: variety.name.clone(),
+                        reason: "Present in the existing layout.".into(),
+                        plants_per_cell: ppc,
+                        span: w.max(l),
+                        anchor: Coordinate { row: r, col: c },
+                        planted_week: 0,
+                        days_to_harvest: adjusted_days,
+                        estimated_harvest_date: effective_date
+                            + Duration::days(adjusted_days as i64),
+                        lifecycle: variety.lifecycle.clone(),
+                    });
                 }
                 LayoutCell::Empty => {}
             }

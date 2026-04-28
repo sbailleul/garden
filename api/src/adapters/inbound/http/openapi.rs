@@ -5,9 +5,9 @@ use crate::adapters::inbound::http::hateoas::{
     CompanionsApiResponse, ErrorResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
     VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
 };
-use crate::application::models::request::PlanRequest;
+use crate::application::models::request::{LayoutCell, PlanRequest};
 use crate::domain::models::{
-    request::{LayoutCell, Level, Period, PreferenceEntry, SowingRecord},
+    request::{Level, Period, PreferenceEntry, SowingRecord},
     response::{
         CompanionInfo, CompanionsResponse, PlanResponse, PlannedCell, SowingTask, WeeklyPlan,
     },

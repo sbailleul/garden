@@ -118,7 +118,6 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
 pub fn plan_garden(
     base_candidates: Vec<Variety>,
     request: &PlanParams,
-    lookup: impl Fn(&str) -> Option<Variety>,
 ) -> Result<PlanResponse, String> {
     let mut warnings = Warnings::new();
 
@@ -131,7 +130,7 @@ pub fn plan_garden(
         .map(|w| w.start)
         .or_else(|| request.period.as_ref().map(|p| p.start))
         .unwrap_or(NaiveDate::MIN);
-    // Compute all sown batches before moving `lookup` into initialize_grid.
+    // Compute all sown batches before the weekly loop.
     let sown_batches = compute_sown_batches(&request.sown, planning_start);
     // Pre-compute sowing tasks for each week.
     let sowing_tasks_by_week = compute_sowing_tasks_by_week(&weeks, &base_candidates, request);
@@ -141,7 +140,6 @@ pub fn plan_garden(
         &request.layout,
         planning_start,
         &request.region,
-        lookup,
         &mut warnings,
     );
     let preferences = &request.preferences;

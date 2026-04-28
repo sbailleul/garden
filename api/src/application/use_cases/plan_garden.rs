@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::application::models::request::PlanRequest;
+use crate::application::models::request::{LayoutCell as RawLayoutCell, PlanRequest};
 use crate::application::ports::variety_repository::{VarietyFilter, VarietyRepository};
-use crate::domain::models::request::{Level, PlanParams, Preference, SownEntry};
+use crate::domain::models::request::{LayoutCell, Level, PlanParams, Preference, SownEntry};
 use crate::domain::models::{response::PlanResponse, variety::Variety};
 use crate::domain::services::{filter::filter_candidates_base, planner::plan_garden};
 
@@ -13,9 +13,8 @@ use crate::domain::services::{filter::filter_candidates_base, planner::plan_gard
 ///    [`VarietyRepository::get_for_planning`].
 /// 2. Sort the pre-filtered candidates by preference / French consumption rank
 ///    (application-level logic, not expressible in SQL).
-/// 3. Fetch the full catalogue via [`VarietyRepository::get_all`] to build a
-///    lookup map so the domain planner can resolve pre-placed variety IDs from
-///    the layout — these may not appear in the filtered candidates.
+/// 3. Fetch the full catalogue via [`VarietyRepository::get_all`] and enrich
+///    preferences, sown entries, and layout cells with resolved [`Variety`] objects.
 /// 4. Delegate planning to the domain service.
 pub struct PlanGardenUseCase<'a> {
     repo: &'a dyn VarietyRepository,
@@ -68,17 +67,61 @@ impl<'a> PlanGardenUseCase<'a> {
             })
             .collect();
 
+        // Enrich layout cells with resolved Variety objects (unknown IDs → Empty).
+        let layout =
+            request
+                .layout
+                .iter()
+                .map(|row| {
+                    row.iter()
+                        .map(|cell| match cell {
+                            RawLayoutCell::SelfContained {
+                                id,
+                                plants_per_cell,
+                                planted_date,
+                            } => lookup.get(id).map_or(LayoutCell::Empty, |v| {
+                                LayoutCell::SelfContained {
+                                    variety: v.clone(),
+                                    plants_per_cell: *plants_per_cell,
+                                    planted_date: *planted_date,
+                                }
+                            }),
+                            RawLayoutCell::Overflowing {
+                                id,
+                                plants_per_cell,
+                                width_cells,
+                                length_cells,
+                                planted_date,
+                            } => lookup.get(id).map_or(LayoutCell::Empty, |v| {
+                                LayoutCell::Overflowing {
+                                    variety: v.clone(),
+                                    plants_per_cell: *plants_per_cell,
+                                    width_cells: *width_cells,
+                                    length_cells: *length_cells,
+                                    planted_date: *planted_date,
+                                }
+                            }),
+                            RawLayoutCell::Overflowed { covered_by } => LayoutCell::Overflowed {
+                                covered_by: *covered_by,
+                            },
+                            RawLayoutCell::Empty => LayoutCell::Empty,
+                            RawLayoutCell::Blocked => LayoutCell::Blocked,
+                        })
+                        .collect()
+                })
+                .collect();
+
         let params = PlanParams {
             period: request.period.clone(),
             region: request.region.clone(),
             preferences,
             sown,
-            layout: request.layout.clone(),
+            layout,
         };
 
         // Sort by preferences / French consumption rank (application logic).
         let candidates = filter_candidates_base(&filtered, &params);
-        plan_garden(candidates, &params, |id| lookup.get(id).cloned())
+        plan_garden(candidates, &params)
     }
 }
 
