@@ -4,7 +4,7 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 
 use crate::domain::models::{
-    request::{LayoutCell, Level, Period, PlanParams, PreferenceEntry, SowingRecord},
+    request::{LayoutCell, Level, Period, PreferenceEntry, SowingRecord},
     variety::{Region, SoilType, SunExposure},
     Matrix,
 };
@@ -42,14 +42,3 @@ pub struct PlanRequest {
     pub layout: Matrix<LayoutCell>,
 }
 
-impl From<&PlanRequest> for PlanParams {
-    fn from(req: &PlanRequest) -> Self {
-        Self {
-            period: req.period.clone(),
-            region: req.region.clone(),
-            preferences: req.preferences.clone(),
-            sown: req.sown.clone(),
-            layout: req.layout.clone(),
-        }
-    }
-}

@@ -84,7 +84,7 @@ pub struct PlacementWeek {
 /// Returns the cumulative companion score.
 pub fn place_candidates(
     grid: &mut GardenGrid,
-    queue: &[&Variety],
+    queue: &[Variety],
     placements_map: &HashMap<String, usize>,
     week: &PlacementWeek,
     build_reason_fn: impl Fn(&Variety, &[String], i32) -> String,

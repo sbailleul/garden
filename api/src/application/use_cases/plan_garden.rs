@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::application::models::request::PlanRequest;
 use crate::application::ports::variety_repository::{VarietyFilter, VarietyRepository};
-use crate::domain::models::request::{Level, PlanParams};
+use crate::domain::models::request::{Level, PlanParams, Preference, SownEntry};
 use crate::domain::models::{response::PlanResponse, variety::Variety};
 use crate::domain::services::{filter::filter_candidates_base, planner::plan_garden};
 
@@ -32,18 +32,52 @@ impl<'a> PlanGardenUseCase<'a> {
         locale: &str,
     ) -> Result<PlanResponse, String> {
         let filter = VarietyFilter::from(request);
-        let params = PlanParams::from(request);
         // SQL-filtered candidates — avoid loading the full catalogue into memory.
         let filtered = self
             .repo
             .get_for_planning(&filter, locale)
             .await
             .map_err(|e| e.to_string())?;
-        // Sort by preferences / French consumption rank (application logic).
-        let candidates = filter_candidates_base(&filtered, &params);
-        // Full catalogue for resolving pre-placed layout cells.
+        // Full catalogue for resolving pre-placed layout cells and enriching preferences/sown.
         let all: Vec<Variety> = self.repo.get_all(locale).await.map_err(|e| e.to_string())?;
         let lookup: HashMap<String, Variety> = all.into_iter().map(|v| (v.id.clone(), v)).collect();
+
+        // Enrich preferences with resolved Variety objects (unknown IDs are silently dropped).
+        let preferences: Vec<Preference> = request
+            .preferences
+            .as_deref()
+            .unwrap_or(&[])
+            .iter()
+            .filter_map(|p| {
+                lookup.get(&p.id).map(|v| Preference {
+                    variety: v.clone(),
+                    quantity: p.quantity,
+                })
+            })
+            .collect();
+
+        // Enrich sown entries with resolved Variety objects.
+        let sown: Vec<SownEntry> = request
+            .sown
+            .iter()
+            .filter_map(|(id, records)| {
+                lookup.get(id).map(|v| SownEntry {
+                    variety: v.clone(),
+                    records: records.clone(),
+                })
+            })
+            .collect();
+
+        let params = PlanParams {
+            period: request.period.clone(),
+            region: request.region.clone(),
+            preferences,
+            sown,
+            layout: request.layout.clone(),
+        };
+
+        // Sort by preferences / French consumption rank (application logic).
+        let candidates = filter_candidates_base(&filtered, &params);
         plan_garden(candidates, &params, |id| lookup.get(id).cloned())
     }
 }

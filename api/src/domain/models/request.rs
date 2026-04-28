@@ -1,9 +1,11 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use utoipa::ToSchema;
 
-use crate::domain::models::{variety::Region, Coordinate, Matrix};
+use crate::domain::models::{
+    variety::{Region, Variety},
+    Coordinate, Matrix,
+};
 
 /// A single cell in the **request** layout grid.
 /// Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
@@ -91,6 +93,21 @@ pub struct SowingRecord {
     pub seeds_sown: u32,
 }
 
+/// An enriched preference: carries the resolved variety instead of a bare ID.
+#[derive(Debug, Clone)]
+pub struct Preference {
+    pub variety: Variety,
+    /// Desired number of **plants** (placements) for this variety.
+    pub quantity: Option<u32>,
+}
+
+/// An enriched sowing entry: carries the resolved variety together with its batches.
+#[derive(Debug, Clone)]
+pub struct SownEntry {
+    pub variety: Variety,
+    pub records: Vec<SowingRecord>,
+}
+
 #[derive(Debug, Clone)]
 pub struct PlanParams {
     /// Planning period (start and end dates).
@@ -98,14 +115,10 @@ pub struct PlanParams {
     pub period: Option<Period>,
     pub region: Region,
     /// Preferred varieties with optional per-variety plant count.
-    pub preferences: Option<Vec<PreferenceEntry>>,
-    /// Varieties already sown from seed, keyed by variety id.
-    /// Each entry is a list of sowing batches, each with an optional date and a seed count.
-    /// Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`
-    pub sown: HashMap<String, Vec<SowingRecord>>,
+    pub preferences: Vec<Preference>,
+    /// Varieties already sown from seed, enriched with resolved variety data.
+    pub sown: Vec<SownEntry>,
     /// Combined grid layout — defines dimensions and pre-filled cells.
-    /// Each cell is a `LayoutCell` object: `{"type":"Empty"}` (free),
-    /// `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).
     pub layout: Matrix<LayoutCell>,
 }
 

@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::domain::models::{
     garden::GardenGrid,
-    request::{PlanParams, PreferenceEntry, SowingRecord},
+    request::{PlanParams, Preference, SownEntry},
     response::{PlanResponse, SowingTask},
     variety::{Month, Variety},
     warnings::Warnings,
@@ -27,28 +27,22 @@ struct SownBatch {
     seeds_sown: u32,
 }
 
-/// Converts the `sown` map from the request into a flat list of [`SownBatch`]es.
+/// Converts the `sown` entries into a flat list of [`SownBatch`]es.
 /// `plant_date` = `sowing_date + days_to_plant`; falls back to `planning_start`
 /// when no sowing date is provided.
-fn compute_sown_batches(
-    sown: &HashMap<String, Vec<SowingRecord>>,
-    planning_start: NaiveDate,
-    lookup: &impl Fn(&str) -> Option<Variety>,
-) -> Vec<SownBatch> {
+fn compute_sown_batches(sown: &[SownEntry], planning_start: NaiveDate) -> Vec<SownBatch> {
     let mut batches = Vec::new();
-    for (id, records) in sown {
-        if let Some(variety) = lookup(id) {
-            for record in records {
-                let plant_date = record
-                    .sowing_date
-                    .map(|d| d + Duration::days(variety.days_to_plant as i64))
-                    .unwrap_or(planning_start);
-                batches.push(SownBatch {
-                    variety: variety.clone(),
-                    plant_date,
-                    seeds_sown: record.seeds_sown,
-                });
-            }
+    for entry in sown {
+        for record in &entry.records {
+            let plant_date = record
+                .sowing_date
+                .map(|d| d + Duration::days(entry.variety.days_to_plant as i64))
+                .unwrap_or(planning_start);
+            batches.push(SownBatch {
+                variety: entry.variety.clone(),
+                plant_date,
+                seeds_sown: record.seeds_sown,
+            });
         }
     }
     batches
@@ -138,7 +132,7 @@ pub fn plan_garden(
         .or_else(|| request.period.as_ref().map(|p| p.start))
         .unwrap_or(NaiveDate::MIN);
     // Compute all sown batches before moving `lookup` into initialize_grid.
-    let sown_batches = compute_sown_batches(&request.sown, planning_start, &lookup);
+    let sown_batches = compute_sown_batches(&request.sown, planning_start);
     // Pre-compute sowing tasks for each week.
     let sowing_tasks_by_week = compute_sowing_tasks_by_week(&weeks, &base_candidates, request);
     let mut grid = initialize_grid(
@@ -150,7 +144,7 @@ pub fn plan_garden(
         lookup,
         &mut warnings,
     );
-    let preferences = request.preferences.as_deref().unwrap_or(&[]);
+    let preferences = &request.preferences;
     let mut weekly_plans = Vec::with_capacity(weeks.len());
 
     for (week_idx, (week, sowing_tasks)) in weeks.into_iter().zip(sowing_tasks_by_week).enumerate()
@@ -183,33 +177,34 @@ pub fn plan_garden(
             }
         }
 
-        // Sown varieties ready this week that didn't pass the calendar filter — bypass it.
-        let sown_extra: Vec<Variety> = sown_variety_map
-            .iter()
-            .filter(|(id, _)| !week_candidates.iter().any(|c| &c.id == *id))
-            .map(|(_, v)| v.clone())
+        // Sown preferences come before regular preferences for placement priority.
+        let sown_prefs: Vec<Preference> = active_sown_counts
+            .into_iter()
+            .filter_map(|(id, count)| {
+                sown_variety_map.remove(&id).map(|variety| Preference {
+                    variety,
+                    quantity: Some(count),
+                })
+            })
             .collect();
 
-        // Sown preferences come before regular preferences for placement priority.
-        let sown_prefs: Vec<PreferenceEntry> = active_sown_counts
-            .into_iter()
-            .map(|(id, count)| PreferenceEntry {
-                id,
-                quantity: Some(count),
-            })
+        // Sown varieties ready this week that didn't pass the calendar filter — bypass it.
+        let sown_extra: Vec<Variety> = sown_prefs
+            .iter()
+            .filter(|p| !week_candidates.iter().any(|c| c.id == p.variety.id))
+            .map(|p| p.variety.clone())
             .collect();
 
         let extended_candidates: Vec<Variety> =
             week_candidates.iter().cloned().chain(sown_extra).collect();
-        let combined_prefs: Vec<PreferenceEntry> = sown_prefs
+        let combined_prefs: Vec<Preference> = sown_prefs
             .into_iter()
             .chain(preferences.iter().cloned())
             .collect();
 
         let week_score = if free_cells > 0 && !extended_candidates.is_empty() {
             // Phase 1: place varieties with an explicit quantity (in preference order).
-            let (queue, placements_map) =
-                build_placement_queue(&extended_candidates, &combined_prefs, free_cells);
+            let (queue, placements_map) = build_placement_queue(&combined_prefs, free_cells);
             let pw = PlacementWeek {
                 rows,
                 cols,

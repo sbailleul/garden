@@ -60,7 +60,7 @@ fn filter_and_sort_internal(
     request: &PlanParams,
     month_filter: Option<Month>,
 ) -> Vec<Variety> {
-    let preferences = request.preferences.clone().unwrap_or_default();
+    let preferences = request.preferences.clone();
 
     let mut filtered: Vec<Variety> = db
         .iter()
@@ -80,8 +80,8 @@ fn filter_and_sort_internal(
 
     // Sort: preferences first (preserving preference order), then by French consumption rank
     filtered.sort_by(|a, b| {
-        let a_pos = preferences.iter().position(|p| p.id == a.id);
-        let b_pos = preferences.iter().position(|p| p.id == b.id);
+        let a_pos = preferences.iter().position(|p| p.variety.id == a.id);
+        let b_pos = preferences.iter().position(|p| p.variety.id == b.id);
         match (a_pos, b_pos) {
             (Some(ai), Some(bi)) => ai.cmp(&bi),
             (Some(_), None) => std::cmp::Ordering::Less,
@@ -111,10 +111,10 @@ pub fn filter_candidates_base(db: &[Variety], request: &PlanParams) -> Vec<Varie
 mod tests {
     use super::*;
     use crate::domain::models::{
-        request::{LayoutCell, Period, PlanParams, PreferenceEntry},
+        request::{LayoutCell, Period, PlanParams, Preference},
         variety::{Month, Region},
     };
-    use crate::domain::test_fixtures::get_all_varieties;
+    use crate::domain::test_fixtures::{get_all_varieties, get_variety_by_id};
     use chrono::{Duration, NaiveDate};
 
     fn make_request_for_month(month: u32) -> PlanParams {
@@ -127,8 +127,8 @@ mod tests {
                 end: start + Duration::days(6),
             }),
             region: Region::Temperate,
-            preferences: None,
-            sown: std::collections::HashMap::new(),
+            preferences: vec![],
+            sown: vec![],
         }
     }
 
@@ -161,11 +161,12 @@ mod tests {
     #[test]
     fn test_filter_preferences_boost() {
         let db = get_all_varieties();
+        let basil = get_variety_by_id("basil").unwrap();
         let req = PlanParams {
-            preferences: Some(vec![PreferenceEntry {
-                id: "basil".into(),
+            preferences: vec![Preference {
+                variety: basil,
                 quantity: None,
-            }]),
+            }],
             ..make_request_for_month(6)
         };
         let result = filter_varieties(&db, &req, Month::June);
