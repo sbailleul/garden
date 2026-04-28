@@ -41,4 +41,3 @@ pub struct PlanRequest {
     #[schema(value_type = Vec<Vec<LayoutCell>>)]
     pub layout: Matrix<LayoutCell>,
 }
-
