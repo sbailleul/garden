@@ -26,6 +26,13 @@ pub struct VarietyFilter {
 #[async_trait]
 pub trait VarietyRepository: Send + Sync {
     async fn get_all(&self, locale: &str) -> Result<Vec<Variety>, RepositoryError>;
+    /// Fetches varieties whose IDs are in `ids`. Ordering is not guaranteed.
+    /// Silently omits IDs that are not found.
+    async fn get_by_ids(
+        &self,
+        ids: &[String],
+        locale: &str,
+    ) -> Result<Vec<Variety>, RepositoryError>;
     async fn get_by_id(&self, id: &str, locale: &str) -> Result<Option<Variety>, RepositoryError>;
     async fn get_by_vegetable_id(
         &self,

@@ -13,8 +13,8 @@ use crate::domain::services::{filter::filter_candidates_base, planner::plan_gard
 ///    [`VarietyRepository::get_for_planning`].
 /// 2. Sort the pre-filtered candidates by preference / French consumption rank
 ///    (application-level logic, not expressible in SQL).
-/// 3. Fetch the full catalogue via [`VarietyRepository::get_all`] and enrich
-///    preferences, sown entries, and layout cells with resolved [`Variety`] objects.
+/// 3. Collect all variety IDs needed (preferences, sown, layout cells), fetch
+///    only those via [`VarietyRepository::get_by_ids`], and enrich the request.
 /// 4. Delegate planning to the domain service.
 pub struct PlanGardenUseCase<'a> {
     repo: &'a dyn VarietyRepository,
@@ -37,9 +37,34 @@ impl<'a> PlanGardenUseCase<'a> {
             .get_for_planning(&filter, locale)
             .await
             .map_err(|e| e.to_string())?;
-        // Full catalogue for resolving pre-placed layout cells and enriching preferences/sown.
-        let all: Vec<Variety> = self.repo.get_all(locale).await.map_err(|e| e.to_string())?;
-        let lookup: HashMap<String, Variety> = all.into_iter().map(|v| (v.id.clone(), v)).collect();
+        // Collect all variety IDs needed for enrichment (preferences, sown, layout cells)
+        // and fetch only those — avoids loading the full catalogue.
+        let mut needed_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
+        for p in request.preferences.as_deref().unwrap_or(&[]) {
+            needed_ids.insert(p.id.clone());
+        }
+        for id in request.sown.keys() {
+            needed_ids.insert(id.clone());
+        }
+        for row in &request.layout {
+            for cell in row {
+                match cell {
+                    RawLayoutCell::SelfContained { id, .. }
+                    | RawLayoutCell::Overflowing { id, .. } => {
+                        needed_ids.insert(id.clone());
+                    }
+                    _ => {}
+                }
+            }
+        }
+        let ids: Vec<String> = needed_ids.into_iter().collect();
+        let resolved = self
+            .repo
+            .get_by_ids(&ids, locale)
+            .await
+            .map_err(|e| e.to_string())?;
+        let lookup: HashMap<String, Variety> =
+            resolved.into_iter().map(|v| (v.id.clone(), v)).collect();
 
         // Enrich preferences with resolved Variety objects (unknown IDs are silently dropped).
         let preferences: Vec<Preference> = request

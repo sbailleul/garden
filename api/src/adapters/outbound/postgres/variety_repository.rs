@@ -218,6 +218,20 @@ impl VarietyRepository for PostgresVarietyRepository {
         rows_to_varieties(&rows)
     }
 
+    async fn get_by_ids(
+        &self,
+        ids: &[String],
+        locale: &str,
+    ) -> Result<Vec<Variety>, RepositoryError> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let client = self.pool.get().await?;
+        let query = format!("{SELECT_COLUMNS} WHERE v.id = ANY($2) ORDER BY v.id");
+        let rows = client.query(query.as_str(), &[&locale, &ids]).await?;
+        rows_to_varieties(&rows)
+    }
+
     async fn get_by_id(&self, id: &str, locale: &str) -> Result<Option<Variety>, RepositoryError> {
         let client = self.pool.get().await?;
         let query = format!("{SELECT_COLUMNS} WHERE v.id = $2");
