@@ -1,0 +1,65 @@
+meta {
+  name: Get Vegetables by Group
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/groups/bulbes/vegetables
+}
+
+params:query {
+  page: 1
+  size: 20
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: en
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload: isArray
+  res.body.payload: isNotEmpty
+  res.body.pagination: isDefined
+  res.body._links: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("payload is a non-empty array", function() {
+    expect(res.body.payload).to.be.an("array").that.is.not.empty;
+  });
+
+  test("response has pagination metadata", function() {
+    expect(res.body.pagination).to.be.an("object");
+    expect(res.body.pagination.total).to.be.a("number").that.is.gt(0);
+  });
+
+  test("_links.self points to this endpoint", function() {
+    expect(res.body._links.self.href).to.equal("/api/groups/bulbes/vegetables");
+    expect(res.body._links.self.method).to.equal("GET");
+  });
+
+  test("_links.group points back to the group", function() {
+    expect(res.body._links.group.href).to.equal("/api/groups/bulbes");
+    expect(res.body._links.group.method).to.equal("GET");
+  });
+
+  test("each vegetable has required fields and groupId matches", function() {
+    res.body.payload.forEach(function(v) {
+      expect(v.payload).to.have.property("id");
+      expect(v.payload).to.have.property("name");
+      expect(v.payload).to.have.property("groupId", "bulbes");
+    });
+  });
+
+  test("onion is in bulbes group", function() {
+    var onion = res.body.payload.find(function(v) { return v.payload.id === "onion"; });
+    expect(onion).to.not.be.undefined;
+  });
+}

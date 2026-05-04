@@ -3,9 +3,11 @@ use actix_web::{http, web, App, HttpServer};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod};
 use tokio_postgres::NoTls;
 
+use garden::adapters::outbound::postgres::group_repository::PostgresGroupRepository;
 use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
 use garden::adapters::outbound::postgres::variety_response_repository::PostgresVarietyResponseRepository;
 use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
+use garden::application::ports::group_repository::GroupRepository;
 use garden::application::ports::variety_repository::VarietyRepository;
 use garden::application::ports::variety_response_repository::VarietyResponseRepository;
 use garden::application::ports::vegetable_repository::VegetableRepository;
@@ -55,8 +57,10 @@ async fn main() -> std::io::Result<()> {
         Box::new(PostgresVarietyResponseRepository::new(pool.clone()));
     let variety_response_repo_data = web::Data::new(variety_response_repo);
     let vegetable_repo: Box<dyn VegetableRepository> =
-        Box::new(PostgresVegetableRepository::new(pool));
+        Box::new(PostgresVegetableRepository::new(pool.clone()));
     let vegetable_repo_data = web::Data::new(vegetable_repo);
+    let group_repo: Box<dyn GroupRepository> = Box::new(PostgresGroupRepository::new(pool));
+    let group_repo_data = web::Data::new(group_repo);
 
     let bind_addr = "0.0.0.0:8080";
     log::info!("Starting server on {bind_addr}");
@@ -73,6 +77,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(repo_data.clone())
             .app_data(variety_response_repo_data.clone())
             .app_data(vegetable_repo_data.clone())
+            .app_data(group_repo_data.clone())
             .configure(garden::adapters::inbound::http::routes::configure)
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("JSON deserialization error: {err}");

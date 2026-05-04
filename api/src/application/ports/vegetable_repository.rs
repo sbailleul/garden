@@ -17,4 +17,11 @@ pub trait VegetableRepository: Send + Sync {
         page: usize,
         size: usize,
     ) -> Result<Page<Vegetable>, RepositoryError>;
+    async fn list_page_by_group_id(
+        &self,
+        group_id: &str,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Vegetable>, RepositoryError>;
 }

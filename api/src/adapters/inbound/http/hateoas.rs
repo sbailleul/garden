@@ -8,6 +8,7 @@ use crate::application::ports::Page;
 
 use crate::adapters::inbound::http::dto::VarietyResponse;
 use crate::domain::models::{
+    group::Group,
     response::{CompanionsResponse, PlanResponse},
     vegetable::Vegetable,
 };
@@ -99,7 +100,8 @@ impl Default for PaginationParams {
     VarietyApiResponse   = ApiResponse<VarietyResponse>,
     VegetableApiResponse     = ApiResponse<Vegetable>,
     PlanApiResponse        = ApiResponse<PlanResponse>,
-    CompanionsApiResponse  = ApiResponse<CompanionsResponse>
+    CompanionsApiResponse  = ApiResponse<CompanionsResponse>,
+    GroupApiResponse       = ApiResponse<Group>
 )]
 pub struct ApiResponse<T> {
     pub payload: T,
@@ -120,6 +122,7 @@ impl<T> ApiResponse<T> {
 #[aliases(
     VarietiesApiResponse   = PaginatedResponse<VarietyApiResponse>,
     VegetablesApiResponse    = PaginatedResponse<VegetableApiResponse>,
+    GroupsApiResponse        = PaginatedResponse<GroupApiResponse>,
 )]
 pub struct PaginatedResponse<T> {
     pub payload: Vec<T>,

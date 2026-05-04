@@ -105,6 +105,7 @@ mod tests {
             vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
+                group_id: "legumes-fruits".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],
@@ -151,6 +152,7 @@ mod tests {
             vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
+                group_id: "legumes-fruits".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],
@@ -198,6 +200,7 @@ mod tests {
             vegetable: Arc::new(Vegetable {
                 id: "tomato".into(),
                 name: "Tomato".into(),
+                group_id: "legumes-fruits".into(),
                 variety_ids: vec!["tomato".into()],
                 good_companions: vec![],
                 bad_companions: vec![],

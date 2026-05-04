@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/api/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /api/groups */
+        get: operations["list_groups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /api/groups/{id} */
+        get: operations["get_group"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/groups/{id}/vegetables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /api/groups/{id}/vegetables */
+        get: operations["list_vegetables_by_group"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plan": {
         parameters: {
             query?: never;
@@ -64,27 +115,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/varieties/{id}/companions"?: never;
-    "/api/vegetables/{id}/companions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/vegetables/{id}/companions
-         * @description Returns good and bad companions for a given vegetable.
-         */
-        get: operations["get_companions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/vegetables": {
         parameters: {
             query?: never;
@@ -117,6 +147,46 @@ export interface paths {
          * @description Returns a single vegetable by id.
          */
         get: operations["get_vegetable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vegetables/{id}/companions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GET /api/vegetables/{id}/companions
+         * @description Returns good and bad companions for a given vegetable.
+         */
+        get: operations["get_companions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vegetables/{id}/varieties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GET /api/vegetables/{id}/varieties
+         * @description Returns all varieties that belong to the given vegetable.
+         */
+        get: operations["get_varieties_by_vegetable"];
         put?: never;
         post?: never;
         delete?: never;
@@ -166,9 +236,34 @@ export interface components {
             error: string;
         };
         /**
-         * @description A single cell in the **request** layout grid.
-         *     Uses the same `{"type":...}` tag as `PlannedCell` but only carries the data
-         *     relevant for input: `id` for pre-planted cells, nothing for `Empty`/`Blocked`.
+         * @description A group is a high-level category that contains several vegetables
+         *     (e.g. "Bulbes" groups onion, garlic, leek, and chive).
+         */
+        Group: {
+            id: string;
+            name: string;
+        };
+        /** @description Generic single-item response envelope. */
+        GroupApiResponse: {
+            /** @description HAL-style hypermedia links. */
+            _links: {
+                [key: string]: components["schemas"]["Link"];
+            };
+            payload: components["schemas"]["Group"];
+        };
+        /** @description Generic paginated list response envelope. */
+        GroupsApiResponse: {
+            /** @description HAL-style hypermedia links. */
+            _links: {
+                [key: string]: components["schemas"]["Link"];
+            };
+            pagination: components["schemas"]["Pagination"];
+            payload: components["schemas"]["GroupApiResponse"][];
+        };
+        /**
+         * @description HTTP-facing layout cell, deserialized from the `layout` array in `POST /api/plan`.
+         *     Pre-planted cells reference a variety by ID; the use case resolves IDs to [`Variety`]
+         *     objects before passing the layout to the domain planner.
          */
         LayoutCell: {
             id: string;
@@ -276,6 +371,12 @@ export interface components {
             };
             payload: components["schemas"]["PlanResponse"];
         };
+        /**
+         * @description HTTP-facing planning request, deserialized from the `POST /api/plan` body.
+         *
+         *     Validated and converted to [`PlanParams`] by the use case before the domain
+         *     services are invoked.
+         */
         PlanRequest: {
             /**
              * @description Variety IDs to exclude from planning — these will never be auto-placed
@@ -427,24 +528,31 @@ export interface components {
             pagination: components["schemas"]["Pagination"];
             payload: components["schemas"]["VarietyApiResponse"][];
         };
-        Variety: {
+        /** @description Generic single-item response envelope. */
+        VarietyApiResponse: {
+            /** @description HAL-style hypermedia links. */
+            _links: {
+                [key: string]: components["schemas"]["Link"];
+            };
+            payload: components["schemas"]["VarietyResponse"];
+        };
+        /**
+         * @description HTTP-facing flat representation of a variety.
+         *
+         *     Returned directly by the [`VarietyResponseRepository`] so handlers never
+         *     need to build a full domain [`Variety`] (with its embedded [`Vegetable`])
+         *     just to flatten it back down for the API response.
+         *
+         *     [`Variety`]: crate::domain::models::variety::Variety
+         *     [`Vegetable`]: crate::domain::models::vegetable::Vegetable
+         */
+        VarietyResponse: {
             beginnerFriendly: boolean;
-            /**
-             * @description Per-region sowing and planting calendars.
-             *     The presence of a [`RegionCalendar`] entry for a given region implies
-             *     the variety can be grown there.
-             */
             calendars: components["schemas"]["RegionCalendar"][];
             category: components["schemas"]["Category"];
-            /**
-             * Format: int32
-             * @description Approximate number of days from planting/transplanting to first harvest.
-             */
+            /** Format: int32 */
             daysToHarvest: number;
-            /**
-             * Format: int32
-             * @description Approximate number of days from sowing a seed to being ready for transplanting outdoors.
-             */
+            /** Format: int32 */
             daysToPlant: number;
             id: string;
             latinName: string;
@@ -456,21 +564,17 @@ export interface components {
             sunRequirement: components["schemas"]["SunExposure"][];
             vegetableId: string;
         };
-        /** @description Generic single-item response envelope. */
-        VarietyApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["Variety"];
-        };
         /**
          * @description A vegetable groups one or more varieties of the same species or type.
          *     For example, the `"pepper"` vegetable contains both `"pepper"` and `"red-pepper"`.
          */
         Vegetable: {
+            /** @description Identifiers of vegetables that harm this vegetable when planted nearby. */
             badCompanions: string[];
+            /** @description Identifiers of vegetables that benefit this vegetable when planted nearby. */
             goodCompanions: string[];
+            /** @description Identifier of the group this vegetable belongs to. */
+            groupId: string;
             id: string;
             name: string;
             varietyIds: string[];
@@ -519,6 +623,109 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_groups: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-based, default: 1). */
+                page?: number | null;
+                /** @description Items per page (default: 20). */
+                size?: number | null;
+            };
+            header?: {
+                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+                "Accept-Language"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of all groups */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupsApiResponse"];
+                };
+            };
+        };
+    };
+    get_group: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+                "Accept-Language"?: string | null;
+            };
+            path: {
+                /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupApiResponse"];
+                };
+            };
+            /** @description Group not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_vegetables_by_group: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-based, default: 1). */
+                page?: number | null;
+                /** @description Items per page (default: 20). */
+                size?: number | null;
+            };
+            header?: {
+                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+                "Accept-Language"?: string | null;
+            };
+            path: {
+                /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of vegetables in this group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VegetablesApiResponse"];
+                };
+            };
+            /** @description Group not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     post_plan: {
         parameters: {
             query?: never;
@@ -558,7 +765,12 @@ export interface operations {
     };
     list_varieties: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Page number (1-based, default: 1). */
+                page?: number | null;
+                /** @description Items per page (default: 20). */
+                size?: number | null;
+            };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
                 "Accept-Language"?: string | null;
@@ -614,44 +826,14 @@ export interface operations {
             };
         };
     };
-    get_companions: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Companion planting info */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanionsApiResponse"];
-                };
-            };
-            /** @description Vegetable not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     list_vegetables: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Page number (1-based, default: 1). */
+                page?: number | null;
+                /** @description Items per page (default: 20). */
+                size?: number | null;
+            };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
                 "Accept-Language"?: string | null;
@@ -694,6 +876,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VegetableApiResponse"];
+                };
+            };
+            /** @description Vegetable not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_companions: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+                "Accept-Language"?: string | null;
+            };
+            path: {
+                /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Companion planting info */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanionsApiResponse"];
+                };
+            };
+            /** @description Vegetable not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_varieties_by_vegetable: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-based, default: 1). */
+                page?: number | null;
+                /** @description Items per page (default: 20). */
+                size?: number | null;
+            };
+            header?: {
+                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+                "Accept-Language"?: string | null;
+            };
+            path: {
+                /** @description Vegetable identifier (e.g. `pepper`, `brassica`) */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of varieties for this vegetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarietiesApiResponse"];
                 };
             };
             /** @description Vegetable not found */

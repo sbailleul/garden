@@ -8,6 +8,8 @@ use utoipa::ToSchema;
 pub struct Vegetable {
     pub id: String,
     pub name: String,
+    /// Identifier of the group this vegetable belongs to.
+    pub group_id: String,
     pub variety_ids: Vec<String>,
     /// Identifiers of vegetables that benefit this vegetable when planted nearby.
     pub good_companions: Vec<String>,

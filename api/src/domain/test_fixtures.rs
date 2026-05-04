@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use crate::domain::models::group::Group;
 use crate::domain::models::variety::Month::*;
 use crate::domain::models::variety::{
     CalendarWindow, Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure, Variety,
@@ -1988,6 +1989,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "tomato".into(),
             name: "Tomato".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["tomato".into()],
             good_companions: vec![
                 "basil".into(),
@@ -2001,6 +2003,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "zucchini".into(),
             name: "Zucchini".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["zucchini".into()],
             good_companions: vec!["green-bean".into(), "maïs".into(), "radish".into()],
             bad_companions: vec!["potato".into()],
@@ -2008,6 +2011,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "carrot".into(),
             name: "Carrot".into(),
+            group_id: "legumes-racines".into(),
             variety_ids: vec!["carrot".into()],
             good_companions: vec![
                 "tomato".into(),
@@ -2021,6 +2025,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "basil".into(),
             name: "Basil".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["basil".into()],
             good_companions: vec!["tomato".into(), "pepper".into(), "asparagus".into()],
             bad_companions: vec!["sage".into(), "thyme".into()],
@@ -2028,6 +2033,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "lettuce".into(),
             name: "Lettuce".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["lettuce".into()],
             good_companions: vec![
                 "carrot".into(),
@@ -2040,6 +2046,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "radish".into(),
             name: "Radish".into(),
+            group_id: "legumes-racines".into(),
             variety_ids: vec!["radish".into()],
             good_companions: vec![
                 "carrot".into(),
@@ -2052,6 +2059,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "onion".into(),
             name: "Onion".into(),
+            group_id: "bulbes".into(),
             variety_ids: vec!["onion".into()],
             good_companions: vec![
                 "carrot".into(),
@@ -2064,6 +2072,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "garlic".into(),
             name: "Garlic".into(),
+            group_id: "bulbes".into(),
             variety_ids: vec!["garlic".into()],
             good_companions: vec![
                 "tomato".into(),
@@ -2076,6 +2085,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "leek".into(),
             name: "Leek".into(),
+            group_id: "bulbes".into(),
             variety_ids: vec!["leek".into()],
             good_companions: vec!["carrot".into(), "celery".into(), "lettuce".into()],
             bad_companions: vec!["green-bean".into(), "pea".into()],
@@ -2083,6 +2093,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "green-bean".into(),
             name: "Green Bean".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["green-bean".into()],
             good_companions: vec![
                 "zucchini".into(),
@@ -2100,6 +2111,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "cucumber".into(),
             name: "Cucumber".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["cucumber".into()],
             good_companions: vec![
                 "radish".into(),
@@ -2112,6 +2124,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "pepper".into(),
             name: "Pepper".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["pepper".into(), "red-pepper".into()],
             good_companions: vec!["basil".into(), "tomato".into(), "carrot".into()],
             bad_companions: vec!["fennel".into(), "brassica".into()],
@@ -2119,6 +2132,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "pea".into(),
             name: "Pea".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["pea".into()],
             good_companions: vec![
                 "carrot".into(),
@@ -2131,6 +2145,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "brassica".into(),
             name: "Brassica".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["cabbage".into(), "broccoli".into(), "cauliflower".into()],
             good_companions: vec!["celery".into(), "onion".into(), "pea".into()],
             bad_companions: vec!["tomato".into(), "strawberry".into(), "fennel".into()],
@@ -2138,6 +2153,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "parsley".into(),
             name: "Parsley".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["parsley".into()],
             good_companions: vec!["tomato".into(), "asparagus".into(), "rose".into()],
             bad_companions: vec!["lettuce".into()],
@@ -2145,6 +2161,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "thyme".into(),
             name: "Thyme".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["thyme".into()],
             good_companions: vec!["brassica".into(), "tomato".into(), "eggplant".into()],
             bad_companions: vec!["basil".into()],
@@ -2152,6 +2169,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "rosemary".into(),
             name: "Rosemary".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["rosemary".into()],
             good_companions: vec!["brassica".into(), "green-bean".into(), "sage".into()],
             bad_companions: vec!["cucumber".into(), "pumpkin".into()],
@@ -2159,6 +2177,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "beet".into(),
             name: "Beet".into(),
+            group_id: "legumes-racines".into(),
             variety_ids: vec!["beet".into()],
             good_companions: vec!["onion".into(), "lettuce".into(), "radish".into()],
             bad_companions: vec!["green-bean".into(), "mustard".into()],
@@ -2166,6 +2185,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "spinach".into(),
             name: "Spinach".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["spinach".into()],
             good_companions: vec!["strawberry".into(), "tomato".into(), "radish".into()],
             bad_companions: vec!["beet".into(), "sorrel".into()],
@@ -2173,6 +2193,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "fennel".into(),
             name: "Fennel".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["fennel".into()],
             good_companions: vec![],
             bad_companions: vec![
@@ -2188,6 +2209,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "eggplant".into(),
             name: "Eggplant".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["eggplant".into()],
             good_companions: vec!["basil".into(), "thyme".into(), "pepper".into()],
             bad_companions: vec!["fennel".into()],
@@ -2195,6 +2217,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "celery".into(),
             name: "Celery".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["celery".into()],
             good_companions: vec!["leek".into(), "brassica".into(), "tomato".into()],
             bad_companions: vec!["lettuce".into(), "garlic".into()],
@@ -2202,6 +2225,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "potato".into(),
             name: "Potato".into(),
+            group_id: "legumes-racines".into(),
             variety_ids: vec!["potato".into()],
             good_companions: vec!["green-bean".into(), "brassica".into(), "maïs".into()],
             bad_companions: vec!["tomato".into(), "cucumber".into(), "zucchini".into()],
@@ -2209,6 +2233,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "maïs".into(),
             name: "Corn".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["maïs".into()],
             good_companions: vec!["green-bean".into(), "zucchini".into(), "potato".into()],
             bad_companions: vec!["tomato".into(), "celery".into()],
@@ -2216,6 +2241,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "pumpkin".into(),
             name: "Pumpkin".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["pumpkin".into()],
             good_companions: vec!["maïs".into(), "green-bean".into(), "onion".into()],
             bad_companions: vec!["potato".into(), "rosemary".into()],
@@ -2223,6 +2249,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "chive".into(),
             name: "Chive".into(),
+            group_id: "bulbes".into(),
             variety_ids: vec!["chive".into()],
             good_companions: vec![
                 "carrot".into(),
@@ -2235,6 +2262,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "mint".into(),
             name: "Mint".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["mint".into()],
             good_companions: vec!["brassica".into(), "tomato".into(), "pea".into()],
             bad_companions: vec!["parsley".into()],
@@ -2242,6 +2270,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "strawberry".into(),
             name: "Strawberry".into(),
+            group_id: "legumes-fruits".into(),
             variety_ids: vec!["strawberry".into()],
             good_companions: vec![
                 "lettuce".into(),
@@ -2254,6 +2283,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "turnip".into(),
             name: "Turnip".into(),
+            group_id: "legumes-racines".into(),
             variety_ids: vec!["turnip".into()],
             good_companions: vec!["pea".into(), "green-bean".into()],
             bad_companions: vec!["mustard".into(), "radish".into()],
@@ -2261,6 +2291,7 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "asparagus".into(),
             name: "Asparagus".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["asparagus".into()],
             good_companions: vec!["tomato".into(), "parsley".into(), "basil".into()],
             bad_companions: vec!["onion".into(), "garlic".into()],
@@ -2268,9 +2299,43 @@ pub fn get_all_vegetables() -> Vec<Vegetable> {
         Vegetable {
             id: "artichoke".into(),
             name: "Artichoke".into(),
+            group_id: "legumes-feuilles".into(),
             variety_ids: vec!["artichoke".into()],
             good_companions: vec![],
             bad_companions: vec![],
+        },
+    ]
+}
+
+pub fn get_group_by_id(id: &str) -> Option<Group> {
+    get_all_groups().into_iter().find(|g| g.id == id)
+}
+
+pub fn get_all_groups() -> Vec<Group> {
+    vec![
+        Group {
+            id: "bulbes".into(),
+            name: "Bulbs".into(),
+        },
+        Group {
+            id: "engrais-verts".into(),
+            name: "Green Manure".into(),
+        },
+        Group {
+            id: "legumes-feuilles".into(),
+            name: "Leafy Vegetables".into(),
+        },
+        Group {
+            id: "legumes-fruits".into(),
+            name: "Fruiting Vegetables".into(),
+        },
+        Group {
+            id: "legumes-racines".into(),
+            name: "Root Vegetables".into(),
+        },
+        Group {
+            id: "plantes-a-grains".into(),
+            name: "Grain Plants".into(),
         },
     ]
 }

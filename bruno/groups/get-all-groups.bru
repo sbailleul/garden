@@ -1,0 +1,65 @@
+meta {
+  name: Get All Groups
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/groups
+}
+
+params:query {
+  page: 1
+  size: 20
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: en
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload: isArray
+  res.body.payload: isNotEmpty
+  res.body.pagination: isDefined
+  res.body._links: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("payload is a non-empty array", function() {
+    expect(res.body.payload).to.be.an("array").that.is.not.empty;
+  });
+
+  test("response has pagination metadata", function() {
+    expect(res.body.pagination).to.be.an("object");
+    expect(res.body.pagination.total).to.be.a("number").that.is.gt(0);
+    expect(res.body.pagination.page).to.equal(1);
+    expect(res.body.pagination.perPage).to.equal(20);
+    expect(res.body.pagination.totalPages).to.be.a("number").that.is.gte(1);
+  });
+
+  test("response has collection _links", function() {
+    expect(res.body._links.self.href).to.equal("/api/groups");
+    expect(res.body._links.self.method).to.equal("GET");
+  });
+
+  test("each group has required fields and links", function() {
+    res.body.payload.forEach(function(g) {
+      expect(g.payload).to.have.property("id");
+      expect(g.payload).to.have.property("name");
+      expect(g._links.self.href).to.equal("/api/groups/" + g.payload.id);
+      expect(g._links.vegetables.href).to.equal("/api/groups/" + g.payload.id + "/vegetables");
+    });
+  });
+
+  test("known group bulbes is present", function() {
+    var bulbes = res.body.payload.find(function(g) { return g.payload.id === "bulbes"; });
+    expect(bulbes).to.not.be.undefined;
+    expect(bulbes.payload.name).to.equal("Bulbs");
+  });
+}

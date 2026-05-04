@@ -2,11 +2,13 @@ use utoipa::OpenApi;
 
 use crate::adapters::inbound::http::dto::VarietyResponse;
 use crate::adapters::inbound::http::hateoas::{
-    CompanionsApiResponse, ErrorResponse, Link, Pagination, PlanApiResponse, VarietiesApiResponse,
-    VarietyApiResponse, VegetableApiResponse, VegetablesApiResponse,
+    CompanionsApiResponse, ErrorResponse, GroupApiResponse, GroupsApiResponse, Link, Pagination,
+    PlanApiResponse, VarietiesApiResponse, VarietyApiResponse, VegetableApiResponse,
+    VegetablesApiResponse,
 };
 use crate::application::models::request::{LayoutCell, PlanRequest};
 use crate::domain::models::{
+    group::Group,
     request::{Level, Period, PreferenceEntry, SowingRecord},
     response::{
         CompanionInfo, CompanionsResponse, PlanResponse, PlannedCell, SowingTask, WeeklyPlan,
@@ -27,6 +29,9 @@ use crate::domain::models::{
         license(name = "MIT"),
     ),
     paths(
+        crate::adapters::inbound::http::handlers::groups::list_groups,
+        crate::adapters::inbound::http::handlers::groups::get_group,
+        crate::adapters::inbound::http::handlers::groups::list_vegetables_by_group,
         crate::adapters::inbound::http::handlers::varieties::list_varieties,
         crate::adapters::inbound::http::handlers::varieties::get_variety,
         crate::adapters::inbound::http::handlers::vegetables::list_vegetables,
@@ -43,6 +48,8 @@ use crate::domain::models::{
             CalendarWindow, RegionCalendar,
             // Variety response DTO
             VarietyResponse,
+            // Group
+            Group,
             // Vegetable
             Vegetable,
             // Plan request
@@ -56,6 +63,8 @@ use crate::domain::models::{
             // Concrete response envelopes (via #[aliases])
             VarietyApiResponse,
             VarietiesApiResponse,
+            GroupApiResponse,
+            GroupsApiResponse,
             VegetableApiResponse,
             VegetablesApiResponse,
             PlanApiResponse,
@@ -63,6 +72,7 @@ use crate::domain::models::{
         )
     ),
     tags(
+        (name = "groups",     description = "Group catalogue — top-level botanical/culinary categories"),
         (name = "varieties", description = "Variety catalogue — list, detail, companion lookup"),
         (name = "vegetables",  description = "Vegetable catalogue — group varieties by species/type"),
         (name = "plan",       description = "Garden planning — generate an optimised planting layout"),

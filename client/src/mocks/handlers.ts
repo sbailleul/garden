@@ -1,6 +1,9 @@
 import { http, HttpResponse } from "msw";
 
 import type {
+  Group,
+  GroupApiResponse,
+  GroupsApiResponse,
   Variety,
   Vegetable,
   VegetablesApiResponse,
@@ -126,8 +129,8 @@ const VEGETABLE_MAP: Record<string, Variety> = {
   basil: BASIL,
 };
 
-const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
-const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
+const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", groupId: "legumes-fruits", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
+const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", groupId: "legumes-feuilles", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
 
 const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v,
@@ -147,6 +150,46 @@ const VARIETIES_RESPONSE: VegetablesApiResponse = {
 const VARIETY_MAP: Record<string, Vegetable> = {
   tomato: TOMATO_VARIETY,
   basil: BASIL_VARIETY,
+};
+
+const BULBES_GROUP: Group = { id: "bulbes", name: "Bulbes" };
+const LEGUMES_FRUITS_GROUP: Group = { id: "legumes-fruits", name: "Légumes-Fruits" };
+const LEGUMES_FEUILLES_GROUP: Group = { id: "legumes-feuilles", name: "Légumes-Feuilles" };
+const LEGUMES_RACINES_GROUP: Group = { id: "legumes-racines", name: "Légumes-Racines" };
+const ENGRAIS_VERTS_GROUP: Group = { id: "engrais-verts", name: "Engrais Verts" };
+const PLANTES_A_GRAINS_GROUP: Group = { id: "plantes-a-grains", name: "Plantes à Grains" };
+
+const ALL_GROUPS = [
+  BULBES_GROUP,
+  LEGUMES_FEUILLES_GROUP,
+  LEGUMES_FRUITS_GROUP,
+  LEGUMES_RACINES_GROUP,
+  ENGRAIS_VERTS_GROUP,
+  PLANTES_A_GRAINS_GROUP,
+];
+
+const groupResponse = (g: Group): GroupApiResponse => ({
+  payload: g,
+  _links: {
+    self: SELF_LINK(`/api/groups/${g.id}`),
+    vegetables: SELF_LINK(`/api/groups/${g.id}/vegetables`),
+    collection: SELF_LINK("/api/groups"),
+  },
+});
+
+const GROUPS_RESPONSE: GroupsApiResponse = {
+  payload: ALL_GROUPS.map(groupResponse),
+  pagination: { page: 1, perPage: 20, total: 6, totalPages: 1 },
+  _links: { self: SELF_LINK("/api/groups") },
+};
+
+const GROUP_MAP: Record<string, Group> = Object.fromEntries(
+  ALL_GROUPS.map((g) => [g.id, g]),
+);
+
+const GROUP_VEGETABLES: Record<string, Vegetable[]> = {
+  "legumes-fruits": [TOMATO_VARIETY],
+  "legumes-feuilles": [BASIL_VARIETY],
 };
 
 export const handlers = [
@@ -177,5 +220,37 @@ export const handlers = [
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
     return HttpResponse.json(vegetableResponse(vegetable));
+  }),
+
+  http.get("/api/groups", () => HttpResponse.json(GROUPS_RESPONSE)),
+
+  http.get("/api/groups/:id", ({ params }) => {
+    const group = GROUP_MAP[params["id"] as string];
+    if (!group) {
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return HttpResponse.json(groupResponse(group));
+  }),
+
+  http.get("/api/groups/:id/vegetables", ({ params }) => {
+    const group = GROUP_MAP[params["id"] as string];
+    if (!group) {
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const vegetables = GROUP_VEGETABLES[params["id"] as string] ?? [];
+    const response: VegetablesApiResponse = {
+      payload: vegetables.map(vegetableResponse),
+      pagination: {
+        page: 1,
+        perPage: 20,
+        total: vegetables.length,
+        totalPages: 1,
+      },
+      _links: {
+        self: SELF_LINK(`/api/groups/${params["id"]}/vegetables`),
+        group: SELF_LINK(`/api/groups/${params["id"]}`),
+      },
+    };
+    return HttpResponse.json(response);
   }),
 ];

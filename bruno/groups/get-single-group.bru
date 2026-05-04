@@ -1,0 +1,47 @@
+meta {
+  name: Get Single Group
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/groups/bulbes
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: en
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload.id: isDefined
+  res.body.payload.name: isDefined
+  res.body._links: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("payload has id and name", function() {
+    expect(res.body.payload).to.have.property("id", "bulbes");
+    expect(res.body.payload).to.have.property("name", "Bulbs");
+  });
+
+  test("_links.self points to this group", function() {
+    expect(res.body._links.self.href).to.equal("/api/groups/bulbes");
+    expect(res.body._links.self.method).to.equal("GET");
+  });
+
+  test("_links.vegetables points to group vegetables", function() {
+    expect(res.body._links.vegetables.href).to.equal("/api/groups/bulbes/vegetables");
+    expect(res.body._links.vegetables.method).to.equal("GET");
+  });
+
+  test("_links.collection points to groups list", function() {
+    expect(res.body._links.collection.href).to.equal("/api/groups");
+    expect(res.body._links.collection.method).to.equal("GET");
+  });
+}

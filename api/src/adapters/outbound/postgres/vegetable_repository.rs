@@ -18,6 +18,7 @@ const SELECT_COLUMNS: &str = r#"
     SELECT
         v.id,
         COALESCE(t_req.name, t_en.name) AS name,
+        v.group_id,
         v.good_companions,
         v.bad_companions,
         ARRAY_AGG(vr.id ORDER BY vr.id) FILTER (WHERE vr.id IS NOT NULL) AS variety_ids
@@ -30,7 +31,7 @@ const SELECT_COLUMNS: &str = r#"
            ON vr.vegetable_id = v.id
 "#;
 
-const GROUP_BY: &str = "GROUP BY v.id, COALESCE(t_req.name, t_en.name)";
+const GROUP_BY: &str = "GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id";
 
 fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryError> {
     let variety_ids: Vec<String> = row.try_get("variety_ids").unwrap_or_default();
@@ -39,6 +40,7 @@ fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryEr
     Ok(Vegetable {
         id: row.try_get("id")?,
         name: row.try_get("name")?,
+        group_id: row.try_get("group_id")?,
         variety_ids,
         good_companions,
         bad_companions,
@@ -75,7 +77,7 @@ impl VegetableRepository for PostgresVegetableRepository {
         let limit = size as i64;
         let offset = ((page - 1) * size) as i64;
         let query = format!(
-            "SELECT COUNT(*) OVER() AS total_count, id, name,
+            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id,
                 good_companions, bad_companions, variety_ids
              FROM (
                  {SELECT_COLUMNS} {GROUP_BY} ORDER BY v.id
@@ -84,6 +86,56 @@ impl VegetableRepository for PostgresVegetableRepository {
         );
         let rows = client
             .query(query.as_str(), &[&locale, &limit, &offset])
+            .await?;
+        let total = rows
+            .first()
+            .map(|r| r.try_get::<_, i64>("total_count").unwrap_or(0) as usize)
+            .unwrap_or(0);
+        let items = rows
+            .iter()
+            .map(row_to_vegetable)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Page { items, total })
+    }
+
+    async fn list_page_by_group_id(
+        &self,
+        group_id: &str,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Vegetable>, RepositoryError> {
+        let client = self.pool.get().await?;
+        let limit = size as i64;
+        let offset = ((page - 1) * size) as i64;
+        // SELECT_COLUMNS uses $1 for locale; we add group_id as $2, limit as $3, offset as $4.
+        let inner = r#"
+            SELECT
+                v.id,
+                COALESCE(t_req.name, t_en.name) AS name,
+                v.group_id,
+                v.good_companions,
+                v.bad_companions,
+                ARRAY_AGG(vr.id ORDER BY vr.id) FILTER (WHERE vr.id IS NOT NULL) AS variety_ids
+            FROM vegetables v
+            LEFT JOIN vegetable_translations t_req
+                   ON t_req.vegetable_id = v.id AND t_req.locale = $1
+            LEFT JOIN vegetable_translations t_en
+                   ON t_en.vegetable_id = v.id AND t_en.locale = 'en'
+            LEFT JOIN varieties vr
+                   ON vr.vegetable_id = v.id
+            WHERE v.group_id = $2
+            GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id
+            ORDER BY v.id
+        "#;
+        let query = format!(
+            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id,
+                good_companions, bad_companions, variety_ids
+             FROM ({inner}) sub
+             LIMIT $3 OFFSET $4"
+        );
+        let rows = client
+            .query(query.as_str(), &[&locale, &group_id, &limit, &offset])
             .await?;
         let total = rows
             .first()

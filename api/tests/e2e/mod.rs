@@ -2,6 +2,7 @@
 mod common;
 
 mod companions;
+mod groups;
 mod plan;
 mod scenarios;
 mod varieties;

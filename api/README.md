@@ -87,6 +87,82 @@ Endpoints that return a list use the **paginated envelope** which adds:
 
 All responses include a `_links` object following the [HAL](https://stateless.co/hal_spec/hal_spec.html) convention. Each link has an `href` field and a `method` field indicating the HTTP method to use.
 
+### `GET /api/groups`
+
+Returns the full list of botanical/culinary groups (e.g. Bulbes, Légumes-Fruits). Response is a paginated envelope.
+
+**Response:**
+```json
+{
+  "payload": [
+    {
+      "payload": { "id": "bulbes", "name": "Bulbs" },
+      "errors": [],
+      "_links": {
+        "self":       { "href": "/api/groups/bulbes",            "method": "GET" },
+        "vegetables": { "href": "/api/groups/bulbes/vegetables", "method": "GET" }
+      }
+    }
+  ],
+  "errors": [],
+  "_links": { "self": { "href": "/api/groups", "method": "GET" } },
+  "pagination": { "page": 1, "perPage": 20, "total": 6, "totalPages": 1 }
+}
+```
+
+---
+
+### `GET /api/groups/{id}`
+
+Returns a single group by id.
+
+**Response:**
+```json
+{
+  "payload": { "id": "bulbes", "name": "Bulbs" },
+  "errors": [],
+  "_links": {
+    "self":       { "href": "/api/groups/bulbes",            "method": "GET" },
+    "vegetables": { "href": "/api/groups/bulbes/vegetables", "method": "GET" },
+    "collection": { "href": "/api/groups",                   "method": "GET" }
+  }
+}
+```
+
+Returns `404` with `{ "error": "..." }` when the id is unknown.
+
+---
+
+### `GET /api/groups/{id}/vegetables`
+
+Returns all vegetables belonging to a group, as a paginated envelope. Each `payload` item contains the full vegetable object including the `groupId` field.
+
+**Response:**
+```json
+{
+  "payload": [
+    {
+      "payload": { "id": "onion", "name": "Onion", "groupId": "bulbes", "..." },
+      "errors": [],
+      "_links": {
+        "self":       { "href": "/api/vegetables/onion",            "method": "GET" },
+        "companions": { "href": "/api/vegetables/onion/companions", "method": "GET" }
+      }
+    }
+  ],
+  "errors": [],
+  "_links": {
+    "self":  { "href": "/api/groups/bulbes/vegetables", "method": "GET" },
+    "group": { "href": "/api/groups/bulbes",            "method": "GET" }
+  },
+  "pagination": { "page": 1, "perPage": 20, "total": 4, "totalPages": 1 }
+}
+```
+
+Returns `404` with `{ "error": "..." }` when the group id is unknown.
+
+---
+
 ### `GET /api/vegetables`
 
 Returns the full vegetable catalogue. Response is a paginated envelope where each item includes a `payload` object with the vegetable fields, plus per-item `_links.self` and `_links.companions`.
@@ -96,7 +172,7 @@ Returns the full vegetable catalogue. Response is a paginated envelope where eac
 {
   "payload": [
     {
-      "payload": { "id": "tomato", "name": "Tomato", "..." },
+      "payload": { "id": "tomato", "name": "Tomato", "groupId": "legumes-fruits", "..." },
       "errors": [],
       "_links": {
         "self":       { "href": "/api/vegetables/tomato",            "method": "GET" },
@@ -121,7 +197,8 @@ Returns a single vegetable by id.
 {
   "payload": {
     "id": "tomato",
-    "name": "Tomato"
+    "name": "Tomato",
+    "groupId": "legumes-fruits"
   },
   "errors": [],
   "_links": {
@@ -384,7 +461,7 @@ TEST_DATABASE_URL=postgres://garden:garden@localhost/garden cargo test -- --incl
 
 ### Language negotiation
 
-All three `GET /api/vegetables*` endpoints honour the `Accept-Language` request header. The first language tag is extracted, stripped of its region suffix (e.g. `fr-FR` → `fr`), and matched against the `vegetable_translations` table. If no translation exists for the requested locale, the English (`en`) name is returned.
+All `GET /api/vegetables*` and `GET /api/groups*` endpoints honour the `Accept-Language` request header. The first language tag is extracted, stripped of its region suffix (e.g. `fr-FR` → `fr`), and matched against the respective translation tables. If no translation exists for the requested locale, the English (`en`) name is returned.
 
 Supported locales: `en` (default), `fr`.
 

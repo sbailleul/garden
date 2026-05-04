@@ -22,10 +22,13 @@ export type PreferenceEntry = components["schemas"]["PreferenceEntry"];
 export type RegionCalendar = components["schemas"]["RegionCalendar"];
 export type SowingRecord = components["schemas"]["SowingRecord"];
 export type SowingTask = components["schemas"]["SowingTask"];
+export type Group = components["schemas"]["Group"];
 export type Variety = components["schemas"]["Variety"];
 export type Vegetable = components["schemas"]["Vegetable"];
 
 // Request / response envelope types
+export type GroupApiResponse = components["schemas"]["GroupApiResponse"];
+export type GroupsApiResponse = components["schemas"]["GroupsApiResponse"];
 export type ErrorResponse = components["schemas"]["ErrorResponse"];
 export type CompanionsResponse = components["schemas"]["CompanionsResponse"];
 export type CompanionsApiResponse = components["schemas"]["CompanionsApiResponse"];

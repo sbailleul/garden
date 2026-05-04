@@ -97,3 +97,26 @@ impl<'a> GetVegetableCompanionsUseCase<'a> {
         }))
     }
 }
+
+/// Use case: list vegetables belonging to a specific group.
+pub struct ListVegetablesByGroupUseCase<'a> {
+    repo: &'a dyn VegetableRepository,
+}
+
+impl<'a> ListVegetablesByGroupUseCase<'a> {
+    pub fn new(repo: &'a dyn VegetableRepository) -> Self {
+        Self { repo }
+    }
+
+    pub async fn execute(
+        &self,
+        group_id: &str,
+        locale: &str,
+        page: usize,
+        size: usize,
+    ) -> Result<Page<Vegetable>, RepositoryError> {
+        self.repo
+            .list_page_by_group_id(group_id, locale, page, size)
+            .await
+    }
+}
