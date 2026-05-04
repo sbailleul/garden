@@ -18,5 +18,12 @@
 	],
 	"settings": {
 		"js/ts.preferences.importModuleSpecifier": "non-relative"
-	}
+	},
+	"extensions": {
+		"recommendations": [
+			"vitest.explorer",
+			"oxc.oxc-vscode",
+			"ms-azuretools.vscode-docker"
+		]
+	},
 }

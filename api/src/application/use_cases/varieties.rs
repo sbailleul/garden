@@ -1,5 +1,5 @@
 use crate::application::ports::{
-    variety_response_repository::{VarietyResponse, VarietyResponseRepository},
+    variety_response_repository::{VarietyListFilter, VarietyResponse, VarietyResponseRepository},
     Page, RepositoryError,
 };
 
@@ -18,8 +18,9 @@ impl<'a> ListVarietiesUseCase<'a> {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError> {
-        self.repo.list_page(locale, page, size).await
+        self.repo.list_page(locale, page, size, filter).await
     }
 }
 
@@ -39,9 +40,10 @@ impl<'a> ListVarietiesByVegetableUseCase<'a> {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError> {
         self.repo
-            .list_page_by_vegetable_id(vegetable_id, locale, page, size)
+            .list_page_by_vegetable_id(vegetable_id, locale, page, size, filter)
             .await
     }
 }

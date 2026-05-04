@@ -770,6 +770,20 @@ export interface operations {
                 page?: number | null;
                 /** @description Items per page (default: 20). */
                 size?: number | null;
+                /** @description Filter by category (e.g. `Fruit`, `Herb`). */
+                category?: components["schemas"]["Category"] | null;
+                /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
+                lifecycle?: components["schemas"]["Lifecycle"] | null;
+                /** @description Filter to beginner-friendly varieties only. */
+                beginner_friendly?: boolean | null;
+                /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
+                sun_requirement?: components["schemas"]["SunExposure"] | null;
+                /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
+                soil_type?: components["schemas"]["SoilType"] | null;
+                /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
+                region?: components["schemas"]["Region"] | null;
+                /** @description Filter by parent vegetable identifier. */
+                vegetable_id?: string | null;
             };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
@@ -931,6 +945,18 @@ export interface operations {
                 page?: number | null;
                 /** @description Items per page (default: 20). */
                 size?: number | null;
+                /** @description Filter by category (e.g. `Fruit`, `Herb`). */
+                category?: components["schemas"]["Category"] | null;
+                /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
+                lifecycle?: components["schemas"]["Lifecycle"] | null;
+                /** @description Filter to beginner-friendly varieties only. */
+                beginner_friendly?: boolean | null;
+                /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
+                sun_requirement?: components["schemas"]["SunExposure"] | null;
+                /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
+                soil_type?: components["schemas"]["SoilType"] | null;
+                /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
+                region?: components["schemas"]["Region"] | null;
             };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */

@@ -253,4 +253,30 @@ export const handlers = [
     };
     return HttpResponse.json(response);
   }),
+
+  http.get("/api/vegetables/:id/varieties", ({ params }) => {
+    const vegetableId = params["id"] as string;
+    const vegetable = VARIETY_MAP[vegetableId];
+    if (!vegetable) {
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    // Return the mock varieties that belong to this vegetable
+    const matching = Object.values(VEGETABLE_MAP).filter(
+      (v) => v.vegetableId === vegetableId,
+    );
+    const response: VarietiesApiResponse = {
+      payload: matching.map(varietyResponse),
+      pagination: {
+        page: 1,
+        perPage: 20,
+        total: matching.length,
+        totalPages: 1,
+      },
+      _links: {
+        self: SELF_LINK(`/api/vegetables/${vegetableId}/varieties`),
+        vegetable: SELF_LINK(`/api/vegetables/${vegetableId}`),
+      },
+    };
+    return HttpResponse.json(response);
+  }),
 ];

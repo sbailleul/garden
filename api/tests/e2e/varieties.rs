@@ -122,3 +122,216 @@ async fn test_get_variety_by_id_returns_links() {
     );
     assert_eq!(links["collection"]["method"].as_str().unwrap(), "GET");
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/varieties — filter tests
+// ---------------------------------------------------------------------------
+
+#[actix_web::test]
+async fn test_filter_by_lifecycle_annual() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?lifecycle=Annual&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected at least one Annual variety");
+    for item in items {
+        assert_eq!(
+            item["payload"]["lifecycle"].as_str().unwrap(),
+            "Annual",
+            "all returned varieties must be Annual"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_by_lifecycle_perennial() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?lifecycle=Perennial&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected at least one Perennial variety");
+    for item in items {
+        assert_eq!(
+            item["payload"]["lifecycle"].as_str().unwrap(),
+            "Perennial",
+            "all returned varieties must be Perennial"
+        );
+    }
+    // Thyme and rosemary are both Perennial in the seed data
+    let ids: Vec<&str> = items
+        .iter()
+        .filter_map(|i| i["payload"]["id"].as_str())
+        .collect();
+    assert!(
+        ids.contains(&"thyme"),
+        "thyme must appear in Perennial results"
+    );
+}
+
+#[actix_web::test]
+async fn test_filter_by_category_herb() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?category=Herb&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected at least one Herb variety");
+    for item in items {
+        assert_eq!(
+            item["payload"]["category"].as_str().unwrap(),
+            "Herb",
+            "all returned varieties must have category Herb"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_by_beginner_friendly_true() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?beginner_friendly=true&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected beginner-friendly varieties");
+    for item in items {
+        assert_eq!(
+            item["payload"]["beginnerFriendly"].as_bool().unwrap(),
+            true,
+            "all returned varieties must have beginnerFriendly == true"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_by_beginner_friendly_false_excludes_true() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?beginner_friendly=false&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    for item in items {
+        assert_eq!(
+            item["payload"]["beginnerFriendly"].as_bool().unwrap(),
+            false,
+            "all returned varieties must have beginnerFriendly == false"
+        );
+    }
+    // fennel has beginner_friendly=false in seed data
+    let ids: Vec<&str> = items
+        .iter()
+        .filter_map(|i| i["payload"]["id"].as_str())
+        .collect();
+    assert!(
+        ids.contains(&"fennel"),
+        "fennel (beginner_friendly=false) must appear"
+    );
+}
+
+#[actix_web::test]
+async fn test_filter_by_sun_requirement_full_sun() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?sun_requirement=FullSun&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected at least one FullSun variety");
+    for item in items {
+        let sun: Vec<&str> = item["payload"]["sunRequirement"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|s| s.as_str())
+            .collect();
+        assert!(
+            sun.contains(&"FullSun"),
+            "all returned varieties must include FullSun in sunRequirement"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_by_soil_type_loamy() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?soil_type=Loamy&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected at least one Loamy variety");
+    for item in items {
+        let soils: Vec<&str> = item["payload"]["soilTypes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|s| s.as_str())
+            .collect();
+        assert!(
+            soils.contains(&"Loamy"),
+            "all returned varieties must include Loamy in soilTypes"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_by_vegetable_id() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?vegetable_id=pepper&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(!items.is_empty(), "expected pepper varieties");
+    for item in items {
+        assert_eq!(
+            item["payload"]["vegetableId"].as_str().unwrap(),
+            "pepper",
+            "all returned varieties must belong to vegetable pepper"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_filter_no_match_returns_empty_payload() {
+    let app = test::init_service(build_app_postgres().await).await;
+    // "Biennial" lifecycle likely has no seed data
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?lifecycle=Biennial")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        items.is_empty(),
+        "Biennial lifecycle should yield no seed results"
+    );
+    assert_eq!(
+        body["pagination"]["total"].as_u64().unwrap(),
+        0,
+        "total must be 0 for empty results"
+    );
+}
+
+#[actix_web::test]
+async fn test_combined_filter_category_and_lifecycle() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?category=Herb&lifecycle=Perennial&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        !items.is_empty(),
+        "expected Herb+Perennial varieties (thyme, rosemary, …)"
+    );
+    for item in items {
+        assert_eq!(item["payload"]["category"].as_str().unwrap(), "Herb");
+        assert_eq!(item["payload"]["lifecycle"].as_str().unwrap(), "Perennial");
+    }
+}

@@ -291,3 +291,69 @@ async fn test_get_varieties_by_vegetable_links_contain_self_and_vegetable() {
         "_links.vegetable must be present"
     );
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/vegetables/{id}/varieties — filter tests
+// ---------------------------------------------------------------------------
+
+#[actix_web::test]
+async fn test_varieties_by_vegetable_filter_lifecycle_annual() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/vegetables/pepper/varieties?lifecycle=Annual&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        !items.is_empty(),
+        "expected at least one Annual pepper variety"
+    );
+    for item in items {
+        assert_eq!(
+            item["payload"]["vegetableId"].as_str().unwrap(),
+            "pepper",
+            "all returned varieties must belong to pepper"
+        );
+        assert_eq!(
+            item["payload"]["lifecycle"].as_str().unwrap(),
+            "Annual",
+            "all returned varieties must be Annual"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_varieties_by_vegetable_filter_beginner_friendly() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/vegetables/pepper/varieties?beginner_friendly=true&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        !items.is_empty(),
+        "expected beginner-friendly pepper varieties"
+    );
+    for item in items {
+        assert_eq!(
+            item["payload"]["beginnerFriendly"].as_bool().unwrap(),
+            true,
+            "all returned varieties must be beginner-friendly"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_varieties_by_vegetable_filter_no_match_returns_empty() {
+    let app = test::init_service(build_app_postgres().await).await;
+    // Biennial has no seed data, so this should return an empty list
+    let req = test::TestRequest::get()
+        .uri("/api/vegetables/pepper/varieties?lifecycle=Biennial")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        items.is_empty(),
+        "Biennial filter must yield no pepper varieties"
+    );
+}

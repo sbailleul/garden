@@ -3,7 +3,7 @@ use deadpool_postgres::Pool;
 use serde_json::Value as JsonValue;
 
 use crate::application::ports::{
-    variety_response_repository::{VarietyResponse, VarietyResponseRepository},
+    variety_response_repository::{VarietyListFilter, VarietyResponse, VarietyResponseRepository},
     Page, RepositoryError,
 };
 use crate::domain::models::variety::{
@@ -90,6 +90,87 @@ const SELECT_COLUMNS: &str = r#"
            ON t_en.variety_id = v.id AND t_en.locale = 'en'
 "#;
 
+/// Appends WHERE conditions derived from `filter` to `clauses`.
+///
+/// `param_idx` is the 1-based index of the **next** positional parameter
+/// (`$1` is already taken by `locale`). Returns the updated index and a
+/// `Vec` of boxed `ToSql` values to append to the query parameters.
+fn build_filter_clauses(
+    filter: &VarietyListFilter,
+    param_idx: usize,
+) -> (Vec<String>, Vec<String>, usize) {
+    let mut clauses: Vec<String> = Vec::new();
+    let mut values: Vec<String> = Vec::new();
+    let mut idx = param_idx;
+
+    if let Some(ref cat) = filter.category {
+        clauses.push(format!("v.category = ${idx}"));
+        values.push(
+            serde_json::to_value(cat)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
+        );
+        idx += 1;
+    }
+    if let Some(ref lc) = filter.lifecycle {
+        clauses.push(format!("v.lifecycle = ${idx}"));
+        values.push(
+            serde_json::to_value(lc)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
+        );
+        idx += 1;
+    }
+    if let Some(bf) = filter.beginner_friendly {
+        // We encode this as a string "true"/"false" so we can use a uniform
+        // Vec<String> for all filter values.  The cast to boolean happens
+        // directly in the SQL.
+        clauses.push(format!("v.beginner_friendly = ${idx}::boolean"));
+        values.push(bf.to_string());
+        idx += 1;
+    }
+    if let Some(ref sun) = filter.sun_requirement {
+        clauses.push(format!("${idx} = ANY(v.sun_requirement)"));
+        values.push(
+            serde_json::to_value(sun)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
+        );
+        idx += 1;
+    }
+    if let Some(ref soil) = filter.soil_type {
+        clauses.push(format!("${idx} = ANY(v.soil_types)"));
+        values.push(
+            serde_json::to_value(soil)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
+        );
+        idx += 1;
+    }
+    if let Some(ref region) = filter.region {
+        let region_str = serde_json::to_value(region)
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_string();
+        clauses.push(format!(
+            "v.calendars @> jsonb_build_array(jsonb_build_object('region', ${idx}::text))"
+        ));
+        values.push(region_str);
+        idx += 1;
+    }
+
+    (clauses, values, idx)
+}
+
 // ---------------------------------------------------------------------------
 // VarietyResponseRepository implementation
 // ---------------------------------------------------------------------------
@@ -112,18 +193,60 @@ impl VarietyResponseRepository for PostgresVarietyResponseRepository {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError> {
         let client = self.pool.get().await?;
+
+        // $1 = locale; filter params start at $2
+        let (clauses, filter_values, next_idx) = build_filter_clauses(filter, 2);
+
+        // vegetable_id filter (optional)
+        let (veg_clause, veg_value, next_idx) = if let Some(ref vid) = filter.vegetable_id {
+            (
+                Some(format!("v.vegetable_id = ${next_idx}")),
+                Some(vid.clone()),
+                next_idx + 1,
+            )
+        } else {
+            (None, None, next_idx)
+        };
+
+        let limit_idx = next_idx;
+        let offset_idx = next_idx + 1;
+
+        let all_clauses: Vec<String> = clauses.into_iter().chain(veg_clause).collect();
+
+        let where_sql = if all_clauses.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", all_clauses.join(" AND "))
+        };
+
         let limit = size as i64;
         let offset = ((page - 1) * size) as i64;
         let query = format!(
             "SELECT COUNT(*) OVER() AS total_count, sub.*
-             FROM ({SELECT_COLUMNS} ORDER BY v.id) sub
-             LIMIT $2 OFFSET $3"
+             FROM ({SELECT_COLUMNS} {where_sql} ORDER BY v.id) sub
+             LIMIT ${limit_idx} OFFSET ${offset_idx}"
         );
-        let rows = client
-            .query(query.as_str(), &[&locale, &limit, &offset])
-            .await?;
+
+        let mut params: Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>> =
+            vec![Box::new(locale.to_string())];
+        for v in filter_values {
+            params.push(Box::new(v));
+        }
+        if let Some(v) = veg_value {
+            params.push(Box::new(v));
+        }
+        params.push(Box::new(limit));
+        params.push(Box::new(offset));
+
+        let param_refs: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = params
+            .iter()
+            .map(|p| p.as_ref() as &(dyn tokio_postgres::types::ToSql + Sync))
+            .collect();
+
+        let rows = client.query(query.as_str(), &param_refs).await?;
         let total = rows
             .first()
             .map(|r| r.try_get::<_, i64>("total_count").unwrap_or(0) as usize)
@@ -141,18 +264,46 @@ impl VarietyResponseRepository for PostgresVarietyResponseRepository {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError> {
         let client = self.pool.get().await?;
+
+        // $1 = locale, $2 = vegetable_id; filter params start at $3
+        let (clauses, filter_values, next_idx) = build_filter_clauses(filter, 3);
+
+        let limit_idx = next_idx;
+        let offset_idx = next_idx + 1;
+
+        let where_sql = if clauses.is_empty() {
+            "WHERE v.vegetable_id = $2".to_string()
+        } else {
+            format!("WHERE v.vegetable_id = $2 AND {}", clauses.join(" AND "))
+        };
+
         let limit = size as i64;
         let offset = ((page - 1) * size) as i64;
         let query = format!(
             "SELECT COUNT(*) OVER() AS total_count, sub.*
-             FROM ({SELECT_COLUMNS} WHERE v.vegetable_id = $2 ORDER BY v.id) sub
-             LIMIT $3 OFFSET $4"
+             FROM ({SELECT_COLUMNS} {where_sql} ORDER BY v.id) sub
+             LIMIT ${limit_idx} OFFSET ${offset_idx}"
         );
-        let rows = client
-            .query(query.as_str(), &[&locale, &vegetable_id, &limit, &offset])
-            .await?;
+
+        let mut params: Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>> = vec![
+            Box::new(locale.to_string()),
+            Box::new(vegetable_id.to_string()),
+        ];
+        for v in filter_values {
+            params.push(Box::new(v));
+        }
+        params.push(Box::new(limit));
+        params.push(Box::new(offset));
+
+        let param_refs: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = params
+            .iter()
+            .map(|p| p.as_ref() as &(dyn tokio_postgres::types::ToSql + Sync))
+            .collect();
+
+        let rows = client.query(query.as_str(), &param_refs).await?;
         let total = rows
             .first()
             .map(|r| r.try_get::<_, i64>("total_count").unwrap_or(0) as usize)

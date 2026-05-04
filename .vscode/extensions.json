@@ -2,6 +2,8 @@
     "recommendations": [
         "1yib.rust-bundle",
         "rust-lang.rust-analyzer",
-        "dustypomerleau.rust-syntax"
+        "dustypomerleau.rust-syntax",
+        "streetsidesoftware.code-spell-checker-british-english",
+        "streetsidesoftware.code-spell-checker"
     ]
 }

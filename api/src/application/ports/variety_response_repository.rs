@@ -3,7 +3,24 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::application::ports::{Page, RepositoryError};
-use crate::domain::models::variety::{Category, Lifecycle, RegionCalendar, SoilType, SunExposure};
+use crate::domain::models::variety::{
+    Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure,
+};
+
+/// Filters for the variety listing endpoints.
+///
+/// All fields are optional — an absent filter means "no restriction".
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VarietyListFilter {
+    pub category: Option<Category>,
+    pub lifecycle: Option<Lifecycle>,
+    pub beginner_friendly: Option<bool>,
+    pub sun_requirement: Option<SunExposure>,
+    pub soil_type: Option<SoilType>,
+    pub region: Option<Region>,
+    pub vegetable_id: Option<String>,
+}
 
 /// HTTP-facing flat representation of a variety.
 ///
@@ -52,6 +69,7 @@ pub trait VarietyResponseRepository: Send + Sync {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError>;
 
     async fn list_page_by_vegetable_id(
@@ -60,5 +78,6 @@ pub trait VarietyResponseRepository: Send + Sync {
         locale: &str,
         page: usize,
         size: usize,
+        filter: &VarietyListFilter,
     ) -> Result<Page<VarietyResponse>, RepositoryError>;
 }

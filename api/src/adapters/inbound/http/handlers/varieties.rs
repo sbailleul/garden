@@ -11,10 +11,41 @@ use crate::{
         localization::parse_locale,
     },
     application::{
-        ports::variety_response_repository::{VarietyResponse, VarietyResponseRepository},
+        ports::variety_response_repository::{
+            VarietyListFilter, VarietyResponse, VarietyResponseRepository,
+        },
         use_cases::varieties::{GetVarietyUseCase, ListVarietiesUseCase},
     },
+    domain::models::variety::{Category, Lifecycle, Region, SoilType, SunExposure},
 };
+
+/// Combined pagination + filter query parameters for variety listing endpoints.
+#[derive(Debug, serde::Deserialize)]
+pub struct VarietyQueryParams {
+    #[serde(flatten)]
+    pub pagination: PaginationParams,
+    pub category: Option<Category>,
+    pub lifecycle: Option<Lifecycle>,
+    pub beginner_friendly: Option<bool>,
+    pub sun_requirement: Option<SunExposure>,
+    pub soil_type: Option<SoilType>,
+    pub region: Option<Region>,
+    pub vegetable_id: Option<String>,
+}
+
+impl VarietyQueryParams {
+    fn into_filter(self) -> VarietyListFilter {
+        VarietyListFilter {
+            category: self.category,
+            lifecycle: self.lifecycle,
+            beginner_friendly: self.beginner_friendly,
+            sun_requirement: self.sun_requirement,
+            soil_type: self.soil_type,
+            region: self.region,
+            vegetable_id: self.vegetable_id,
+        }
+    }
+}
 
 /// GET /api/varieties
 /// Returns all varieties from the database.
@@ -25,6 +56,13 @@ use crate::{
     params(
         ("page" = Option<usize>, Query, description = "Page number (1-based, default: 1)."),
         ("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
+        ("category" = Option<String>, Query, description = "Filter by category (e.g. `Fruit`, `Herb`)."),
+        ("lifecycle" = Option<String>, Query, description = "Filter by lifecycle (`Annual`, `Biennial`, `Perennial`)."),
+        ("beginner_friendly" = Option<bool>, Query, description = "Filter to beginner-friendly varieties only."),
+        ("sun_requirement" = Option<String>, Query, description = "Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`)."),
+        ("soil_type" = Option<String>, Query, description = "Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`)."),
+        ("region" = Option<String>, Query, description = "Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`)."),
+        ("vegetable_id" = Option<String>, Query, description = "Filter by parent vegetable identifier."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
@@ -35,14 +73,15 @@ use crate::{
 #[get("/varieties")]
 pub async fn list_varieties(
     req: HttpRequest,
-    query: web::Query<PaginationParams>,
+    query: web::Query<VarietyQueryParams>,
     repo: web::Data<Box<dyn VarietyResponseRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
-    let page = query.page.max(1);
-    let size = query.size.max(1);
+    let page = query.pagination.page.max(1);
+    let size = query.pagination.size.max(1);
+    let filter = query.into_inner().into_filter();
     match ListVarietiesUseCase::new(repo.as_ref().as_ref())
-        .execute(&locale, page, size)
+        .execute(&locale, page, size, &filter)
         .await
     {
         Err(e) => {

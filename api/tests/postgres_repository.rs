@@ -8,9 +8,13 @@ mod common;
 use common::test_pool;
 use garden::adapters::outbound::postgres::group_repository::PostgresGroupRepository;
 use garden::adapters::outbound::postgres::variety_repository::PostgresVarietyRepository;
+use garden::adapters::outbound::postgres::variety_response_repository::PostgresVarietyResponseRepository;
 use garden::adapters::outbound::postgres::vegetable_repository::PostgresVegetableRepository;
 use garden::application::ports::group_repository::GroupRepository;
 use garden::application::ports::variety_repository::VarietyRepository;
+use garden::application::ports::variety_response_repository::{
+    VarietyListFilter, VarietyResponseRepository,
+};
 use garden::application::ports::vegetable_repository::VegetableRepository;
 
 // ---------------------------------------------------------------------------
@@ -274,4 +278,236 @@ async fn test_vegetable_french_locale() {
         .find(|v| v.id == "tomato")
         .expect("tomato not found");
     assert_eq!(tomato.name, "Tomate", "expected French name for tomato");
+}
+
+// ---------------------------------------------------------------------------
+// VarietyResponseRepository — filter tests
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn test_variety_response_list_page_no_filter() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    let page = repo
+        .list_page("en", 1, 10, &VarietyListFilter::default())
+        .await
+        .expect("list_page failed");
+    assert!(page.total >= 10, "expected at least 10 varieties total");
+    assert_eq!(page.items.len(), 10, "page size must be 10");
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_lifecycle_annual() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::Lifecycle;
+    let filter = VarietyListFilter {
+        lifecycle: Some(Lifecycle::Annual),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected Annual varieties");
+    for item in &page.items {
+        assert_eq!(
+            item.lifecycle,
+            Lifecycle::Annual,
+            "all items must have lifecycle Annual"
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_lifecycle_perennial() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::Lifecycle;
+    let filter = VarietyListFilter {
+        lifecycle: Some(Lifecycle::Perennial),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected Perennial varieties");
+    for item in &page.items {
+        assert_eq!(item.lifecycle, Lifecycle::Perennial);
+    }
+    assert!(
+        page.items.iter().any(|v| v.id == "thyme"),
+        "thyme must appear in Perennial results"
+    );
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_category_herb() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::Category;
+    let filter = VarietyListFilter {
+        category: Some(Category::Herb),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected Herb varieties");
+    for item in &page.items {
+        assert_eq!(item.category, Category::Herb);
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_beginner_friendly_false() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    let filter = VarietyListFilter {
+        beginner_friendly: Some(false),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(
+        !page.items.is_empty(),
+        "expected non-beginner-friendly varieties"
+    );
+    for item in &page.items {
+        assert!(!item.beginner_friendly);
+    }
+    // fennel has beginner_friendly=false in seed data
+    assert!(
+        page.items.iter().any(|v| v.id == "fennel"),
+        "fennel must appear in non-beginner-friendly results"
+    );
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_sun_requirement_full_sun() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::SunExposure;
+    let filter = VarietyListFilter {
+        sun_requirement: Some(SunExposure::FullSun),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected FullSun varieties");
+    for item in &page.items {
+        assert!(
+            item.sun_requirement.contains(&SunExposure::FullSun),
+            "variety '{}' must have FullSun in sun_requirement",
+            item.id
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_soil_type_loamy() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::SoilType;
+    let filter = VarietyListFilter {
+        soil_type: Some(SoilType::Loamy),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected Loamy varieties");
+    for item in &page.items {
+        assert!(
+            item.soil_types.contains(&SoilType::Loamy),
+            "variety '{}' must have Loamy in soil_types",
+            item.id
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_by_vegetable_id() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    let filter = VarietyListFilter {
+        vegetable_id: Some("pepper".to_string()),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected pepper varieties");
+    for item in &page.items {
+        assert_eq!(
+            item.vegetable_id, "pepper",
+            "all returned items must belong to pepper"
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_filter_biennial_returns_empty() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::Lifecycle;
+    let filter = VarietyListFilter {
+        lifecycle: Some(Lifecycle::Biennial),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert_eq!(page.total, 0, "Biennial filter must yield no results");
+    assert!(page.items.is_empty());
+}
+
+#[tokio::test]
+async fn test_variety_response_combined_filter_herb_perennial() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::{Category, Lifecycle};
+    let filter = VarietyListFilter {
+        category: Some(Category::Herb),
+        lifecycle: Some(Lifecycle::Perennial),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page("en", 1, 100, &filter)
+        .await
+        .expect("list_page failed");
+    assert!(!page.items.is_empty(), "expected Herb+Perennial varieties");
+    for item in &page.items {
+        assert_eq!(item.category, Category::Herb);
+        assert_eq!(item.lifecycle, Lifecycle::Perennial);
+    }
+}
+
+#[tokio::test]
+async fn test_variety_response_list_page_by_vegetable_with_filter() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    use garden::domain::models::variety::Lifecycle;
+    let filter = VarietyListFilter {
+        lifecycle: Some(Lifecycle::Annual),
+        ..Default::default()
+    };
+    let page = repo
+        .list_page_by_vegetable_id("pepper", "en", 1, 100, &filter)
+        .await
+        .expect("list_page_by_vegetable_id failed");
+    assert!(!page.items.is_empty(), "expected Annual pepper varieties");
+    for item in &page.items {
+        assert_eq!(item.vegetable_id, "pepper");
+        assert_eq!(item.lifecycle, Lifecycle::Annual);
+    }
 }

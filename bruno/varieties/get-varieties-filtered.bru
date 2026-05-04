@@ -1,0 +1,69 @@
+meta {
+  name: Get Varieties Filtered
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/varieties
+}
+
+params:query {
+  page: 1
+  size: 20
+  category: Herb
+  lifecycle: Perennial
+  beginner_friendly: true
+  sun_requirement: FullSun
+  soil_type: Loamy
+  region: Temperate
+  vegetable_id:
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: en
+}
+
+assert {
+  res.status: eq 200
+  res.body.payload: isArray
+  res.body.pagination: isDefined
+  res.body._links: isDefined
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("all items match the requested category", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload.category).to.equal("Herb");
+    });
+  });
+
+  test("all items match the requested lifecycle", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload.lifecycle).to.equal("Perennial");
+    });
+  });
+
+  test("all items are beginner-friendly", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload.beginnerFriendly).to.equal(true);
+    });
+  });
+
+  test("all items include FullSun in sunRequirement", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload.sunRequirement).to.include("FullSun");
+    });
+  });
+
+  test("all items include Loamy in soilTypes", function() {
+    res.body.payload.forEach(function(item) {
+      expect(item.payload.soilTypes).to.include("Loamy");
+    });
+  });
+}
