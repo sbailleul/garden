@@ -168,6 +168,11 @@ fn build_filter_clauses(
         values.push(Box::new(region_str));
         idx += 1;
     }
+    if let Some(ref search) = filter.search {
+        clauses.push(format!("COALESCE(t_req.name, t_en.name) ILIKE ${idx}"));
+        values.push(Box::new(format!("%{search}%")));
+        idx += 1;
+    }
 
     (clauses, values, idx)
 }

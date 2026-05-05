@@ -319,6 +319,64 @@ async fn test_filter_no_match_returns_empty_payload() {
 }
 
 #[actix_web::test]
+async fn test_search_by_name_returns_matching_varieties() {
+    let app = test::init_service(build_app_postgres().await).await;
+    // "tom" is a substring of "Tomato"
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?search=tom&size=100")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        !items.is_empty(),
+        "search=tom must return at least one result"
+    );
+    for item in items {
+        let name = item["payload"]["name"].as_str().unwrap().to_lowercase();
+        assert!(
+            name.contains("tom"),
+            "all returned varieties must have 'tom' in their name, got: {name}"
+        );
+    }
+}
+
+#[actix_web::test]
+async fn test_search_by_name_is_case_insensitive() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req_lower = test::TestRequest::get()
+        .uri("/api/varieties?search=tomato&size=100")
+        .to_request();
+    let req_upper = test::TestRequest::get()
+        .uri("/api/varieties?search=TOMATO&size=100")
+        .to_request();
+    let body_lower: serde_json::Value = test::call_and_read_body_json(&app, req_lower).await;
+    let body_upper: serde_json::Value = test::call_and_read_body_json(&app, req_upper).await;
+    assert_eq!(
+        body_lower["pagination"]["total"], body_upper["pagination"]["total"],
+        "search must be case-insensitive"
+    );
+}
+
+#[actix_web::test]
+async fn test_search_no_match_returns_empty_payload() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties?search=zzznomatch999")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let items = body["payload"].as_array().expect("payload must be array");
+    assert!(
+        items.is_empty(),
+        "non-matching search must return empty payload"
+    );
+    assert_eq!(
+        body["pagination"]["total"].as_u64().unwrap(),
+        0,
+        "total must be 0 for non-matching search"
+    );
+}
+
+#[actix_web::test]
 async fn test_combined_filter_category_and_lifecycle() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()

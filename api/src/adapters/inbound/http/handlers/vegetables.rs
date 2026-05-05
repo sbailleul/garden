@@ -53,6 +53,7 @@ pub struct VarietyByVegetableQueryParams {
     pub sun_requirement: Option<SunExposure>,
     pub soil_type: Option<SoilType>,
     pub region: Option<Region>,
+    pub search: Option<String>,
 }
 
 impl VarietyByVegetableQueryParams {
@@ -65,6 +66,7 @@ impl VarietyByVegetableQueryParams {
             soil_type: self.soil_type,
             region: self.region,
             vegetable_id: None,
+            search: self.search,
         }
     }
 }
@@ -196,6 +198,7 @@ pub async fn get_vegetable(
         ("sun_requirement" = Option<String>, Query, description = "Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`)."),
         ("soil_type" = Option<String>, Query, description = "Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`)."),
         ("region" = Option<String>, Query, description = "Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`)."),
+        ("search" = Option<String>, Query, description = "Case-insensitive substring search on the translated variety name."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")
     ),
     responses(
