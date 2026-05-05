@@ -455,7 +455,7 @@ async fn test_variety_response_filter_by_vegetable_id() {
 }
 
 #[tokio::test]
-async fn test_variety_response_filter_biennial_returns_empty() {
+async fn test_variety_response_filter_biennial_returns_three_items() {
     let pool = test_pool().await;
     let repo = PostgresVarietyResponseRepository::new(pool);
     use garden::domain::models::variety::Lifecycle;
@@ -467,8 +467,7 @@ async fn test_variety_response_filter_biennial_returns_empty() {
         .list_page("en", 1, 100, &filter)
         .await
         .expect("list_page failed");
-    assert_eq!(page.total, 0, "Biennial filter must yield no results");
-    assert!(page.items.is_empty());
+    assert_eq!(page.total, 3, "Biennial filter must yield 3 varieties");
 }
 
 #[tokio::test]

@@ -23,7 +23,12 @@
 		"recommendations": [
 			"vitest.explorer",
 			"oxc.oxc-vscode",
-			"ms-azuretools.vscode-docker"
+			"ms-azuretools.vscode-docker",
+			"github.vscode-github-actions",
+			"mhutchie.git-graph",
+			"fill-labs.dependi",
+			"vadimcn.vscode-lldb",
+			"tamasfe.even-better-toml"
 		]
 	},
 }

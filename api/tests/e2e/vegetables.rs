@@ -326,13 +326,13 @@ async fn test_varieties_by_vegetable_filter_lifecycle_annual() {
 async fn test_varieties_by_vegetable_filter_beginner_friendly() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/vegetables/pepper/varieties?beginner_friendly=true&size=100")
+        .uri("/api/vegetables/tomato/varieties?beginner_friendly=true&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
     assert!(
         !items.is_empty(),
-        "expected beginner-friendly pepper varieties"
+        "expected beginner-friendly tomato varieties"
     );
     for item in items {
         assert_eq!(

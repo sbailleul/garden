@@ -32,12 +32,21 @@ use crate::{
     },
 };
 
+fn default_page() -> usize {
+    1
+}
+fn default_size() -> usize {
+    20
+}
+
 /// Combined pagination + filter query parameters for the
 /// `GET /api/vegetables/{id}/varieties` endpoint.
 #[derive(Debug, serde::Deserialize)]
 pub struct VarietyByVegetableQueryParams {
-    #[serde(flatten)]
-    pub pagination: PaginationParams,
+    #[serde(default = "default_page")]
+    pub page: usize,
+    #[serde(default = "default_size")]
+    pub size: usize,
     pub category: Option<Category>,
     pub lifecycle: Option<Lifecycle>,
     pub beginner_friendly: Option<bool>,
@@ -204,8 +213,8 @@ pub async fn get_varieties_by_vegetable(
 ) -> impl Responder {
     let locale = parse_locale(&req);
     let id = path.into_inner();
-    let page = query.pagination.page.max(1);
-    let size = query.pagination.size.max(1);
+    let page = query.page.max(1);
+    let size = query.size.max(1);
     let filter = query.into_inner().into_filter();
 
     // 404 if the vegetable doesn't exist

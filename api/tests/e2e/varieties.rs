@@ -301,15 +301,15 @@ async fn test_filter_by_vegetable_id() {
 #[actix_web::test]
 async fn test_filter_no_match_returns_empty_payload() {
     let app = test::init_service(build_app_postgres().await).await;
-    // "Biennial" lifecycle likely has no seed data
+    // Root + Perennial has no seed data
     let req = test::TestRequest::get()
-        .uri("/api/varieties?lifecycle=Biennial")
+        .uri("/api/varieties?category=Root&lifecycle=Perennial")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
     assert!(
         items.is_empty(),
-        "Biennial lifecycle should yield no seed results"
+        "Root+Perennial combination should yield no seed results"
     );
     assert_eq!(
         body["pagination"]["total"].as_u64().unwrap(),

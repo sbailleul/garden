@@ -7,7 +7,7 @@ use crate::adapters::inbound::http::hateoas::{
 
 use crate::{
     adapters::inbound::http::{
-        hateoas::{link, ApiResponse, IntoHttpPagination, PaginatedResponse, PaginationParams},
+        hateoas::{link, ApiResponse, IntoHttpPagination, PaginatedResponse},
         localization::parse_locale,
     },
     application::{
@@ -19,11 +19,20 @@ use crate::{
     domain::models::variety::{Category, Lifecycle, Region, SoilType, SunExposure},
 };
 
+fn default_page() -> usize {
+    1
+}
+fn default_size() -> usize {
+    20
+}
+
 /// Combined pagination + filter query parameters for variety listing endpoints.
 #[derive(Debug, serde::Deserialize)]
 pub struct VarietyQueryParams {
-    #[serde(flatten)]
-    pub pagination: PaginationParams,
+    #[serde(default = "default_page")]
+    pub page: usize,
+    #[serde(default = "default_size")]
+    pub size: usize,
     pub category: Option<Category>,
     pub lifecycle: Option<Lifecycle>,
     pub beginner_friendly: Option<bool>,
@@ -77,8 +86,8 @@ pub async fn list_varieties(
     repo: web::Data<Box<dyn VarietyResponseRepository>>,
 ) -> impl Responder {
     let locale = parse_locale(&req);
-    let page = query.pagination.page.max(1);
-    let size = query.pagination.size.max(1);
+    let page = query.page.max(1);
+    let size = query.size.max(1);
     let filter = query.into_inner().into_filter();
     match ListVarietiesUseCase::new(repo.as_ref().as_ref())
         .execute(&locale, page, size, &filter)

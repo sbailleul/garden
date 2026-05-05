@@ -98,61 +98,62 @@ const SELECT_COLUMNS: &str = r#"
 fn build_filter_clauses(
     filter: &VarietyListFilter,
     param_idx: usize,
-) -> (Vec<String>, Vec<String>, usize) {
+) -> (
+    Vec<String>,
+    Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>>,
+    usize,
+) {
     let mut clauses: Vec<String> = Vec::new();
-    let mut values: Vec<String> = Vec::new();
+    let mut values: Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>> = Vec::new();
     let mut idx = param_idx;
 
     if let Some(ref cat) = filter.category {
         clauses.push(format!("v.category = ${idx}"));
-        values.push(
+        values.push(Box::new(
             serde_json::to_value(cat)
                 .unwrap()
                 .as_str()
                 .unwrap()
                 .to_string(),
-        );
+        ));
         idx += 1;
     }
     if let Some(ref lc) = filter.lifecycle {
         clauses.push(format!("v.lifecycle = ${idx}"));
-        values.push(
+        values.push(Box::new(
             serde_json::to_value(lc)
                 .unwrap()
                 .as_str()
                 .unwrap()
                 .to_string(),
-        );
+        ));
         idx += 1;
     }
     if let Some(bf) = filter.beginner_friendly {
-        // We encode this as a string "true"/"false" so we can use a uniform
-        // Vec<String> for all filter values.  The cast to boolean happens
-        // directly in the SQL.
-        clauses.push(format!("v.beginner_friendly = ${idx}::boolean"));
-        values.push(bf.to_string());
+        clauses.push(format!("v.beginner_friendly = ${idx}"));
+        values.push(Box::new(bf));
         idx += 1;
     }
     if let Some(ref sun) = filter.sun_requirement {
         clauses.push(format!("${idx} = ANY(v.sun_requirement)"));
-        values.push(
+        values.push(Box::new(
             serde_json::to_value(sun)
                 .unwrap()
                 .as_str()
                 .unwrap()
                 .to_string(),
-        );
+        ));
         idx += 1;
     }
     if let Some(ref soil) = filter.soil_type {
         clauses.push(format!("${idx} = ANY(v.soil_types)"));
-        values.push(
+        values.push(Box::new(
             serde_json::to_value(soil)
                 .unwrap()
                 .as_str()
                 .unwrap()
                 .to_string(),
-        );
+        ));
         idx += 1;
     }
     if let Some(ref region) = filter.region {
@@ -164,7 +165,7 @@ fn build_filter_clauses(
         clauses.push(format!(
             "v.calendars @> jsonb_build_array(jsonb_build_object('region', ${idx}::text))"
         ));
-        values.push(region_str);
+        values.push(Box::new(region_str));
         idx += 1;
     }
 
@@ -233,7 +234,7 @@ impl VarietyResponseRepository for PostgresVarietyResponseRepository {
         let mut params: Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>> =
             vec![Box::new(locale.to_string())];
         for v in filter_values {
-            params.push(Box::new(v));
+            params.push(v);
         }
         if let Some(v) = veg_value {
             params.push(Box::new(v));
@@ -293,7 +294,7 @@ impl VarietyResponseRepository for PostgresVarietyResponseRepository {
             Box::new(vegetable_id.to_string()),
         ];
         for v in filter_values {
-            params.push(Box::new(v));
+            params.push(v);
         }
         params.push(Box::new(limit));
         params.push(Box::new(offset));
