@@ -6,13 +6,13 @@ on:
     paths:
       - "api/**"
       - "bruno/**"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/api-bruno.yml"
   pull_request:
     branches: ["**"]
     paths:
       - "api/**"
       - "bruno/**"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/api-bruno.yml"
 
 env:
   CARGO_TERM_COLOR: always
