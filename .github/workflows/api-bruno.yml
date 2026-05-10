@@ -89,6 +89,8 @@ jobs:
     name: Bruno — API end-to-end tests
     runs-on: ubuntu-latest
     needs: rust-tests
+    env:
+      DATABASE_URL: postgresql://garden:garden@localhost:5432/garden
 
     services:
       postgres:
