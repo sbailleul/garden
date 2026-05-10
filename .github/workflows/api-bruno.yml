@@ -29,13 +29,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: garden
+          POSTGRES_DB: garden_test
           POSTGRES_USER: garden
           POSTGRES_PASSWORD: garden
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U garden -d garden"
+          --health-cmd "pg_isready -U garden -d garden_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -71,9 +71,6 @@ jobs:
       - name: Build release binary
         run: cargo build --release
         working-directory: api
-
-      - name: Create test database
-        run: psql postgresql://garden:garden@localhost:5432/garden -c "CREATE DATABASE garden_test OWNER garden; GRANT ALL PRIVILEGES ON DATABASE garden_test TO garden;"
 
       - name: Run all tests (unit + integration)
         run: cargo test --all -- --nocapture
