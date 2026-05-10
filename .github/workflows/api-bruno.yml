@@ -58,7 +58,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            api/target/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('api/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: garden-api
-          path: api/target/release/garden
+          path: target/release/garden
           retention-days: 1
 
   # ---------------------------------------------------------------------------
