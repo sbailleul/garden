@@ -1,7 +1,7 @@
 name: Client
 defaults:
   run:
-    working-directory: ./global-scripts
+    working-directory: client
 on:
   push:
     branches: ["**"]
@@ -14,7 +14,7 @@ on:
       - "client/**"
       - ".github/workflows/client.yml"
 env:
-  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/client  /.cache/ms-playwright
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
 
 jobs:
   client-build:
