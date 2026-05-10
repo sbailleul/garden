@@ -1,38 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { queryClient } from "@/lib/query-client";
-import { routeTree } from "@/routeTree.gen";
-
-function createTestRouter(initialPath: string) {
-  const history = createMemoryHistory({ initialEntries: [initialPath] });
-  return createRouter({
-    routeTree,
-    history,
-    context: { queryClient },
-  });
-}
-
-function renderAt(path: string) {
-  queryClient.clear();
-  const router = createTestRouter(path);
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
-}
+import { varietiesPage } from "@/tests/page-objects/varieties.page";
+import { renderAt } from "@/tests/render-at";
 
 describe("Variety catalogue", () => {
   it("renders a table with variety rows from MSW fixture", async () => {
     renderAt("/varieties");
 
     await waitFor(() => {
-      expect(screen.getByText("Tomato")).toBeInTheDocument();
-      expect(screen.getByText("Basil")).toBeInTheDocument();
+      expect(varietiesPage.varietyName("Tomato")).toBeInTheDocument();
+      expect(varietiesPage.varietyName("Basil")).toBeInTheDocument();
     });
   });
 
@@ -40,22 +18,20 @@ describe("Variety catalogue", () => {
     renderAt("/varieties");
 
     await waitFor(() => {
-      expect(screen.getByText(/2 varieties/i)).toBeInTheDocument();
+      expect(varietiesPage.varietyCount()).toBeInTheDocument();
     });
   });
 
   it("filters rows by name", async () => {
-    const user = userEvent.setup();
     renderAt("/varieties");
 
-    await waitFor(() => screen.getAllByText("Tomato").length > 0);
+    await waitFor(() => varietiesPage.allByName("Tomato").length > 0);
 
-    const input = screen.getByRole("textbox", { name: /filter by name/i });
-    await user.type(input, "bas");
+    await varietiesPage.typeSearch("bas");
 
     await waitFor(() => {
-      expect(screen.getByText("Basil")).toBeInTheDocument();
-      expect(screen.queryByText("Tomato")).not.toBeInTheDocument();
+      expect(varietiesPage.varietyName("Basil")).toBeInTheDocument();
+      expect(varietiesPage.queryVarietyName("Tomato")).not.toBeInTheDocument();
     });
   });
 });

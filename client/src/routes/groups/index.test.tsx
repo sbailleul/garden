@@ -1,37 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import {
-  createMemoryHistory,
-  createRouter,
-  RouterProvider,
-} from "@tanstack/react-router";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { queryClient } from "@/lib/query-client";
-import { routeTree } from "@/routeTree.gen";
-
-function renderAt(path: string) {
-  queryClient.clear();
-  const history = createMemoryHistory({ initialEntries: [path] });
-  const router = createRouter({
-    routeTree,
-    history,
-    context: { queryClient },
-  });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
-}
+import { groupsPage } from "@/tests/page-objects/groups.page";
+import { renderAt } from "@/tests/render-at";
 
 describe("Group catalogue", () => {
   it("renders group names from MSW fixture", async () => {
     renderAt("/groups");
 
     await waitFor(() => {
-      expect(screen.getByText("Bulbes")).toBeInTheDocument();
-      expect(screen.getByText("Légumes-Fruits")).toBeInTheDocument();
+      expect(groupsPage.groupName("Bulbes")).toBeInTheDocument();
+      expect(groupsPage.groupName("Légumes-Fruits")).toBeInTheDocument();
     });
   });
 
@@ -39,7 +18,7 @@ describe("Group catalogue", () => {
     renderAt("/groups");
 
     await waitFor(() => {
-      expect(screen.getByText(/6 groups/i)).toBeInTheDocument();
+      expect(groupsPage.groupCount()).toBeInTheDocument();
     });
   });
 });

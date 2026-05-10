@@ -571,6 +571,8 @@ export interface components {
         Vegetable: {
             /** @description Identifiers of vegetables that harm this vegetable when planted nearby. */
             badCompanions: string[];
+            /** @description 8-digit HEX color code (RRGGBBAA) representative of the vegetable. */
+            color: string;
             /** @description Identifiers of vegetables that benefit this vegetable when planted nearby. */
             goodCompanions: string[];
             /** @description Identifier of the group this vegetable belongs to. */
@@ -771,19 +773,21 @@ export interface operations {
                 /** @description Items per page (default: 20). */
                 size?: number | null;
                 /** @description Filter by category (e.g. `Fruit`, `Herb`). */
-                category?: components["schemas"]["Category"] | null;
+                category?: string | null;
                 /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
-                lifecycle?: components["schemas"]["Lifecycle"] | null;
+                lifecycle?: string | null;
                 /** @description Filter to beginner-friendly varieties only. */
                 beginner_friendly?: boolean | null;
                 /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
-                sun_requirement?: components["schemas"]["SunExposure"] | null;
+                sun_requirement?: string | null;
                 /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
-                soil_type?: components["schemas"]["SoilType"] | null;
+                soil_type?: string | null;
                 /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
-                region?: components["schemas"]["Region"] | null;
+                region?: string | null;
                 /** @description Filter by parent vegetable identifier. */
                 vegetable_id?: string | null;
+                /** @description Case-insensitive substring search on the translated variety name. */
+                search?: string | null;
             };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
@@ -946,17 +950,19 @@ export interface operations {
                 /** @description Items per page (default: 20). */
                 size?: number | null;
                 /** @description Filter by category (e.g. `Fruit`, `Herb`). */
-                category?: components["schemas"]["Category"] | null;
+                category?: string | null;
                 /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
-                lifecycle?: components["schemas"]["Lifecycle"] | null;
+                lifecycle?: string | null;
                 /** @description Filter to beginner-friendly varieties only. */
                 beginner_friendly?: boolean | null;
                 /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
-                sun_requirement?: components["schemas"]["SunExposure"] | null;
+                sun_requirement?: string | null;
                 /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
-                soil_type?: components["schemas"]["SoilType"] | null;
+                soil_type?: string | null;
                 /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
-                region?: components["schemas"]["Region"] | null;
+                region?: string | null;
+                /** @description Case-insensitive substring search on the translated variety name. */
+                search?: string | null;
             };
             header?: {
                 /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */

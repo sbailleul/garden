@@ -23,7 +23,6 @@ export type RegionCalendar = components["schemas"]["RegionCalendar"];
 export type SowingRecord = components["schemas"]["SowingRecord"];
 export type SowingTask = components["schemas"]["SowingTask"];
 export type Group = components["schemas"]["Group"];
-export type Variety = components["schemas"]["Variety"];
 export type Vegetable = components["schemas"]["Vegetable"];
 
 // Request / response envelope types

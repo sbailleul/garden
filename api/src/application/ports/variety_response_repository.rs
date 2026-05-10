@@ -20,7 +20,6 @@ pub struct VarietyListFilter {
     pub soil_type: Option<SoilType>,
     pub region: Option<Region>,
     pub vegetable_id: Option<String>,
-    /// Case-insensitive substring search on the translated variety name.
     pub search: Option<String>,
 }
 

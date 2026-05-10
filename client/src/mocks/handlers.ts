@@ -129,8 +129,8 @@ const VEGETABLE_MAP: Record<string, Variety> = {
   basil: BASIL,
 };
 
-const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", groupId: "legumes-fruits", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
-const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", groupId: "legumes-feuilles", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
+const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", groupId: "legumes-fruits", color: "#E34234FF", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
+const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", groupId: "legumes-feuilles", color: "#1A5C38FF", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
 
 const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v,

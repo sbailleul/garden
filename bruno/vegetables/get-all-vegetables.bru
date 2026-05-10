@@ -52,6 +52,8 @@ tests {
     res.body.payload.forEach(function(v) {
       expect(v.payload).to.have.property("id");
       expect(v.payload).to.have.property("name");
+      expect(v.payload).to.have.property("color");
+      expect(v.payload.color).to.match(/^#[0-9A-F]{8}$/);
       expect(v._links.self.href).to.equal("/api/vegetables/" + v.payload.id);
       expect(v._links.companions.href).to.equal("/api/vegetables/" + v.payload.id + "/companions");
     });

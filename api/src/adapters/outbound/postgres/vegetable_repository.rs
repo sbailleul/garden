@@ -19,6 +19,7 @@ const SELECT_COLUMNS: &str = r#"
         v.id,
         COALESCE(t_req.name, t_en.name) AS name,
         v.group_id,
+        v.color,
         v.good_companions,
         v.bad_companions,
         ARRAY_AGG(vr.id ORDER BY vr.id) FILTER (WHERE vr.id IS NOT NULL) AS variety_ids
@@ -31,7 +32,7 @@ const SELECT_COLUMNS: &str = r#"
            ON vr.vegetable_id = v.id
 "#;
 
-const GROUP_BY: &str = "GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id";
+const GROUP_BY: &str = "GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id, v.color";
 
 fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryError> {
     let variety_ids: Vec<String> = row.try_get("variety_ids").unwrap_or_default();
@@ -41,6 +42,7 @@ fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryEr
         id: row.try_get("id")?,
         name: row.try_get("name")?,
         group_id: row.try_get("group_id")?,
+        color: row.try_get("color")?,
         variety_ids,
         good_companions,
         bad_companions,
@@ -77,7 +79,7 @@ impl VegetableRepository for PostgresVegetableRepository {
         let limit = size as i64;
         let offset = ((page - 1) * size) as i64;
         let query = format!(
-            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id,
+            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id, color,
                 good_companions, bad_companions, variety_ids
              FROM (
                  {SELECT_COLUMNS} {GROUP_BY} ORDER BY v.id
@@ -114,6 +116,7 @@ impl VegetableRepository for PostgresVegetableRepository {
                 v.id,
                 COALESCE(t_req.name, t_en.name) AS name,
                 v.group_id,
+                v.color,
                 v.good_companions,
                 v.bad_companions,
                 ARRAY_AGG(vr.id ORDER BY vr.id) FILTER (WHERE vr.id IS NOT NULL) AS variety_ids
@@ -125,11 +128,11 @@ impl VegetableRepository for PostgresVegetableRepository {
             LEFT JOIN varieties vr
                    ON vr.vegetable_id = v.id
             WHERE v.group_id = $2
-            GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id
+            GROUP BY v.id, COALESCE(t_req.name, t_en.name), v.group_id, v.color
             ORDER BY v.id
         "#;
         let query = format!(
-            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id,
+            "SELECT COUNT(*) OVER() AS total_count, id, name, group_id, color,
                 good_companions, bad_companions, variety_ids
              FROM ({inner}) sub
              LIMIT $3 OFFSET $4"

@@ -10,6 +10,8 @@ pub struct Vegetable {
     pub name: String,
     /// Identifier of the group this vegetable belongs to.
     pub group_id: String,
+    /// 8-digit HEX color code (RRGGBBAA) representative of the vegetable.
+    pub color: String,
     pub variety_ids: Vec<String>,
     /// Identifiers of vegetables that benefit this vegetable when planted nearby.
     pub good_companions: Vec<String>,

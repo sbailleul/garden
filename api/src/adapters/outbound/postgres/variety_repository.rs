@@ -45,10 +45,12 @@ fn row_to_vegetable(row: &tokio_postgres::Row) -> Result<Vegetable, RepositoryEr
     let veg_bad_companions: Vec<String> = row.try_get("veg_bad_companions").unwrap_or_default();
     let veg_variety_ids: Vec<String> = row.try_get("veg_variety_ids").unwrap_or_default();
     let veg_group_id: String = row.try_get("veg_group_id")?;
+    let veg_color: String = row.try_get("veg_color")?;
     Ok(Vegetable {
         id: veg_id,
         name: veg_name,
         group_id: veg_group_id,
+        color: veg_color,
         variety_ids: veg_variety_ids,
         good_companions: veg_good_companions,
         bad_companions: veg_bad_companions,
@@ -191,6 +193,7 @@ const SELECT_COLUMNS: &str = r#"
         veg.id                                                                     AS veg_id,
         COALESCE(vt_req.name, vt_en.name)                                         AS veg_name,
         veg.group_id                                                               AS veg_group_id,
+        veg.color                                                                  AS veg_color,
         veg.good_companions                                                        AS veg_good_companions,
         veg.bad_companions                                                         AS veg_bad_companions,
         (SELECT ARRAY_AGG(v2.id ORDER BY v2.id) FROM varieties v2

@@ -1,37 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import {
-  createMemoryHistory,
-  createRouter,
-  RouterProvider,
-} from "@tanstack/react-router";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { queryClient } from "@/lib/query-client";
-import { routeTree } from "@/routeTree.gen";
-
-function renderAt(path: string) {
-  queryClient.clear();
-  const history = createMemoryHistory({ initialEntries: [path] });
-  const router = createRouter({
-    routeTree,
-    history,
-    context: { queryClient },
-  });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
-}
+import { groupDetailPage } from "@/tests/page-objects/group-detail.page";
+import { renderAt } from "@/tests/render-at";
 
 describe("Group detail", () => {
   it("renders group name and id", async () => {
     renderAt("/groups/legumes-fruits");
 
     await waitFor(() => {
-      expect(screen.getByText("Légumes-Fruits")).toBeInTheDocument();
-      expect(screen.getByText("legumes-fruits")).toBeInTheDocument();
+      expect(groupDetailPage.groupName("Légumes-Fruits")).toBeInTheDocument();
+      expect(groupDetailPage.groupId("legumes-fruits")).toBeInTheDocument();
     });
   });
 
@@ -39,7 +18,7 @@ describe("Group detail", () => {
     renderAt("/groups/legumes-fruits");
 
     await waitFor(() => {
-      expect(screen.getByText("Tomato")).toBeInTheDocument();
+      expect(groupDetailPage.vegetableName("Tomato")).toBeInTheDocument();
     });
   });
 
@@ -47,7 +26,7 @@ describe("Group detail", () => {
     renderAt("/groups/legumes-feuilles");
 
     await waitFor(() => {
-      expect(screen.getByText(/← Groups/i)).toBeInTheDocument();
+      expect(groupDetailPage.backLink()).toBeInTheDocument();
     });
   });
 });

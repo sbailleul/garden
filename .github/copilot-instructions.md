@@ -197,9 +197,30 @@ Paginated responses use `PaginatedResponse` with a `Pagination` block:
 Every new client feature must be covered by at least one UI test. Tests use **Vitest** and **React Testing Library** and live in a `.test.tsx` file co-located with the component or route being tested (e.g. `src/components/vegetables/vegetable-table.test.tsx`, `src/routes/vegetables/index.test.tsx`).
 
 - **Dumb component tests** — render the component directly with explicit props and assert the resulting output. No router or query client setup is required.
-- **Smart / route component tests** — render via `RouterProvider` (with a `createMemoryHistory`) wrapped in `QueryClientProvider`. Call `queryClient.clear()` at the start of each test. Use `screen.findBy*` or `waitFor` to handle async data loading.
+- **Smart / route component tests** — render via `RouterProvider` (with a `createMemoryHistory`) wrapped in `QueryClientProvider`. Call `queryClient.clear()` at the start of each test. Use `screen.findBy*` or `waitFor` to handle async data loading. Use the shared `renderAt(path)` helper from `src/tests/render-at.tsx` instead of duplicating the router setup in every test file.
 - **API mocking** — all HTTP calls must be intercepted by MSW. Request handlers are registered in `src/mocks/handlers.ts`. Add or extend handlers there when a new endpoint is consumed by the client.
 - Use `@testing-library/user-event` for simulating user interactions (typing, clicking, etc.).
+
+## Page objects in UI tests
+
+Every `.test.tsx` file must use the **page object pattern** to encapsulate DOM queries and user interactions.
+
+- Define a `const page = { ... }` object at the top of each test file (or inside a `beforeEach`/factory function when state is needed). The object exposes named accessors and actions specific to the component under test, e.g.:
+
+```ts
+const page = {
+  heading: () => screen.getByRole("heading", { name: /vegetables/i }),
+  rows: () => screen.getAllByRole("row"),
+  searchInput: () => screen.getByRole("textbox", { name: /search/i }),
+  async typeSearch(text: string) {
+    await userEvent.type(page.searchInput(), text);
+  },
+};
+```
+
+- Test bodies must call page object methods/accessors rather than duplicating `screen.getBy*` queries inline.
+- Never repeat the same `screen.getBy*` selector in more than one `it` block — extract it into the page object instead.
+- Page objects always live in `src/tests/page-objects/<component>.page.ts` and are imported by the test file. Never inline a page object directly inside a `.test.tsx` file.
 
 ## File and directory naming (client)
 
