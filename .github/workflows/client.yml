@@ -12,7 +12,7 @@ on:
       - "client/**"
       - ".github/workflows/client.yml"
 env:
-  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/client/.cache/ms-playwright
 
 jobs:
   client-build:
@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Change to client directory
+        run: cd client
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -31,24 +34,18 @@ jobs:
 
       - name: Install client dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: client
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium --with-deps
-        working-directory: client
 
       - name: Check formatting
         run: pnpm run format:check
-        working-directory: client
 
       - name: Lint
         run: pnpm run lint
-        working-directory: client
 
       - name: Run browser tests
         run: pnpm run test:run
-        working-directory: client
 
       - name: Build production bundle
         run: pnpm run build
-        working-directory: client
