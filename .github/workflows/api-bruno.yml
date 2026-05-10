@@ -22,6 +22,9 @@ jobs:
   # Job 1: Rust format, lint, build and tests
   # ---------------------------------------------------------------------------
   rust-tests:
+    defaults:
+      run:
+        working-directory: ./api
     name: Rust — fmt / clippy / build / test
     runs-on: ubuntu-latest
 
@@ -62,19 +65,15 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --check
-        working-directory: api
 
       - name: Clippy (no warnings allowed)
         run: cargo clippy -- -D warnings
-        working-directory: api
 
       - name: Build release binary
         run: cargo build --release
-        working-directory: api
 
       - name: Run all tests (unit + integration)
         run: cargo test --all -- --nocapture
-        working-directory: api
 
       - name: Upload release binary
         uses: actions/upload-artifact@v4
