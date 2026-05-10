@@ -15,7 +15,7 @@ import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
 import { Route as VarietiesIdRouteImport } from './routes/varieties/$id'
 import { Route as GroupsIdRouteImport } from './routes/groups/$id'
-import { Route as VarietiesIdCompanionsRouteImport } from './routes/varieties/$id.companions'
+import { Route as VegetablesIdCompanionsRouteImport } from './routes/vegetables/$id.companions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,39 +47,39 @@ const GroupsIdRoute = GroupsIdRouteImport.update({
   path: '/groups/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VarietiesIdCompanionsRoute = VarietiesIdCompanionsRouteImport.update({
-  id: '/companions',
-  path: '/companions',
-  getParentRoute: () => VarietiesIdRoute,
+const VegetablesIdCompanionsRoute = VegetablesIdCompanionsRouteImport.update({
+  id: '/vegetables/$id/companions',
+  path: '/vegetables/$id/companions',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/groups/$id': typeof GroupsIdRoute
-  '/varieties/$id': typeof VarietiesIdRouteWithChildren
+  '/varieties/$id': typeof VarietiesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/varieties/': typeof VarietiesIndexRoute
-  '/varieties/$id/companions': typeof VarietiesIdCompanionsRoute
+  '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/groups/$id': typeof GroupsIdRoute
-  '/varieties/$id': typeof VarietiesIdRouteWithChildren
+  '/varieties/$id': typeof VarietiesIdRoute
   '/groups': typeof GroupsIndexRoute
   '/plan': typeof PlanIndexRoute
   '/varieties': typeof VarietiesIndexRoute
-  '/varieties/$id/companions': typeof VarietiesIdCompanionsRoute
+  '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/groups/$id': typeof GroupsIdRoute
-  '/varieties/$id': typeof VarietiesIdRouteWithChildren
+  '/varieties/$id': typeof VarietiesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/varieties/': typeof VarietiesIndexRoute
-  '/varieties/$id/companions': typeof VarietiesIdCompanionsRoute
+  '/vegetables/$id/companions': typeof VegetablesIdCompanionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +90,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/plan/'
     | '/varieties/'
-    | '/varieties/$id/companions'
+    | '/vegetables/$id/companions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +99,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/plan'
     | '/varieties'
-    | '/varieties/$id/companions'
+    | '/vegetables/$id/companions'
   id:
     | '__root__'
     | '/'
@@ -108,16 +108,17 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/plan/'
     | '/varieties/'
-    | '/varieties/$id/companions'
+    | '/vegetables/$id/companions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GroupsIdRoute: typeof GroupsIdRoute
-  VarietiesIdRoute: typeof VarietiesIdRouteWithChildren
+  VarietiesIdRoute: typeof VarietiesIdRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
   VarietiesIndexRoute: typeof VarietiesIndexRoute
+  VegetablesIdCompanionsRoute: typeof VegetablesIdCompanionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,35 +165,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/varieties/$id/companions': {
-      id: '/varieties/$id/companions'
-      path: '/companions'
-      fullPath: '/varieties/$id/companions'
-      preLoaderRoute: typeof VarietiesIdCompanionsRouteImport
-      parentRoute: typeof VarietiesIdRoute
+    '/vegetables/$id/companions': {
+      id: '/vegetables/$id/companions'
+      path: '/vegetables/$id/companions'
+      fullPath: '/vegetables/$id/companions'
+      preLoaderRoute: typeof VegetablesIdCompanionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface VarietiesIdRouteChildren {
-  VarietiesIdCompanionsRoute: typeof VarietiesIdCompanionsRoute
-}
-
-const VarietiesIdRouteChildren: VarietiesIdRouteChildren = {
-  VarietiesIdCompanionsRoute: VarietiesIdCompanionsRoute,
-}
-
-const VarietiesIdRouteWithChildren = VarietiesIdRoute._addFileChildren(
-  VarietiesIdRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GroupsIdRoute: GroupsIdRoute,
-  VarietiesIdRoute: VarietiesIdRouteWithChildren,
+  VarietiesIdRoute: VarietiesIdRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
   VarietiesIndexRoute: VarietiesIndexRoute,
+  VegetablesIdCompanionsRoute: VegetablesIdCompanionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

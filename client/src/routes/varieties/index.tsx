@@ -8,7 +8,7 @@ export const Route = createFileRoute("/varieties/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData({
       queryKey: ["varieties"],
-      queryFn: fetchVarieties,
+      queryFn: () => fetchVarieties(),
     }),
   component: VarietyCatalogue,
 });
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/varieties/")({
 function VarietyCatalogue() {
   const { data } = useSuspenseQuery({
     queryKey: ["varieties"],
-    queryFn: fetchVarieties,
+    queryFn: () => fetchVarieties(),
   });
 
   return <VarietyTable varieties={data.payload.map((v) => v.payload)} />;
