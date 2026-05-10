@@ -12,7 +12,7 @@ on:
       - "client/**"
       - ".github/workflows/client.yml"
 env:
-  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/client/.cache/ms-playwright
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/client  /.cache/ms-playwright
 
 jobs:
   client-build:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Change to client directory
         run: cd client
