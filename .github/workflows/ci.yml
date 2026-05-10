@@ -6,11 +6,13 @@ on:
     paths:
       - "api/**"
       - "bruno/**"
+      - "workflows/ci.yml"
   pull_request:
     branches: ["**"]
     paths:
       - "api/**"
       - "bruno/**"
+      - "workflows/ci.yml"
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,6 +24,22 @@ jobs:
   rust-tests:
     name: Rust — fmt / clippy / build / test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: garden
+          POSTGRES_USER: garden
+          POSTGRES_PASSWORD: garden
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U garden -d garden"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,6 +71,9 @@ jobs:
       - name: Build release binary
         run: cargo build --release
         working-directory: api
+
+      - name: Create test database
+        run: psql postgresql://garden:garden@localhost:5432/garden -c "CREATE DATABASE garden_test OWNER garden; GRANT ALL PRIVILEGES ON DATABASE garden_test TO garden;"
 
       - name: Run all tests (unit + integration)
         run: cargo test --all -- --nocapture
