@@ -25,7 +25,7 @@ jobs:
           node-version: 20
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 10.33.0
 
@@ -34,7 +34,7 @@ jobs:
         working-directory: client
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
         working-directory: client
 
       - name: Check formatting
