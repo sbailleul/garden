@@ -9,7 +9,7 @@ import type {
   Region,
   SoilType,
   SunExposure,
-  WeeklyPlan
+  WeeklyPlan,
 } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -114,7 +114,7 @@ export function PlanForm({ onSubmit, isPending, isError, error, result }: Props)
       exclusions: "",
     },
     onSubmit: async ({ value }) => {
-      const layout:PlanRequestLayout = Array.from({ length: value.rows }, () =>
+      const layout: PlanRequestLayout = Array.from({ length: value.rows }, () =>
         Array.from({ length: value.cols }, () => ({ type: "Empty" as const })),
       );
 
@@ -126,7 +126,7 @@ export function PlanForm({ onSubmit, isPending, isError, error, result }: Props)
           : {}),
         ...(value.sun ? { sun: value.sun as SunExposure } : {}),
         ...(value.soil ? { soil: value.soil as SoilType } : {}),
-        ...(value.level ? { level: value.level as Level} : {}),
+        ...(value.level ? { level: value.level as Level } : {}),
         preferences: value.preferences
           ? value.preferences
               .split(",")

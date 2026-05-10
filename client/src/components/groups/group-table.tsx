@@ -37,9 +37,7 @@ const columns = [
   columnHelper.accessor("id", {
     header: "ID",
     cell: (info) => (
-      <span className="text-muted-foreground text-sm font-mono">
-        {info.getValue()}
-      </span>
+      <span className="text-muted-foreground text-sm font-mono">{info.getValue()}</span>
     ),
   }),
 ];

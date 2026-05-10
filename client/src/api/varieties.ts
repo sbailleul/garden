@@ -2,8 +2,9 @@ import { apiClient } from "@/api/client";
 import { paths } from "@/api/schema";
 import type { VarietiesApiResponse, VarietyApiResponse } from "@/api/types";
 
-
-export async function fetchVarieties(filter?: paths["/api/varieties"]["get"]["parameters"]["query"]): Promise<VarietiesApiResponse> {
+export async function fetchVarieties(
+  filter?: paths["/api/varieties"]["get"]["parameters"]["query"],
+): Promise<VarietiesApiResponse> {
   const { data, error } = await apiClient.GET("/api/varieties", {
     params: { query: filter },
   });

@@ -6,7 +6,6 @@ import type {
   VegetablesApiResponse,
 } from "@/api/types";
 
-
 export async function fetchVegetables(
   params?: paths["/api/vegetables"]["get"]["parameters"]["query"],
 ): Promise<VegetablesApiResponse> {

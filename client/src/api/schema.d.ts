@@ -4,996 +4,1018 @@
  */
 
 export interface paths {
-    "/api/groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /api/groups */
-        get: operations["list_groups"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/api/groups": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/groups/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /api/groups/{id} */
-        get: operations["get_group"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** GET /api/groups */
+    get: operations["list_groups"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/groups/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/groups/{id}/vegetables": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /api/groups/{id}/vegetables */
-        get: operations["list_vegetables_by_group"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** GET /api/groups/{id} */
+    get: operations["get_group"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/groups/{id}/vegetables": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/plan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * POST /api/plan
-         * @description Generates an optimised garden plan based on the provided constraints.
-         */
-        post: operations["post_plan"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** GET /api/groups/{id}/vegetables */
+    get: operations["list_vegetables_by_group"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/plan": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/varieties": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/varieties
-         * @description Returns all varieties from the database.
-         */
-        get: operations["list_varieties"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/plan
+     * @description Generates an optimised garden plan based on the provided constraints.
+     */
+    post: operations["post_plan"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/varieties": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/varieties/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/varieties/{id}
-         * @description Returns a single variety by id.
-         */
-        get: operations["get_variety"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * GET /api/varieties
+     * @description Returns all varieties from the database.
+     */
+    get: operations["list_varieties"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/varieties/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/vegetables": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/vegetables
-         * @description Returns all vegetables from the database.
-         */
-        get: operations["list_vegetables"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * GET /api/varieties/{id}
+     * @description Returns a single variety by id.
+     */
+    get: operations["get_variety"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/vegetables": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/vegetables/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/vegetables/{id}
-         * @description Returns a single vegetable by id.
-         */
-        get: operations["get_vegetable"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * GET /api/vegetables
+     * @description Returns all vegetables from the database.
+     */
+    get: operations["list_vegetables"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/vegetables/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/vegetables/{id}/companions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/vegetables/{id}/companions
-         * @description Returns good and bad companions for a given vegetable.
-         */
-        get: operations["get_companions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * GET /api/vegetables/{id}
+     * @description Returns a single vegetable by id.
+     */
+    get: operations["get_vegetable"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/vegetables/{id}/companions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/vegetables/{id}/varieties": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GET /api/vegetables/{id}/varieties
-         * @description Returns all varieties that belong to the given vegetable.
-         */
-        get: operations["get_varieties_by_vegetable"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * GET /api/vegetables/{id}/companions
+     * @description Returns good and bad companions for a given vegetable.
+     */
+    get: operations["get_companions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/vegetables/{id}/varieties": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /**
+     * GET /api/vegetables/{id}/varieties
+     * @description Returns all varieties that belong to the given vegetable.
+     */
+    get: operations["get_varieties_by_vegetable"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** @description Sowing or planting window — distinguishes direct outdoor from under-cover months. */
-        CalendarWindow: {
-            /** @description Months for sowing / planting under cover or in a greenhouse. */
-            indoor: components["schemas"]["Month"][];
-            /** @description Months for sowing / planting directly in open ground. */
-            outdoor: components["schemas"]["Month"][];
-        };
-        /** @enum {string} */
-        Category: "Fruit" | "Produce" | "Herb" | "Root" | "Bulb" | "Leafy" | "Pod";
-        CompanionInfo: {
-            id: string;
-            name: string;
-        };
-        /** @description Generic single-item response envelope. */
-        CompanionsApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["CompanionsResponse"];
-        };
-        CompanionsResponse: {
-            bad: components["schemas"]["CompanionInfo"][];
-            good: components["schemas"]["CompanionInfo"][];
-            id: string;
-            name: string;
-        };
-        /** @description A zero-based (row, col) position within the garden grid. */
-        Coordinate: {
-            col: number;
-            row: number;
-        };
-        /** @description Error response returned for 4xx responses. */
-        ErrorResponse: {
-            error: string;
-        };
-        /**
-         * @description A group is a high-level category that contains several vegetables
-         *     (e.g. "Bulbes" groups onion, garlic, leek, and chive).
-         */
-        Group: {
-            id: string;
-            name: string;
-        };
-        /** @description Generic single-item response envelope. */
-        GroupApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["Group"];
-        };
-        /** @description Generic paginated list response envelope. */
-        GroupsApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            pagination: components["schemas"]["Pagination"];
-            payload: components["schemas"]["GroupApiResponse"][];
-        };
-        /**
-         * @description HTTP-facing layout cell, deserialized from the `layout` array in `POST /api/plan`.
-         *     Pre-planted cells reference a variety by ID; the use case resolves IDs to [`Variety`]
-         *     objects before passing the layout to the domain planner.
-         */
-        LayoutCell: {
-            id: string;
-            /**
-             * Format: date
-             * @description Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
-             *     When provided, it is used to free the cell after harvest and compute
-             *     `estimatedHarvestDate` in the response.
-             * @example 2025-05-01
-             */
-            plantedDate?: string | null;
-            /**
-             * Format: int32
-             * @description Number of plants per cell. Computed from the variety's spacing if absent.
-             */
-            plantsPerCell?: number | null;
-            /** @enum {string} */
-            type: "SelfContained";
-        } | {
-            id: string;
-            /**
-             * Format: int32
-             * @description Block length in grid cells. Computed from the variety's spacing if absent.
-             */
-            lengthCells?: number | null;
-            /**
-             * Format: date
-             * @description Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
-             *     When provided, it is used to free the cell after harvest and compute
-             *     `estimatedHarvestDate` in the response.
-             * @example 2025-05-01
-             */
-            plantedDate?: string | null;
-            /**
-             * Format: int32
-             * @description Number of plants per cell. Computed from the variety's spacing if absent.
-             */
-            plantsPerCell?: number | null;
-            /** @enum {string} */
-            type: "Overflowing";
-            /**
-             * Format: int32
-             * @description Block width in grid cells. Computed from the variety's spacing if absent.
-             */
-            widthCells?: number | null;
-        } | {
-            coveredBy: components["schemas"]["Coordinate"];
-            /** @enum {string} */
-            type: "Overflowed";
-        } | {
-            /** @enum {string} */
-            type: "Empty";
-        } | {
-            /** @enum {string} */
-            type: "Blocked";
-        };
-        /** @enum {string} */
-        Level: "Beginner" | "Expert";
-        /**
-         * @description Plant lifecycle: how many growing seasons the plant lives.
-         * @enum {string}
-         */
-        Lifecycle: "Annual" | "Biennial" | "Perennial";
-        /** @description A single HAL-style hyperlink. */
-        Link: {
-            href: string;
-            /**
-             * @description HTTP method to use for this link (e.g. `GET`, `POST`).
-             * @example GET
-             */
-            method: string;
-        };
-        /**
-         * @description Calendar month — used in sowing and planting windows.
-         * @enum {string}
-         */
-        Month: "January" | "February" | "March" | "April" | "May" | "June" | "July" | "August" | "September" | "October" | "November" | "December";
-        /** @description Pagination metadata included in responses that return lists. */
-        Pagination: {
-            page: number;
-            perPage: number;
-            total: number;
-            totalPages: number;
-        };
-        /** @description The date range of the planning period. */
-        Period: {
-            /**
-             * Format: date
-             * @description Last day of the planning period (ISO 8601, e.g. `"2025-08-31"`).
-             * @example 2025-08-31
-             */
-            end: string;
-            /**
-             * Format: date
-             * @description First day of the planning period (ISO 8601, e.g. `"2025-06-01"`).
-             * @example 2025-06-01
-             */
-            start: string;
-        };
-        /** @description Generic single-item response envelope. */
-        PlanApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["PlanResponse"];
-        };
-        /**
-         * @description HTTP-facing planning request, deserialized from the `POST /api/plan` body.
-         *
-         *     Validated and converted to [`PlanParams`] by the use case before the domain
-         *     services are invoked.
-         */
-        PlanRequest: {
-            /**
-             * @description Variety IDs to exclude from planning — these will never be auto-placed
-             *     regardless of other filters. Pre-placed cells in `layout` are not affected.
-             */
-            exclusions?: string[];
-            /**
-             * @description Combined grid layout — defines dimensions and pre-filled cells.
-             *     Each cell is a `LayoutCell` object: `{"type":"Empty"}` (free),
-             *     `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).
-             */
-            layout: components["schemas"]["LayoutCell"][][];
-            level?: components["schemas"]["Level"] | null;
-            period?: components["schemas"]["Period"] | null;
-            /** @description Preferred varieties with optional per-variety plant count. */
-            preferences?: components["schemas"]["PreferenceEntry"][] | null;
-            region: components["schemas"]["Region"];
-            soil?: components["schemas"]["SoilType"] | null;
-            /**
-             * @description Varieties already sown from seed, keyed by variety id.
-             *     Each entry is a list of sowing batches, each with an optional date and a seed count.
-             *     Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`
-             */
-            sown?: {
-                [key: string]: components["schemas"]["SowingRecord"][];
-            };
-            sun?: components["schemas"]["SunExposure"] | null;
-        };
-        PlanResponse: {
-            cols: number;
-            rows: number;
-            warnings: string[];
-            /** @description One entry per week in the requested planning period. */
-            weeks: components["schemas"]["WeeklyPlan"][];
-        };
-        /**
-         * @description A cell in the planned garden grid (response output).
-         *
-         *     Three occupied variants, plus `Empty` and `Blocked`:
-         *     - `SelfContained` - a plant whose spacing <= 30 cm; fits entirely in one cell.
-         *     - `Overflowing`   - the anchor (top-left) cell of a plant that spans multiple cells.
-         *     - `Overflowed`    - a continuation cell covered by a neighbouring anchor; carries only a
-         *     back-reference so clients can look up the full data from the anchor.
-         *     - `Empty`         - free, unoccupied, non-blocked cell.
-         *     - `Blocked`       - non-plantable zone (path, alley, obstacle).
-         */
-        PlannedCell: {
-            /**
-             * Format: date
-             * @description Estimated date the plant will be ready to harvest.
-             * @example 2025-08-01
-             */
-            estimatedHarvestDate: string;
-            id: string;
-            name: string;
-            /** Format: int32 */
-            plantsPerCell: number;
-            reason: string;
-            /** @enum {string} */
-            type: "SelfContained";
-        } | {
-            /**
-             * Format: date
-             * @description Estimated date the plant will be ready to harvest.
-             * @example 2025-08-01
-             */
-            estimatedHarvestDate: string;
-            id: string;
-            /** Format: int32 */
-            lengthCells: number;
-            name: string;
-            /** Format: int32 */
-            plantsPerCell: number;
-            reason: string;
-            /** @enum {string} */
-            type: "Overflowing";
-            /** Format: int32 */
-            widthCells: number;
-        } | {
-            coveredBy: components["schemas"]["Coordinate"];
-            /** @enum {string} */
-            type: "Overflowed";
-        } | {
-            /** @enum {string} */
-            type: "Empty";
-        } | {
-            /** @enum {string} */
-            type: "Blocked";
-        };
-        /** @description A single preference entry with an optional desired plant count. */
-        PreferenceEntry: {
-            id: string;
-            /**
-             * Format: int32
-             * @description Desired number of **plants** (placements) for this variety.
-             *     Each plant may occupy more than one cell depending on its spacing.
-             */
-            quantity?: number | null;
-        };
-        /** @enum {string} */
-        Region: "Temperate" | "Mediterranean" | "Oceanic" | "Continental" | "Mountain";
-        /** @description Per-region sowing and planting calendar for a variety. */
-        RegionCalendar: {
-            planting: components["schemas"]["CalendarWindow"];
-            region: components["schemas"]["Region"];
-            sowing: components["schemas"]["CalendarWindow"];
-        };
-        /** @enum {string} */
-        SoilType: "Clay" | "Sandy" | "Loamy" | "Chalky" | "Humus";
-        /** @description One sowing event: an optional date and a seed count. */
-        SowingRecord: {
-            /**
-             * Format: int32
-             * @description Number of seeds (or seedlings) that were sown in this batch.
-             */
-            seedsSown: number;
-            /**
-             * Format: date
-             * @description Date when the seeds were sown (ISO 8601, e.g. `"2025-03-15"`).
-             *     When omitted the planner uses the variety's regional sowing calendar.
-             * @example 2025-03-15
-             */
-            sowingDate?: string | null;
-        };
-        /**
-         * @description A variety that should be sown during a given planning week so it is
-         *     ready to transplant into the garden during a future week.
-         */
-        SowingTask: {
-            /** @description Variety identifier. */
-            id: string;
-            /** @description Human-readable variety name. */
-            name: string;
-            /**
-             * Format: date
-             * @description Start date of the target transplanting week.
-             * @example 2025-05-05
-             */
-            targetWeekStart: string;
-        };
-        /** @enum {string} */
-        SunExposure: "FullSun" | "PartialShade" | "Shade";
-        /** @description Generic paginated list response envelope. */
-        VarietiesApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            pagination: components["schemas"]["Pagination"];
-            payload: components["schemas"]["VarietyApiResponse"][];
-        };
-        /** @description Generic single-item response envelope. */
-        VarietyApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["VarietyResponse"];
-        };
-        /**
-         * @description HTTP-facing flat representation of a variety.
-         *
-         *     Returned directly by the [`VarietyResponseRepository`] so handlers never
-         *     need to build a full domain [`Variety`] (with its embedded [`Vegetable`])
-         *     just to flatten it back down for the API response.
-         *
-         *     [`Variety`]: crate::domain::models::variety::Variety
-         *     [`Vegetable`]: crate::domain::models::vegetable::Vegetable
-         */
-        VarietyResponse: {
-            beginnerFriendly: boolean;
-            calendars: components["schemas"]["RegionCalendar"][];
-            category: components["schemas"]["Category"];
-            /** Format: int32 */
-            daysToHarvest: number;
-            /** Format: int32 */
-            daysToPlant: number;
-            id: string;
-            latinName: string;
-            lifecycle: components["schemas"]["Lifecycle"];
-            name: string;
-            soilTypes: components["schemas"]["SoilType"][];
-            /** Format: int32 */
-            spacingCm: number;
-            sunRequirement: components["schemas"]["SunExposure"][];
-            vegetableId: string;
-        };
-        /**
-         * @description A vegetable groups one or more varieties of the same species or type.
-         *     For example, the `"pepper"` vegetable contains both `"pepper"` and `"red-pepper"`.
-         */
-        Vegetable: {
-            /** @description Identifiers of vegetables that harm this vegetable when planted nearby. */
-            badCompanions: string[];
-            /** @description 8-digit HEX color code (RRGGBBAA) representative of the vegetable. */
-            color: string;
-            /** @description Identifiers of vegetables that benefit this vegetable when planted nearby. */
-            goodCompanions: string[];
-            /** @description Identifier of the group this vegetable belongs to. */
-            groupId: string;
-            id: string;
-            name: string;
-            varietyIds: string[];
-        };
-        /** @description Generic single-item response envelope. */
-        VegetableApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            payload: components["schemas"]["Vegetable"];
-        };
-        /** @description Generic paginated list response envelope. */
-        VegetablesApiResponse: {
-            /** @description HAL-style hypermedia links. */
-            _links: {
-                [key: string]: components["schemas"]["Link"];
-            };
-            pagination: components["schemas"]["Pagination"];
-            payload: components["schemas"]["VegetableApiResponse"][];
-        };
-        /** @description A snapshot of the garden layout for one week of the planning period. */
-        WeeklyPlan: {
-            /** @description Full garden grid for this week (same dimensions as the request layout). */
-            grid: components["schemas"]["PlannedCell"][][];
-            period: components["schemas"]["Period"];
-            /**
-             * Format: int32
-             * @description Cumulative companion-planting score for plants placed **this week**.
-             */
-            score: number;
-            /**
-             * @description Varieties to sow this week so they are ready to transplant during a
-             *     future planning week.
-             */
-            sowingTasks: components["schemas"]["SowingTask"][];
-            /** Format: int32 */
-            weekCount: number;
-        };
+  schemas: {
+    /** @description Sowing or planting window — distinguishes direct outdoor from under-cover months. */
+    CalendarWindow: {
+      /** @description Months for sowing / planting under cover or in a greenhouse. */
+      indoor: components["schemas"]["Month"][];
+      /** @description Months for sowing / planting directly in open ground. */
+      outdoor: components["schemas"]["Month"][];
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /** @enum {string} */
+    Category: "Fruit" | "Produce" | "Herb" | "Root" | "Bulb" | "Leafy" | "Pod";
+    CompanionInfo: {
+      id: string;
+      name: string;
+    };
+    /** @description Generic single-item response envelope. */
+    CompanionsApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      payload: components["schemas"]["CompanionsResponse"];
+    };
+    CompanionsResponse: {
+      bad: components["schemas"]["CompanionInfo"][];
+      good: components["schemas"]["CompanionInfo"][];
+      id: string;
+      name: string;
+    };
+    /** @description A zero-based (row, col) position within the garden grid. */
+    Coordinate: {
+      col: number;
+      row: number;
+    };
+    /** @description Error response returned for 4xx responses. */
+    ErrorResponse: {
+      error: string;
+    };
+    /**
+     * @description A group is a high-level category that contains several vegetables
+     *     (e.g. "Bulbes" groups onion, garlic, leek, and chive).
+     */
+    Group: {
+      id: string;
+      name: string;
+    };
+    /** @description Generic single-item response envelope. */
+    GroupApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      payload: components["schemas"]["Group"];
+    };
+    /** @description Generic paginated list response envelope. */
+    GroupsApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      pagination: components["schemas"]["Pagination"];
+      payload: components["schemas"]["GroupApiResponse"][];
+    };
+    /**
+     * @description HTTP-facing layout cell, deserialized from the `layout` array in `POST /api/plan`.
+     *     Pre-planted cells reference a variety by ID; the use case resolves IDs to [`Variety`]
+     *     objects before passing the layout to the domain planner.
+     */
+    LayoutCell:
+      | {
+          id: string;
+          /**
+           * Format: date
+           * @description Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+           *     When provided, it is used to free the cell after harvest and compute
+           *     `estimatedHarvestDate` in the response.
+           * @example 2025-05-01
+           */
+          plantedDate?: string | null;
+          /**
+           * Format: int32
+           * @description Number of plants per cell. Computed from the variety's spacing if absent.
+           */
+          plantsPerCell?: number | null;
+          /** @enum {string} */
+          type: "SelfContained";
+        }
+      | {
+          id: string;
+          /**
+           * Format: int32
+           * @description Block length in grid cells. Computed from the variety's spacing if absent.
+           */
+          lengthCells?: number | null;
+          /**
+           * Format: date
+           * @description Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
+           *     When provided, it is used to free the cell after harvest and compute
+           *     `estimatedHarvestDate` in the response.
+           * @example 2025-05-01
+           */
+          plantedDate?: string | null;
+          /**
+           * Format: int32
+           * @description Number of plants per cell. Computed from the variety's spacing if absent.
+           */
+          plantsPerCell?: number | null;
+          /** @enum {string} */
+          type: "Overflowing";
+          /**
+           * Format: int32
+           * @description Block width in grid cells. Computed from the variety's spacing if absent.
+           */
+          widthCells?: number | null;
+        }
+      | {
+          coveredBy: components["schemas"]["Coordinate"];
+          /** @enum {string} */
+          type: "Overflowed";
+        }
+      | {
+          /** @enum {string} */
+          type: "Empty";
+        }
+      | {
+          /** @enum {string} */
+          type: "Blocked";
+        };
+    /** @enum {string} */
+    Level: "Beginner" | "Expert";
+    /**
+     * @description Plant lifecycle: how many growing seasons the plant lives.
+     * @enum {string}
+     */
+    Lifecycle: "Annual" | "Biennial" | "Perennial";
+    /** @description A single HAL-style hyperlink. */
+    Link: {
+      href: string;
+      /**
+       * @description HTTP method to use for this link (e.g. `GET`, `POST`).
+       * @example GET
+       */
+      method: string;
+    };
+    /**
+     * @description Calendar month — used in sowing and planting windows.
+     * @enum {string}
+     */
+    Month:
+      | "January"
+      | "February"
+      | "March"
+      | "April"
+      | "May"
+      | "June"
+      | "July"
+      | "August"
+      | "September"
+      | "October"
+      | "November"
+      | "December";
+    /** @description Pagination metadata included in responses that return lists. */
+    Pagination: {
+      page: number;
+      perPage: number;
+      total: number;
+      totalPages: number;
+    };
+    /** @description The date range of the planning period. */
+    Period: {
+      /**
+       * Format: date
+       * @description Last day of the planning period (ISO 8601, e.g. `"2025-08-31"`).
+       * @example 2025-08-31
+       */
+      end: string;
+      /**
+       * Format: date
+       * @description First day of the planning period (ISO 8601, e.g. `"2025-06-01"`).
+       * @example 2025-06-01
+       */
+      start: string;
+    };
+    /** @description Generic single-item response envelope. */
+    PlanApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      payload: components["schemas"]["PlanResponse"];
+    };
+    /**
+     * @description HTTP-facing planning request, deserialized from the `POST /api/plan` body.
+     *
+     *     Validated and converted to [`PlanParams`] by the use case before the domain
+     *     services are invoked.
+     */
+    PlanRequest: {
+      /**
+       * @description Variety IDs to exclude from planning — these will never be auto-placed
+       *     regardless of other filters. Pre-placed cells in `layout` are not affected.
+       */
+      exclusions?: string[];
+      /**
+       * @description Combined grid layout — defines dimensions and pre-filled cells.
+       *     Each cell is a `LayoutCell` object: `{"type":"Empty"}` (free),
+       *     `{"type":"SelfContained","id":"..."}` (pre-planted), or `{"type":"Blocked"}` (blocked).
+       */
+      layout: components["schemas"]["LayoutCell"][][];
+      level?: components["schemas"]["Level"] | null;
+      period?: components["schemas"]["Period"] | null;
+      /** @description Preferred varieties with optional per-variety plant count. */
+      preferences?: components["schemas"]["PreferenceEntry"][] | null;
+      region: components["schemas"]["Region"];
+      soil?: components["schemas"]["SoilType"] | null;
+      /**
+       * @description Varieties already sown from seed, keyed by variety id.
+       *     Each entry is a list of sowing batches, each with an optional date and a seed count.
+       *     Example: `{ "tomato": [{ "sowingDate": "2025-03-15", "seedsSown": 10 }] }`
+       */
+      sown?: {
+        [key: string]: components["schemas"]["SowingRecord"][];
+      };
+      sun?: components["schemas"]["SunExposure"] | null;
+    };
+    PlanResponse: {
+      cols: number;
+      rows: number;
+      warnings: string[];
+      /** @description One entry per week in the requested planning period. */
+      weeks: components["schemas"]["WeeklyPlan"][];
+    };
+    /**
+     * @description A cell in the planned garden grid (response output).
+     *
+     *     Three occupied variants, plus `Empty` and `Blocked`:
+     *     - `SelfContained` - a plant whose spacing <= 30 cm; fits entirely in one cell.
+     *     - `Overflowing`   - the anchor (top-left) cell of a plant that spans multiple cells.
+     *     - `Overflowed`    - a continuation cell covered by a neighbouring anchor; carries only a
+     *     back-reference so clients can look up the full data from the anchor.
+     *     - `Empty`         - free, unoccupied, non-blocked cell.
+     *     - `Blocked`       - non-plantable zone (path, alley, obstacle).
+     */
+    PlannedCell:
+      | {
+          /**
+           * Format: date
+           * @description Estimated date the plant will be ready to harvest.
+           * @example 2025-08-01
+           */
+          estimatedHarvestDate: string;
+          id: string;
+          name: string;
+          /** Format: int32 */
+          plantsPerCell: number;
+          reason: string;
+          /** @enum {string} */
+          type: "SelfContained";
+        }
+      | {
+          /**
+           * Format: date
+           * @description Estimated date the plant will be ready to harvest.
+           * @example 2025-08-01
+           */
+          estimatedHarvestDate: string;
+          id: string;
+          /** Format: int32 */
+          lengthCells: number;
+          name: string;
+          /** Format: int32 */
+          plantsPerCell: number;
+          reason: string;
+          /** @enum {string} */
+          type: "Overflowing";
+          /** Format: int32 */
+          widthCells: number;
+        }
+      | {
+          coveredBy: components["schemas"]["Coordinate"];
+          /** @enum {string} */
+          type: "Overflowed";
+        }
+      | {
+          /** @enum {string} */
+          type: "Empty";
+        }
+      | {
+          /** @enum {string} */
+          type: "Blocked";
+        };
+    /** @description A single preference entry with an optional desired plant count. */
+    PreferenceEntry: {
+      id: string;
+      /**
+       * Format: int32
+       * @description Desired number of **plants** (placements) for this variety.
+       *     Each plant may occupy more than one cell depending on its spacing.
+       */
+      quantity?: number | null;
+    };
+    /** @enum {string} */
+    Region: "Temperate" | "Mediterranean" | "Oceanic" | "Continental" | "Mountain";
+    /** @description Per-region sowing and planting calendar for a variety. */
+    RegionCalendar: {
+      planting: components["schemas"]["CalendarWindow"];
+      region: components["schemas"]["Region"];
+      sowing: components["schemas"]["CalendarWindow"];
+    };
+    /** @enum {string} */
+    SoilType: "Clay" | "Sandy" | "Loamy" | "Chalky" | "Humus";
+    /** @description One sowing event: an optional date and a seed count. */
+    SowingRecord: {
+      /**
+       * Format: int32
+       * @description Number of seeds (or seedlings) that were sown in this batch.
+       */
+      seedsSown: number;
+      /**
+       * Format: date
+       * @description Date when the seeds were sown (ISO 8601, e.g. `"2025-03-15"`).
+       *     When omitted the planner uses the variety's regional sowing calendar.
+       * @example 2025-03-15
+       */
+      sowingDate?: string | null;
+    };
+    /**
+     * @description A variety that should be sown during a given planning week so it is
+     *     ready to transplant into the garden during a future week.
+     */
+    SowingTask: {
+      /** @description Variety identifier. */
+      id: string;
+      /** @description Human-readable variety name. */
+      name: string;
+      /**
+       * Format: date
+       * @description Start date of the target transplanting week.
+       * @example 2025-05-05
+       */
+      targetWeekStart: string;
+    };
+    /** @enum {string} */
+    SunExposure: "FullSun" | "PartialShade" | "Shade";
+    /** @description Generic paginated list response envelope. */
+    VarietiesApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      pagination: components["schemas"]["Pagination"];
+      payload: components["schemas"]["VarietyApiResponse"][];
+    };
+    /** @description Generic single-item response envelope. */
+    VarietyApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      payload: components["schemas"]["VarietyResponse"];
+    };
+    /**
+     * @description HTTP-facing flat representation of a variety.
+     *
+     *     Returned directly by the [`VarietyResponseRepository`] so handlers never
+     *     need to build a full domain [`Variety`] (with its embedded [`Vegetable`])
+     *     just to flatten it back down for the API response.
+     *
+     *     [`Variety`]: crate::domain::models::variety::Variety
+     *     [`Vegetable`]: crate::domain::models::vegetable::Vegetable
+     */
+    VarietyResponse: {
+      beginnerFriendly: boolean;
+      calendars: components["schemas"]["RegionCalendar"][];
+      category: components["schemas"]["Category"];
+      /** Format: int32 */
+      daysToHarvest: number;
+      /** Format: int32 */
+      daysToPlant: number;
+      id: string;
+      latinName: string;
+      lifecycle: components["schemas"]["Lifecycle"];
+      name: string;
+      soilTypes: components["schemas"]["SoilType"][];
+      /** Format: int32 */
+      spacingCm: number;
+      sunRequirement: components["schemas"]["SunExposure"][];
+      vegetableId: string;
+    };
+    /**
+     * @description A vegetable groups one or more varieties of the same species or type.
+     *     For example, the `"pepper"` vegetable contains both `"pepper"` and `"red-pepper"`.
+     */
+    Vegetable: {
+      /** @description Identifiers of vegetables that harm this vegetable when planted nearby. */
+      badCompanions: string[];
+      /** @description 8-digit HEX color code (RRGGBBAA) representative of the vegetable. */
+      color: string;
+      /** @description Identifiers of vegetables that benefit this vegetable when planted nearby. */
+      goodCompanions: string[];
+      /** @description Identifier of the group this vegetable belongs to. */
+      groupId: string;
+      id: string;
+      name: string;
+      varietyIds: string[];
+    };
+    /** @description Generic single-item response envelope. */
+    VegetableApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      payload: components["schemas"]["Vegetable"];
+    };
+    /** @description Generic paginated list response envelope. */
+    VegetablesApiResponse: {
+      /** @description HAL-style hypermedia links. */
+      _links: {
+        [key: string]: components["schemas"]["Link"];
+      };
+      pagination: components["schemas"]["Pagination"];
+      payload: components["schemas"]["VegetableApiResponse"][];
+    };
+    /** @description A snapshot of the garden layout for one week of the planning period. */
+    WeeklyPlan: {
+      /** @description Full garden grid for this week (same dimensions as the request layout). */
+      grid: components["schemas"]["PlannedCell"][][];
+      period: components["schemas"]["Period"];
+      /**
+       * Format: int32
+       * @description Cumulative companion-planting score for plants placed **this week**.
+       */
+      score: number;
+      /**
+       * @description Varieties to sow this week so they are ready to transplant during a
+       *     future planning week.
+       */
+      sowingTasks: components["schemas"]["SowingTask"][];
+      /** Format: int32 */
+      weekCount: number;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_groups: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based, default: 1). */
-                page?: number | null;
-                /** @description Items per page (default: 20). */
-                size?: number | null;
-            };
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of all groups */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupsApiResponse"];
-                };
-            };
-        };
+  list_groups: {
+    parameters: {
+      query?: {
+        /** @description Page number (1-based, default: 1). */
+        page?: number | null;
+        /** @description Items per page (default: 20). */
+        size?: number | null;
+      };
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path?: never;
+      cookie?: never;
     };
-    get_group: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Paginated list of all groups */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Group found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupApiResponse"];
-                };
-            };
-            /** @description Group not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["GroupsApiResponse"];
         };
+      };
     };
-    list_vegetables_by_group: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based, default: 1). */
-                page?: number | null;
-                /** @description Items per page (default: 20). */
-                size?: number | null;
-            };
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of vegetables in this group */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VegetablesApiResponse"];
-                };
-            };
-            /** @description Group not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
+  };
+  get_group: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
+        id: string;
+      };
+      cookie?: never;
     };
-    post_plan: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Group found */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        /** @description Planning constraints and grid layout */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlanRequest"];
-            };
+        content: {
+          "application/json": components["schemas"]["GroupApiResponse"];
         };
-        responses: {
-            /** @description Optimised garden plan */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PlanApiResponse"];
-                };
-            };
-            /** @description Validation error or bad JSON */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+      };
+      /** @description Group not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
     };
-    list_varieties: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based, default: 1). */
-                page?: number | null;
-                /** @description Items per page (default: 20). */
-                size?: number | null;
-                /** @description Filter by category (e.g. `Fruit`, `Herb`). */
-                category?: string | null;
-                /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
-                lifecycle?: string | null;
-                /** @description Filter to beginner-friendly varieties only. */
-                beginner_friendly?: boolean | null;
-                /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
-                sun_requirement?: string | null;
-                /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
-                soil_type?: string | null;
-                /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
-                region?: string | null;
-                /** @description Filter by parent vegetable identifier. */
-                vegetable_id?: string | null;
-                /** @description Case-insensitive substring search on the translated variety name. */
-                search?: string | null;
-            };
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of all varieties */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VarietiesApiResponse"];
-                };
-            };
-        };
+  };
+  list_vegetables_by_group: {
+    parameters: {
+      query?: {
+        /** @description Page number (1-based, default: 1). */
+        page?: number | null;
+        /** @description Items per page (default: 20). */
+        size?: number | null;
+      };
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Group identifier (e.g. `bulbes`, `legumes-fruits`) */
+        id: string;
+      };
+      cookie?: never;
     };
-    get_variety: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Variety identifier (e.g. `tomato`, `basil`) */
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Paginated list of vegetables in this group */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Variety found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VarietyApiResponse"];
-                };
-            };
-            /** @description Variety not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["VegetablesApiResponse"];
         };
+      };
+      /** @description Group not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
     };
-    list_vegetables: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based, default: 1). */
-                page?: number | null;
-                /** @description Items per page (default: 20). */
-                size?: number | null;
-            };
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of all vegetables */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VegetablesApiResponse"];
-                };
-            };
-        };
+  };
+  post_plan: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path?: never;
+      cookie?: never;
     };
-    get_vegetable: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Vegetable found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VegetableApiResponse"];
-                };
-            };
-            /** @description Vegetable not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
+    /** @description Planning constraints and grid layout */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PlanRequest"];
+      };
     };
-    get_companions: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
-                id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Optimised garden plan */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Companion planting info */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanionsApiResponse"];
-                };
-            };
-            /** @description Vegetable not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["PlanApiResponse"];
         };
+      };
+      /** @description Validation error or bad JSON */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
     };
-    get_varieties_by_vegetable: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based, default: 1). */
-                page?: number | null;
-                /** @description Items per page (default: 20). */
-                size?: number | null;
-                /** @description Filter by category (e.g. `Fruit`, `Herb`). */
-                category?: string | null;
-                /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
-                lifecycle?: string | null;
-                /** @description Filter to beginner-friendly varieties only. */
-                beginner_friendly?: boolean | null;
-                /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
-                sun_requirement?: string | null;
-                /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
-                soil_type?: string | null;
-                /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
-                region?: string | null;
-                /** @description Case-insensitive substring search on the translated variety name. */
-                search?: string | null;
-            };
-            header?: {
-                /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
-                "Accept-Language"?: string | null;
-            };
-            path: {
-                /** @description Vegetable identifier (e.g. `pepper`, `brassica`) */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of varieties for this vegetable */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VarietiesApiResponse"];
-                };
-            };
-            /** @description Vegetable not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
+  };
+  list_varieties: {
+    parameters: {
+      query?: {
+        /** @description Page number (1-based, default: 1). */
+        page?: number | null;
+        /** @description Items per page (default: 20). */
+        size?: number | null;
+        /** @description Filter by category (e.g. `Fruit`, `Herb`). */
+        category?: string | null;
+        /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
+        lifecycle?: string | null;
+        /** @description Filter to beginner-friendly varieties only. */
+        beginner_friendly?: boolean | null;
+        /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
+        sun_requirement?: string | null;
+        /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
+        soil_type?: string | null;
+        /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
+        region?: string | null;
+        /** @description Filter by parent vegetable identifier. */
+        vegetable_id?: string | null;
+        /** @description Case-insensitive substring search on the translated variety name. */
+        search?: string | null;
+      };
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path?: never;
+      cookie?: never;
     };
+    requestBody?: never;
+    responses: {
+      /** @description Paginated list of all varieties */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VarietiesApiResponse"];
+        };
+      };
+    };
+  };
+  get_variety: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Variety identifier (e.g. `tomato`, `basil`) */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Variety found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VarietyApiResponse"];
+        };
+      };
+      /** @description Variety not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  list_vegetables: {
+    parameters: {
+      query?: {
+        /** @description Page number (1-based, default: 1). */
+        page?: number | null;
+        /** @description Items per page (default: 20). */
+        size?: number | null;
+      };
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Paginated list of all vegetables */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VegetablesApiResponse"];
+        };
+      };
+    };
+  };
+  get_vegetable: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Vegetable found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VegetableApiResponse"];
+        };
+      };
+      /** @description Vegetable not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  get_companions: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Vegetable identifier (e.g. `tomato`, `brassica`) */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Companion planting info */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CompanionsApiResponse"];
+        };
+      };
+      /** @description Vegetable not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  get_varieties_by_vegetable: {
+    parameters: {
+      query?: {
+        /** @description Page number (1-based, default: 1). */
+        page?: number | null;
+        /** @description Items per page (default: 20). */
+        size?: number | null;
+        /** @description Filter by category (e.g. `Fruit`, `Herb`). */
+        category?: string | null;
+        /** @description Filter by lifecycle (`Annual`, `Biennial`, `Perennial`). */
+        lifecycle?: string | null;
+        /** @description Filter to beginner-friendly varieties only. */
+        beginner_friendly?: boolean | null;
+        /** @description Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`). */
+        sun_requirement?: string | null;
+        /** @description Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`). */
+        soil_type?: string | null;
+        /** @description Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`). */
+        region?: string | null;
+        /** @description Case-insensitive substring search on the translated variety name. */
+        search?: string | null;
+      };
+      header?: {
+        /** @description BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`. */
+        "Accept-Language"?: string | null;
+      };
+      path: {
+        /** @description Vegetable identifier (e.g. `pepper`, `brassica`) */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Paginated list of varieties for this vegetable */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VarietiesApiResponse"];
+        };
+      };
+      /** @description Vegetable not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
 }

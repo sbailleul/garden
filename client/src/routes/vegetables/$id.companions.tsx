@@ -22,12 +22,5 @@ function CompanionsPage() {
 
   const { name, good, bad } = data.payload;
 
-  return (
-    <CompanionList
-      varietyId={id}
-      varietyName={name}
-      good={good}
-      bad={bad}
-    />
-  );
+  return <CompanionList varietyId={id} varietyName={name} good={good} bad={bad} />;
 }

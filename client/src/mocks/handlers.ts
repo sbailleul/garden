@@ -129,8 +129,24 @@ const VEGETABLE_MAP: Record<string, Variety> = {
   basil: BASIL,
 };
 
-const TOMATO_VARIETY: Vegetable = { id: "tomato", name: "Tomato", groupId: "legumes-fruits", color: "#E34234FF", varietyIds: ["tomato"], goodCompanions: ["basil"], badCompanions: ["fennel"] };
-const BASIL_VARIETY: Vegetable = { id: "basil", name: "Basil", groupId: "legumes-feuilles", color: "#1A5C38FF", varietyIds: ["basil"], goodCompanions: ["tomato"], badCompanions: [] };
+const TOMATO_VARIETY: Vegetable = {
+  id: "tomato",
+  name: "Tomato",
+  groupId: "legumes-fruits",
+  color: "#E34234FF",
+  varietyIds: ["tomato"],
+  goodCompanions: ["basil"],
+  badCompanions: ["fennel"],
+};
+const BASIL_VARIETY: Vegetable = {
+  id: "basil",
+  name: "Basil",
+  groupId: "legumes-feuilles",
+  color: "#1A5C38FF",
+  varietyIds: ["basil"],
+  goodCompanions: ["tomato"],
+  badCompanions: [],
+};
 
 const vegetableResponse = (v: Vegetable): VegetableApiResponse => ({
   payload: v,
@@ -183,9 +199,7 @@ const GROUPS_RESPONSE: GroupsApiResponse = {
   _links: { self: SELF_LINK("/api/groups") },
 };
 
-const GROUP_MAP: Record<string, Group> = Object.fromEntries(
-  ALL_GROUPS.map((g) => [g.id, g]),
-);
+const GROUP_MAP: Record<string, Group> = Object.fromEntries(ALL_GROUPS.map((g) => [g.id, g]));
 
 const GROUP_VEGETABLES: Record<string, Vegetable[]> = {
   "legumes-fruits": [TOMATO_VARIETY],
@@ -196,7 +210,7 @@ export const handlers = [
   http.get("/api/varieties", () => HttpResponse.json(VEGETABLES_RESPONSE)),
 
   http.get("/api/varieties/:id", ({ params }) => {
-    const veg = VEGETABLE_MAP[params['id']as string];
+    const veg = VEGETABLE_MAP[params["id"] as string];
     if (!veg) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -204,7 +218,7 @@ export const handlers = [
   }),
 
   http.get("/api/vegetables/:id/companions", ({ params }) => {
-    if (params['id'] !== "tomato") {
+    if (params["id"] !== "tomato") {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
     return HttpResponse.json(COMPANIONS_RESPONSE);
@@ -261,9 +275,7 @@ export const handlers = [
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
     // Return the mock varieties that belong to this vegetable
-    const matching = Object.values(VEGETABLE_MAP).filter(
-      (v) => v.vegetableId === vegetableId,
-    );
+    const matching = Object.values(VEGETABLE_MAP).filter((v) => v.vegetableId === vegetableId);
     const response: VarietiesApiResponse = {
       payload: matching.map(varietyResponse),
       pagination: {

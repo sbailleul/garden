@@ -19,10 +19,7 @@ export function GroupDetail({ group, vegetables }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          to="/groups"
-          className="text-muted-foreground text-sm hover:underline"
-        >
+        <Link to="/groups" className="text-muted-foreground text-sm hover:underline">
           ← Groups
         </Link>
       </div>
@@ -48,16 +45,11 @@ export function GroupDetail({ group, vegetables }: Props) {
               {vegetables.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell>
-                    <Link
-                      to="/varieties"
-                      className="font-medium hover:underline"
-                    >
+                    <Link to="/varieties" className="font-medium hover:underline">
                       {v.name}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm font-mono">
-                    {v.id}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm font-mono">{v.id}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
