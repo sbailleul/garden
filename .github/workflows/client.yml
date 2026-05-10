@@ -11,6 +11,8 @@ on:
     paths:
       - "client/**"
       - ".github/workflows/client.yml"
+env:
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
 
 jobs:
   client-build:
@@ -21,15 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
 
       - name: Install client dependencies
         run: pnpm install --frozen-lockfile
