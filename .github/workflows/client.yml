@@ -1,5 +1,7 @@
 name: Client
-
+defaults:
+  run:
+    working-directory: ./global-scripts
 on:
   push:
     branches: ["**"]
@@ -23,9 +25,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       
-      - name: Change to client directory
-        run: cd client
-
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
