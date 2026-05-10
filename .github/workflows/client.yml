@@ -5,12 +5,12 @@ on:
     branches: ["**"]
     paths:
       - "client/**"
-      - "workflows/client.yml"
+      - ".github/workflows/client.yml"
   pull_request:
     branches: ["**"]
     paths:
       - "client/**"
-      - "workflows/client.yml"
+      - ".github/workflows/client.yml"
 
 jobs:
   client-build:
