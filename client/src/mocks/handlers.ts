@@ -205,11 +205,11 @@ const GROUP_VEGETABLES: Record<string, Vegetable[]> = {
   "legumes-fruits": [TOMATO_VARIETY],
   "legumes-feuilles": [BASIL_VARIETY],
 };
-
+const BASE_URL = (url: string) => `${import.meta.env.VITE_API_URL}/${url}`;
 export const handlers = [
-  http.get("/api/varieties", () => HttpResponse.json(VEGETABLES_RESPONSE)),
+  http.get(BASE_URL("api/varieties"), () => HttpResponse.json(VEGETABLES_RESPONSE)),
 
-  http.get("/api/varieties/:id", ({ params }) => {
+  http.get(BASE_URL("api/varieties/:id"), ({ params }) => {
     const veg = VEGETABLE_MAP[params["id"] as string];
     if (!veg) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
@@ -217,18 +217,18 @@ export const handlers = [
     return HttpResponse.json(varietyResponse(veg));
   }),
 
-  http.get("/api/vegetables/:id/companions", ({ params }) => {
+  http.get(BASE_URL("api/vegetables/:id/companions"), ({ params }) => {
     if (params["id"] !== "tomato") {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
     }
     return HttpResponse.json(COMPANIONS_RESPONSE);
   }),
 
-  http.post("/api/plan", () => HttpResponse.json(PLAN_RESPONSE)),
+  http.post(BASE_URL("api/plan"), () => HttpResponse.json(PLAN_RESPONSE)),
 
-  http.get("/api/vegetables", () => HttpResponse.json(VARIETIES_RESPONSE)),
+  http.get(BASE_URL("api/vegetables"), () => HttpResponse.json(VARIETIES_RESPONSE)),
 
-  http.get("/api/vegetables/:id", ({ params }) => {
+  http.get(BASE_URL("api/vegetables/:id"), ({ params }) => {
     const vegetable = VARIETY_MAP[params["id"] as string];
     if (!vegetable) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
@@ -236,9 +236,9 @@ export const handlers = [
     return HttpResponse.json(vegetableResponse(vegetable));
   }),
 
-  http.get("/api/groups", () => HttpResponse.json(GROUPS_RESPONSE)),
+  http.get(BASE_URL("api/groups"), () => HttpResponse.json(GROUPS_RESPONSE)),
 
-  http.get("/api/groups/:id", ({ params }) => {
+  http.get(BASE_URL("api/groups/:id"), ({ params }) => {
     const group = GROUP_MAP[params["id"] as string];
     if (!group) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
@@ -246,7 +246,7 @@ export const handlers = [
     return HttpResponse.json(groupResponse(group));
   }),
 
-  http.get("/api/groups/:id/vegetables", ({ params }) => {
+  http.get(BASE_URL("api/groups/:id/vegetables"), ({ params }) => {
     const group = GROUP_MAP[params["id"] as string];
     if (!group) {
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
@@ -268,7 +268,7 @@ export const handlers = [
     return HttpResponse.json(response);
   }),
 
-  http.get("/api/vegetables/:id/varieties", ({ params }) => {
+  http.get(BASE_URL("api/vegetables/:id/varieties"), ({ params }) => {
     const vegetableId = params["id"] as string;
     const vegetable = VARIETY_MAP[vegetableId];
     if (!vegetable) {

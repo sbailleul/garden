@@ -23,8 +23,8 @@ export function VarietyDetail({ variety: veg }: Props) {
           <p className="text-muted-foreground italic">{veg.latinName}</p>
         </div>
         <Link
-          to="/varieties/$id/companions"
-          params={{ id: veg.id }}
+          to="/vegetables/$id/companions"
+          params={{ id: veg.vegetableId }}
           className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent"
         >
           View companions
