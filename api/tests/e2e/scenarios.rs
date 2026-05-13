@@ -1,15 +1,7 @@
-use crate::common::{build_app_postgres, null_layout};
+use crate::common::{
+    build_app_postgres, cell_contains_id, cell_id, collect_placed_ids, null_layout,
+};
 use actix_web::test;
-
-fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
-    body["payload"]["weeks"][0]["grid"]
-        .as_array()
-        .unwrap_or(&vec![])
-        .iter()
-        .flat_map(|row| row.as_array().unwrap_or(&vec![]).to_owned())
-        .filter_map(|cell| cell["id"].as_str().map(String::from))
-        .collect()
-}
 
 // ---------------------------------------------------------------------------
 // Scenario 1: Small summer garden, full sun, loamy soil, beginner
@@ -119,9 +111,8 @@ async fn scenario_existing_tomatoes_add_companions() {
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
-    assert_eq!(
-        body["payload"]["weeks"][0]["grid"][0][0]["id"].as_str(),
-        Some("tomato"),
+    assert!(
+        cell_contains_id(&body["payload"]["weeks"][0]["grid"][0][0], "tomato"),
         "Existing tomato must be preserved"
     );
 
@@ -132,8 +123,8 @@ async fn scenario_existing_tomatoes_add_companions() {
     );
 
     let basil_adjacent_to_tomato = {
-        let r0c1 = body["payload"]["weeks"][0]["grid"][0][1]["id"].as_str() == Some("basil");
-        let r1c0 = body["payload"]["weeks"][0]["grid"][1][0]["id"].as_str() == Some("basil");
+        let r0c1 = cell_contains_id(&body["payload"]["weeks"][0]["grid"][0][1], "basil");
+        let r1c0 = cell_contains_id(&body["payload"]["weeks"][0]["grid"][1][0], "basil");
         r0c1 || r1c0
     };
     assert!(
@@ -212,7 +203,15 @@ async fn scenario_sown_seeds_appear_in_plan() {
                 .unwrap_or(&vec![])
                 .iter()
                 .flat_map(|row| row.as_array().unwrap_or(&vec![]).to_owned())
-                .filter_map(|cell| cell["id"].as_str().map(String::from))
+                .flat_map(|cell| {
+                    cell["layers"]
+                        .as_array()
+                        .cloned()
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+                        .collect::<Vec<_>>()
+                })
                 .collect::<Vec<_>>()
         })
         .collect();
@@ -301,11 +300,13 @@ async fn scenario_exclusions_prevent_placement() {
     for week in body["payload"]["weeks"].as_array().unwrap() {
         for row in week["grid"].as_array().unwrap_or(&vec![]) {
             for cell in row.as_array().unwrap_or(&vec![]) {
-                if let Some(id) = cell["id"].as_str() {
-                    assert!(
-                        !excluded.contains(&id),
-                        "Excluded variety '{id}' must not appear in the plan"
-                    );
+                for layer in cell["layers"].as_array().unwrap_or(&vec![]) {
+                    if let Some(id) = layer["cell"]["id"].as_str() {
+                        assert!(
+                            !excluded.contains(&id),
+                            "Excluded variety '{id}' must not appear in the plan"
+                        );
+                    }
                 }
             }
         }

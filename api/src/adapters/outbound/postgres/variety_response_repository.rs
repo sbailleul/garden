@@ -71,7 +71,6 @@ fn parse_cultivation_modes_response(
     json: JsonValue,
 ) -> Result<Vec<CultivationMode>, serde_json::Error> {
     #[derive(serde::Deserialize)]
-    #[serde(rename_all = "camelCase")]
     struct RawMode {
         id: String,
         name: String,

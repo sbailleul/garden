@@ -62,3 +62,42 @@ pub fn null_layout(rows: usize, cols: usize) -> serde_json::Value {
         .collect();
     serde_json::Value::Array(layout)
 }
+
+/// Returns the variety id from the first occupied layer of a `CellLayers` response cell, if any.
+pub fn cell_id(cell: &serde_json::Value) -> Option<String> {
+    cell["layers"]
+        .as_array()?
+        .iter()
+        .find_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+}
+
+/// Returns `true` if any layer of a `CellLayers` response cell has the given variety id.
+pub fn cell_contains_id(cell: &serde_json::Value, id: &str) -> bool {
+    cell["layers"]
+        .as_array()
+        .map(|layers| {
+            layers
+                .iter()
+                .any(|layer| layer["cell"]["id"].as_str() == Some(id))
+        })
+        .unwrap_or(false)
+}
+
+/// Collects all placed variety ids from every layer of every cell in the first week's grid.
+pub fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
+    body["payload"]["weeks"][0]["grid"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .flat_map(|row| row.as_array().unwrap_or(&vec![]).to_owned())
+        .flat_map(|cell| {
+            cell["layers"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}

@@ -1,4 +1,4 @@
-use crate::common::{build_app_postgres, null_layout};
+use crate::common::{build_app_postgres, cell_contains_id, null_layout};
 use actix_web::test;
 
 // ---------------------------------------------------------------------------
@@ -170,11 +170,8 @@ async fn test_post_plan_with_existing_layout_preserved() {
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-    let first_cell_id = body["payload"]["weeks"][0]["grid"][0][0]["id"]
-        .as_str()
-        .unwrap_or("");
-    assert_eq!(
-        first_cell_id, "tomato",
+    assert!(
+        cell_contains_id(&body["payload"]["weeks"][0]["grid"][0][0], "tomato"),
         "Existing cell [0][0] must remain 'tomato'"
     );
 }
@@ -194,8 +191,13 @@ async fn test_post_plan_existing_layout_planted_date_sets_estimated_harvest_date
         .set_json(&payload)
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let harvest_date = body["payload"]["weeks"][0]["grid"][0][0]["layers"]
+        .as_array()
+        .and_then(|l| l.first())
+        .map(|layer| layer["cell"]["estimatedHarvestDate"].is_string())
+        .unwrap_or(false);
     assert!(
-        body["payload"]["weeks"][0]["grid"][0][0]["estimatedHarvestDate"].is_string(),
+        harvest_date,
         "estimatedHarvestDate must be present when plantedDate is supplied: {body}"
     );
 }
@@ -224,10 +226,16 @@ async fn test_post_plan_blocked_cells_never_planted() {
 
     let row1 = body["payload"]["weeks"][0]["grid"][1].as_array().unwrap();
     for cell in row1 {
-        assert!(cell["id"].is_null(), "Blocked cell must have no variety");
-        assert_eq!(
-            cell["type"], "Blocked",
-            "Blocked cell must have type='Blocked'"
+        assert!(
+            cell["layers"]
+                .as_array()
+                .map(|a| a.is_empty())
+                .unwrap_or(true),
+            "Blocked cell must have no variety"
+        );
+        assert!(
+            cell["blocked"].as_bool().unwrap_or(false),
+            "Blocked cell must have blocked=true"
         );
     }
 }
@@ -253,9 +261,9 @@ async fn test_post_plan_blocked_flag_false_on_plantable_cells() {
     for r in [0usize, 2usize] {
         let row = body["payload"]["weeks"][0]["grid"][r].as_array().unwrap();
         for cell in row {
-            assert_ne!(
-                cell["type"], "Blocked",
-                "Non-blocked cell must not have type='Blocked' (row {r})"
+            assert!(
+                !cell["blocked"].as_bool().unwrap_or(false),
+                "Non-blocked cell must not have blocked=true (row {r})"
             );
         }
     }

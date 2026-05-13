@@ -98,7 +98,6 @@ fn row_to_variety(
 /// `{ "id": "...", "name": "...", "spacingCm": 60, "stratum": { "id": "...", "name": "..." } }`
 fn parse_cultivation_modes(json: JsonValue) -> Result<Vec<CultivationMode>, serde_json::Error> {
     #[derive(serde::Deserialize)]
-    #[serde(rename_all = "camelCase")]
     struct RawMode {
         id: String,
         name: String,
