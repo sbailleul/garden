@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::domain::models::{request::Preference, variety::Variety};
+use crate::domain::models::{
+    request::Preference,
+    variety::{CultivationMode, Variety},
+};
 use crate::domain::services::helpers::cell_span;
 
 /// Distributes cells for varieties that have an explicit `quantity` preference.
@@ -15,7 +18,7 @@ pub fn compute_explicit_allocation(
 
     for pref in preferences {
         if let Some(qty) = pref.quantity {
-            let cells_per_plant = (cell_span(pref.variety.spacing_cm) as usize).pow(2);
+            let cells_per_plant = (cell_span(pref.cultivation_mode.spacing_cm) as usize).pow(2);
             let cells_needed = (qty as usize).saturating_mul(cells_per_plant);
             let alloc = cells_needed.min(remaining);
             allocation.insert(pref.variety.id.clone(), alloc);
@@ -27,13 +30,14 @@ pub fn compute_explicit_allocation(
 }
 
 /// Converts explicit-preference allocations into an ordered placement queue
-/// (each variety repeated by its allocated count) and a per-variety placement cap.
+/// (each `(variety, mode)` pair repeated by its allocated count) and a
+/// per-variety placement cap.
 /// Varieties without an explicit quantity are not in the queue; they are handled
 /// by the iterative fill phase.
 pub fn build_placement_queue(
     preferences: &[Preference],
     free_cells: usize,
-) -> (Vec<Variety>, HashMap<String, usize>) {
+) -> (Vec<(Variety, CultivationMode)>, HashMap<String, usize>) {
     let allocation = compute_explicit_allocation(preferences, free_cells);
 
     // Convert cell allocations -> placement counts (one placement = span^2 cells).
@@ -41,7 +45,7 @@ pub fn build_placement_queue(
         .iter()
         .filter(|p| allocation.contains_key(&p.variety.id))
         .map(|p| {
-            let cells_per_slot = (cell_span(p.variety.spacing_cm) as usize).pow(2);
+            let cells_per_slot = (cell_span(p.cultivation_mode.spacing_cm) as usize).pow(2);
             let cells = allocation.get(&p.variety.id).copied().unwrap_or(0);
             let n = if cells > 0 {
                 (cells / cells_per_slot).max(1)
@@ -52,12 +56,12 @@ pub fn build_placement_queue(
         })
         .collect();
 
-    // Expand: repeat each variety in preference order by its placement count.
-    let queue: Vec<Variety> = preferences
+    // Expand: repeat each (variety, mode) pair in preference order by its placement count.
+    let queue: Vec<(Variety, CultivationMode)> = preferences
         .iter()
         .flat_map(|p| {
             let n = placements_map.get(&p.variety.id).copied().unwrap_or(0);
-            std::iter::repeat_n(p.variety.clone(), n)
+            std::iter::repeat_n((p.variety.clone(), p.cultivation_mode.clone()), n)
         })
         .collect();
     (queue, placements_map)
@@ -73,14 +77,18 @@ mod tests {
     fn test_compute_explicit_allocation_honours_quantities() {
         let basil = get_variety_by_id("basil").unwrap();
         let tomato = get_variety_by_id("tomato").unwrap();
+        let basil_mode = basil.default_mode().clone();
+        let tomato_mode = tomato.default_mode().clone();
         let preferences = vec![
             Preference {
                 variety: basil,
                 quantity: Some(2),
+                cultivation_mode: basil_mode,
             },
             Preference {
                 variety: tomato,
                 quantity: Some(1),
+                cultivation_mode: tomato_mode,
             },
         ];
         let allocation = compute_explicit_allocation(&preferences, 20);

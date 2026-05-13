@@ -1,7 +1,11 @@
+use crate::domain::models::garden::PlacedVariety;
+use crate::domain::models::variety::CultivationMode;
 use crate::domain::models::vegetable::Vegetable;
 
 pub const GOOD_COMPANION_SCORE: i32 = 2;
 pub const BAD_COMPANION_SCORE: i32 = -3;
+/// Applied per co-occupant in a lower stratum when a canopy plant casts shade.
+pub const SHADE_PENALTY: i32 = -2;
 
 /// Calculates the companion score of a vegetable against its neighbours.
 /// +2 per good companion, -3 per bad companion.
@@ -16,6 +20,15 @@ pub fn companion_score(vegetable: &Vegetable, neighbor_vegetable_ids: &[&str]) -
         }
     }
     score
+}
+
+/// Returns a shade penalty when a canopy plant is placed over lower-stratum occupants.
+/// The penalty is -2 per distinct co-occupant that would be shaded.
+pub fn shade_penalty(mode: &CultivationMode, co_occupants: &[&PlacedVariety]) -> i32 {
+    if mode.stratum.id != "canopy" || co_occupants.is_empty() {
+        return 0;
+    }
+    SHADE_PENALTY * co_occupants.len() as i32
 }
 
 /// Returns true if the two vegetables are compatible (neither appears in the other's bad_companions list).

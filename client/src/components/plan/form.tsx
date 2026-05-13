@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 
 import type {
+  CellLayers,
   Level,
   PlanApiResponse,
   PlanRequest,
@@ -38,19 +39,39 @@ const CATEGORY_COLOURS: Record<string, string> = {
   Pod: "bg-yellow-100 text-yellow-800",
 };
 
-function cellColour(cell: PlannedCell): string {
-  if (cell.type === "Empty") return "bg-muted/30";
-  if (cell.type === "Blocked") return "bg-gray-300";
-  if (cell.type === "Overflowed") return "bg-blue-50";
+function cellColour(cell: CellLayers): string {
+  if (cell.blocked) return "bg-gray-300";
+  if (cell.layers.length === 0) return "bg-muted/30";
+  const first = cell.layers[0].cell;
+  if (first.type === "Overflowed") return "bg-blue-50";
   return CATEGORY_COLOURS["Fruit"] ?? "bg-blue-100 text-blue-800";
 }
 
-function cellLabel(cell: PlannedCell): string {
-  if (cell.type === "SelfContained" || cell.type === "Overflowing") {
-    return cell.name.slice(0, 3).toUpperCase();
+function cellLabel(cell: CellLayers): string {
+  if (cell.blocked) return "✕";
+  if (cell.layers.length === 0) return "";
+  const first = cell.layers[0].cell;
+  if (first.type === "SelfContained" || first.type === "Overflowing") {
+    return first.name.slice(0, 3).toUpperCase();
   }
-  if (cell.type === "Blocked") return "✕";
   return "";
+}
+
+function cellTitle(cell: CellLayers): string {
+  if (cell.blocked) return "Blocked";
+  if (cell.layers.length === 0) return "Empty";
+  return cell.layers
+    .map((l) => {
+      const c = l.cell as PlannedCell;
+      if (c.type === "Overflowed") {
+        return `Overflowed by (${c.coveredBy.row},${c.coveredBy.col})`;
+      }
+      if (c.type === "SelfContained" || c.type === "Overflowing") {
+        return `${c.name} [${l.stratumId}] — ${c.reason}`;
+      }
+      return c.type;
+    })
+    .join("\n");
 }
 
 function WeekGrid({ week }: { week: WeeklyPlan }) {
@@ -74,13 +95,7 @@ function WeekGrid({ week }: { week: WeeklyPlan }) {
                 "flex h-8 w-8 items-center justify-center rounded-sm text-xs font-bold",
                 cellColour(cell),
               ].join(" ")}
-              title={
-                cell.type !== "Empty" && cell.type !== "Blocked"
-                  ? cell.type === "Overflowed"
-                    ? `Overflowed by (${cell.coveredBy.row},${cell.coveredBy.col})`
-                    : `${cell.name} — ${cell.reason}`
-                  : cell.type
-              }
+              title={cellTitle(cell)}
             >
               {cellLabel(cell)}
             </div>

@@ -51,9 +51,13 @@ const columns = [
     filterFn: "equalsString",
     cell: (info) => <Badge variant="secondary">{info.getValue()}</Badge>,
   }),
-  columnHelper.accessor("spacingCm", {
-    header: "Spacing (cm)",
-  }),
+  columnHelper.accessor(
+    (row) => row.cultivationModes.map((m) => `${m.spacingCm} cm`).join(", "),
+    {
+      id: "spacing",
+      header: "Spacing (cm)",
+    },
+  ),
   columnHelper.accessor("lifecycle", {
     header: "Lifecycle",
   }),

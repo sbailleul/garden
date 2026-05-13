@@ -1,5 +1,6 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 
 use crate::domain::models::{variety::Lifecycle, Coordinate, Matrix};
 
@@ -24,13 +25,17 @@ pub struct PlacedVariety {
     pub estimated_harvest_date: chrono::NaiveDate,
     /// Plant lifecycle — `Perennial` plants are never removed from the grid after harvest.
     pub lifecycle: Lifecycle,
+    /// Identifier of the height stratum this placement occupies.
+    pub stratum_id: String,
+    /// Identifier of the cultivation mode used for this placement.
+    pub cultivation_mode_id: String,
 }
 
-#[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Cell {
-    pub variety: Option<PlacedVariety>,
+    /// Occupants keyed by stratum id — one `PlacedVariety` per stratum layer.
+    pub layers: HashMap<String, PlacedVariety>,
     /// True when the cell is a path, alley or other non-plantable zone.
     pub blocked: bool,
 }
@@ -49,7 +54,7 @@ impl GardenGrid {
             .map(|_| {
                 (0..cols)
                     .map(|_| Cell {
-                        variety: None,
+                        layers: HashMap::new(),
                         blocked: false,
                     })
                     .collect()
@@ -65,23 +70,28 @@ impl GardenGrid {
             let nr = row as i32 + dr;
             let nc = col as i32 + dc;
             if nr >= 0 && nr < self.rows as i32 && nc >= 0 && nc < self.cols as i32 {
-                if let Some(ref v) = self.cells[nr as usize][nc as usize].variety {
-                    neighbors.push(v);
-                }
+                neighbors.extend(self.cells[nr as usize][nc as usize].layers.values());
             }
         }
         neighbors
     }
 
-    /// Returns true when every cell in the `span × span` block starting at `(row, col)` is free.
-    pub fn is_block_free(&self, row: usize, col: usize, span: usize) -> bool {
+    /// Returns `true` when every cell in the `span × span` block starting at
+    /// `(row, col)` has no occupant in `stratum_id` and is not blocked.
+    pub fn is_block_free_for_stratum(
+        &self,
+        row: usize,
+        col: usize,
+        span: usize,
+        stratum_id: &str,
+    ) -> bool {
         if row + span > self.rows || col + span > self.cols {
             return false;
         }
         for dr in 0..span {
             for dc in 0..span {
                 let cell = &self.cells[row + dr][col + dc];
-                if cell.variety.is_some() || cell.blocked {
+                if cell.blocked || cell.layers.contains_key(stratum_id) {
                     return false;
                 }
             }
@@ -103,9 +113,7 @@ impl GardenGrid {
             }
             let key = (r as usize, c as usize);
             if seen.insert(key) {
-                if let Some(ref v) = self.cells[r as usize][c as usize].variety {
-                    neighbors.push(v);
-                }
+                neighbors.extend(self.cells[r as usize][c as usize].layers.values());
             }
         };
 
@@ -116,5 +124,34 @@ impl GardenGrid {
             check(r0 + d, c0 + s); // right edge
         }
         neighbors
+    }
+
+    /// Returns all plants already occupying any stratum OTHER than `stratum_id`
+    /// within the `span × span` block starting at `(row, col)`.
+    /// Used to compute shade penalties when placing a canopy plant over lower layers.
+    pub fn get_block_co_occupants(
+        &self,
+        coordinate: Coordinate,
+        span: usize,
+        stratum_id: &str,
+    ) -> Vec<&PlacedVariety> {
+        let mut seen_anchors: std::collections::HashSet<(usize, usize, &str)> =
+            std::collections::HashSet::new();
+        let mut co_occupants: Vec<&PlacedVariety> = Vec::new();
+
+        for dr in 0..span {
+            for dc in 0..span {
+                let cell = &self.cells[coordinate.row + dr][coordinate.col + dc];
+                for (sid, pv) in &cell.layers {
+                    if sid != stratum_id {
+                        let key = (pv.anchor.row, pv.anchor.col, sid.as_str());
+                        if seen_anchors.insert(key) {
+                            co_occupants.push(pv);
+                        }
+                    }
+                }
+            }
+        }
+        co_occupants
     }
 }

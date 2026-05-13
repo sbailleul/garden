@@ -55,7 +55,8 @@ pub fn initialize_grid(
                     plants_per_cell: ppc_input,
                     planted_date,
                 } => {
-                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(variety.spacing_cm));
+                    let mode = variety.default_mode();
+                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(mode.spacing_cm));
                     let effective_date = planted_date
                         .unwrap_or_else(|| infer_planted_date(variety, region, planning_start));
                     let adjusted_days = adjusted_days_to_harvest(
@@ -63,7 +64,7 @@ pub fn initialize_grid(
                         Some(effective_date),
                         planning_start,
                     );
-                    grid.cells[r][c].variety = Some(crate::domain::models::garden::PlacedVariety {
+                    let placed = crate::domain::models::garden::PlacedVariety {
                         id: variety.id.clone(),
                         vegetable_id: variety.vegetable.id.clone(),
                         name: variety.name.clone(),
@@ -76,7 +77,12 @@ pub fn initialize_grid(
                         estimated_harvest_date: effective_date
                             + Duration::days(adjusted_days as i64),
                         lifecycle: variety.lifecycle.clone(),
-                    });
+                        stratum_id: mode.stratum.id.clone(),
+                        cultivation_mode_id: mode.id.clone(),
+                    };
+                    grid.cells[r][c]
+                        .layers
+                        .insert(mode.stratum.id.clone(), placed);
                 }
                 LayoutCell::Overflowed { covered_by } => {
                     deferred.push(DeferredCell(Coordinate { row: r, col: c }, *covered_by));
@@ -88,8 +94,9 @@ pub fn initialize_grid(
                     length_cells,
                     planted_date,
                 } => {
-                    let span = cell_span(variety.spacing_cm);
-                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(variety.spacing_cm));
+                    let mode = variety.default_mode();
+                    let span = cell_span(mode.spacing_cm);
+                    let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(mode.spacing_cm));
                     let w = width_cells.unwrap_or(span);
                     let l = length_cells.unwrap_or(span);
                     let effective_date = planted_date
@@ -99,7 +106,7 @@ pub fn initialize_grid(
                         Some(effective_date),
                         planning_start,
                     );
-                    grid.cells[r][c].variety = Some(crate::domain::models::garden::PlacedVariety {
+                    let placed = crate::domain::models::garden::PlacedVariety {
                         id: variety.id.clone(),
                         vegetable_id: variety.vegetable.id.clone(),
                         name: variety.name.clone(),
@@ -112,7 +119,12 @@ pub fn initialize_grid(
                         estimated_harvest_date: effective_date
                             + Duration::days(adjusted_days as i64),
                         lifecycle: variety.lifecycle.clone(),
-                    });
+                        stratum_id: mode.stratum.id.clone(),
+                        cultivation_mode_id: mode.id.clone(),
+                    };
+                    grid.cells[r][c]
+                        .layers
+                        .insert(mode.stratum.id.clone(), placed);
                 }
                 LayoutCell::Empty => {}
             }
@@ -130,8 +142,9 @@ pub fn initialize_grid(
             col: covered_by_col,
         } = covered_by;
         if covered_by_row < rows && covered_by_col < cols {
-            if let Some(anchor_veg) = grid.cells[covered_by_row][covered_by_col].variety.clone() {
-                grid.cells[position_row][position_col].variety = Some(anchor_veg);
+            let anchor_layers = grid.cells[covered_by_row][covered_by_col].layers.clone();
+            if !anchor_layers.is_empty() {
+                grid.cells[position_row][position_col].layers = anchor_layers;
             } else {
                 warnings.add(format!(
                     "Continuation cell [{position_row},{position_col}] references an unplanted anchor [{covered_by_row},{covered_by_col}], skipped."
@@ -150,7 +163,7 @@ pub fn initialize_grid(
 /// Returns `GridOccupancy(occupied, blocked)` cell counts for the given grid.
 pub fn count_grid_occupancy(grid: &GardenGrid) -> GridOccupancy {
     let flat = || grid.cells.iter().flat_map(|r| r.iter());
-    let occupied = flat().filter(|c| c.variety.is_some()).count();
+    let occupied = flat().filter(|c| !c.layers.is_empty()).count();
     let blocked = flat().filter(|c| c.blocked).count();
     GridOccupancy(occupied, blocked)
 }

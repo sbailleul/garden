@@ -73,9 +73,14 @@ impl<'a> PlanGardenUseCase<'a> {
             .unwrap_or(&[])
             .iter()
             .filter_map(|p| {
-                lookup.get(&p.id).map(|v| Preference {
-                    variety: v.clone(),
-                    quantity: p.quantity,
+                lookup.get(&p.id).map(|v| {
+                    let cultivation_mode =
+                        v.mode_or_default(p.cultivation_mode_id.as_deref()).clone();
+                    Preference {
+                        variety: v.clone(),
+                        quantity: p.quantity,
+                        cultivation_mode,
+                    }
                 })
             })
             .collect();

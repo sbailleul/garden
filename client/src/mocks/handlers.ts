@@ -21,7 +21,14 @@ const TOMATO: Variety = {
   latinName: "Solanum lycopersicum",
   category: "Fruit",
   lifecycle: "Annual",
-  spacingCm: 60,
+  cultivationModes: [
+    {
+      id: "tomato-standard",
+      name: "Standard",
+      spacingCm: 60,
+      stratum: { id: "intermediate", name: "Intermediate" },
+    },
+  ],
   daysToHarvest: 70,
   daysToPlant: 42,
   beginnerFriendly: true,
@@ -43,7 +50,14 @@ const BASIL: Variety = {
   latinName: "Ocimum basilicum",
   category: "Herb",
   lifecycle: "Annual",
-  spacingCm: 30,
+  cultivationModes: [
+    {
+      id: "basil-standard",
+      name: "Standard",
+      spacingCm: 30,
+      stratum: { id: "ground-cover", name: "Ground Cover" },
+    },
+  ],
   daysToHarvest: 30,
   daysToPlant: 14,
   beginnerFriendly: true,

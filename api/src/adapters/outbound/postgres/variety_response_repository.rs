@@ -7,7 +7,8 @@ use crate::application::ports::{
     Page, RepositoryError,
 };
 use crate::domain::models::variety::{
-    CalendarWindow, Category, Lifecycle, RegionCalendar, SoilType, SunExposure,
+    CalendarWindow, Category, CultivationMode, Lifecycle, RegionCalendar, SoilType, Stratum,
+    SunExposure,
 };
 
 pub struct PostgresVarietyResponseRepository {
@@ -45,6 +46,10 @@ fn row_to_variety_response(row: &tokio_postgres::Row) -> Result<VarietyResponse,
     let category_str: String = row.try_get("category")?;
     let lifecycle_str: String = row.try_get("lifecycle")?;
 
+    let cultivation_modes_json: JsonValue = row.try_get("cultivation_modes")?;
+    let cultivation_modes =
+        parse_cultivation_modes_response(cultivation_modes_json).map_err(RepositoryError::Json)?;
+
     Ok(VarietyResponse {
         id: row.try_get("id")?,
         vegetable_id: row.try_get("vegetable_id")?,
@@ -52,7 +57,7 @@ fn row_to_variety_response(row: &tokio_postgres::Row) -> Result<VarietyResponse,
         latin_name: row.try_get("latin_name")?,
         category: parse_enum::<Category>(&category_str)?,
         lifecycle: parse_enum::<Lifecycle>(&lifecycle_str)?,
-        spacing_cm: row.try_get::<_, i32>("spacing_cm")? as u32,
+        cultivation_modes,
         days_to_harvest: row.try_get::<_, i32>("days_to_harvest")? as u32,
         days_to_plant: row.try_get::<_, i32>("days_to_plant")? as u32,
         beginner_friendly: row.try_get("beginner_friendly")?,
@@ -60,6 +65,34 @@ fn row_to_variety_response(row: &tokio_postgres::Row) -> Result<VarietyResponse,
         sun_requirement: parse_enum_vec::<SunExposure>(&sun_requirement_raw)?,
         calendars,
     })
+}
+
+fn parse_cultivation_modes_response(
+    json: JsonValue,
+) -> Result<Vec<CultivationMode>, serde_json::Error> {
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct RawMode {
+        id: String,
+        name: String,
+        spacing_cm: u32,
+        stratum_id: String,
+        stratum_name: String,
+    }
+
+    let raw: Vec<RawMode> = serde_json::from_value(json)?;
+    Ok(raw
+        .into_iter()
+        .map(|m| CultivationMode {
+            id: m.id,
+            name: m.name,
+            spacing_cm: m.spacing_cm,
+            stratum: Stratum {
+                id: m.stratum_id,
+                name: m.stratum_name,
+            },
+        })
+        .collect())
 }
 
 // ---------------------------------------------------------------------------
@@ -76,13 +109,32 @@ const SELECT_COLUMNS: &str = r#"
         v.latin_name,
         v.category,
         v.lifecycle,
-        v.spacing_cm,
         v.days_to_harvest,
         v.days_to_plant,
         v.beginner_friendly,
         v.soil_types,
         v.sun_requirement,
-        v.calendars
+        v.calendars,
+        COALESCE(
+            (SELECT JSON_AGG(JSON_BUILD_OBJECT(
+                        'id',          cm.id,
+                        'name',        COALESCE(cmt_req.name, cmt_en.name),
+                        'spacing_cm',  cm.spacing_cm,
+                        'stratum_id',  cm.stratum_id,
+                        'stratum_name', COALESCE(st_req.name, st_en.name))
+                    ORDER BY cm.id)
+             FROM cultivation_modes cm
+             LEFT JOIN cultivation_mode_translations cmt_req
+                    ON cmt_req.cultivation_mode_id = cm.id AND cmt_req.locale = $1
+             LEFT JOIN cultivation_mode_translations cmt_en
+                    ON cmt_en.cultivation_mode_id = cm.id AND cmt_en.locale = 'en'
+             LEFT JOIN strata s ON s.id = cm.stratum_id
+             LEFT JOIN stratum_translations st_req
+                    ON st_req.stratum_id = s.id AND st_req.locale = $1
+             LEFT JOIN stratum_translations st_en
+                    ON st_en.stratum_id = s.id AND st_en.locale = 'en'
+             WHERE cm.variety_id = v.id),
+            '[]'::json)                  AS cultivation_modes
     FROM varieties v
     LEFT JOIN variety_translations t_req
            ON t_req.variety_id = v.id AND t_req.locale = $1

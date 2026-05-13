@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::domain::models::{
-    variety::{Region, Variety},
+    variety::{CultivationMode, Region, Variety},
     Coordinate, Matrix,
 };
 
@@ -55,6 +55,9 @@ pub struct PreferenceEntry {
     /// Each plant may occupy more than one cell depending on its spacing.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quantity: Option<u32>,
+    /// Optional cultivation mode id. When absent the variety's default mode is used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cultivation_mode_id: Option<String>,
 }
 
 /// The date range of the planning period.
@@ -88,6 +91,8 @@ pub struct Preference {
     pub variety: Variety,
     /// Desired number of **plants** (placements) for this variety.
     pub quantity: Option<u32>,
+    /// The resolved cultivation mode to use when placing this variety.
+    pub cultivation_mode: CultivationMode,
 }
 
 /// An enriched sowing entry: carries the resolved variety together with its batches.

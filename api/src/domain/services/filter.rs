@@ -164,8 +164,9 @@ mod tests {
         let basil = get_variety_by_id("basil").unwrap();
         let req = PlanParams {
             preferences: vec![Preference {
-                variety: basil,
+                variety: basil.clone(),
                 quantity: None,
+                cultivation_mode: basil.default_mode().clone(),
             }],
             ..make_request_for_month(6)
         };

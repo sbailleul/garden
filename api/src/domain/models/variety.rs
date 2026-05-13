@@ -159,6 +159,26 @@ pub enum Lifecycle {
     Perennial,
 }
 
+/// The height layer a plant occupies in the garden.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Stratum {
+    pub id: String,
+    pub name: String,
+}
+
+/// One way to cultivate a variety: its spacing, and the height stratum it occupies.
+/// A variety may have multiple cultivation modes (e.g. bush vs. climbing).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CultivationMode {
+    pub id: String,
+    pub name: String,
+    pub stratum: Stratum,
+    /// Centre-to-centre spacing in centimetres.
+    pub spacing_cm: u32,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Variety {
@@ -172,7 +192,8 @@ pub struct Variety {
     pub calendars: Vec<RegionCalendar>,
     pub sun_requirement: Vec<SunExposure>,
     pub soil_types: Vec<SoilType>,
-    pub spacing_cm: u32,
+    /// Available cultivation modes (at least one guaranteed). The first is the default.
+    pub cultivation_modes: Vec<CultivationMode>,
     /// Approximate number of days from planting/transplanting to first harvest.
     pub days_to_harvest: u32,
     /// Approximate number of days from sowing a seed to being ready for transplanting outdoors.
@@ -180,4 +201,30 @@ pub struct Variety {
     pub lifecycle: Lifecycle,
     pub beginner_friendly: bool,
     pub category: Category,
+}
+
+impl Variety {
+    /// Returns the default (first) cultivation mode.
+    ///
+    /// # Panics
+    /// Panics when `cultivation_modes` is empty — every well-formed `Variety` must
+    /// have at least one mode (enforced at the repository layer).
+    pub fn default_mode(&self) -> &CultivationMode {
+        self.cultivation_modes
+            .first()
+            .expect("variety must have at least one cultivation mode")
+    }
+
+    /// Returns the cultivation mode whose `id` matches `id`, falling back to
+    /// [`default_mode`] when `id` is `None` or no match is found.
+    pub fn mode_or_default(&self, id: Option<&str>) -> &CultivationMode {
+        match id {
+            Some(id) => self
+                .cultivation_modes
+                .iter()
+                .find(|m| m.id == id)
+                .unwrap_or_else(|| self.default_mode()),
+            None => self.default_mode(),
+        }
+    }
 }

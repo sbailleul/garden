@@ -1,7 +1,7 @@
 use crate::domain::models::{
     garden::GardenGrid,
     request::Period,
-    response::{PlannedCell, SowingTask, WeeklyPlan},
+    response::{CellLayers, PlannedCell, PlannedCellLayer, SowingTask, WeeklyPlan},
     variety::Variety,
     Matrix,
 };
@@ -44,42 +44,57 @@ pub fn build_weekly_plan(
     }
 }
 
-/// Converts a [`GardenGrid`] into the `Matrix<PlannedCell>` used in API responses.
-pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<PlannedCell> {
+/// Converts a [`GardenGrid`] into the `Matrix<CellLayers>` used in API responses.
+pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<CellLayers> {
     grid.cells
         .iter()
         .enumerate()
         .map(|(row_idx, row)| {
             row.iter()
                 .enumerate()
-                .map(|(col_idx, cell)| match &cell.variety {
-                    Some(v)
-                        if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) && v.span == 1 =>
-                    {
-                        PlannedCell::SelfContained {
-                            id: v.id.clone(),
-                            name: v.name.clone(),
-                            reason: v.reason.clone(),
-                            plants_per_cell: v.plants_per_cell,
-                            estimated_harvest_date: v.estimated_harvest_date,
-                        }
+                .map(|(col_idx, cell)| {
+                    let layers: Vec<PlannedCellLayer> = cell
+                        .layers
+                        .values()
+                        .map(|v| {
+                            let planned = if (row_idx, col_idx) == (v.anchor.row, v.anchor.col)
+                                && v.span == 1
+                            {
+                                PlannedCell::SelfContained {
+                                    id: v.id.clone(),
+                                    name: v.name.clone(),
+                                    reason: v.reason.clone(),
+                                    plants_per_cell: v.plants_per_cell,
+                                    estimated_harvest_date: v.estimated_harvest_date,
+                                }
+                            } else if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) {
+                                PlannedCell::Overflowing {
+                                    id: v.id.clone(),
+                                    name: v.name.clone(),
+                                    reason: v.reason.clone(),
+                                    plants_per_cell: v.plants_per_cell,
+                                    width_cells: v.span,
+                                    length_cells: v.span,
+                                    estimated_harvest_date: v.estimated_harvest_date,
+                                }
+                            } else {
+                                PlannedCell::Overflowed {
+                                    covered_by: v.anchor,
+                                }
+                            };
+                            PlannedCellLayer {
+                                stratum_id: v.stratum_id.clone(),
+                                stratum_name: v.stratum_id.clone(), // resolved by repo at read time; fallback to id here
+                                cultivation_mode_id: v.cultivation_mode_id.clone(),
+                                cultivation_mode_name: v.cultivation_mode_id.clone(),
+                                cell: planned,
+                            }
+                        })
+                        .collect();
+                    CellLayers {
+                        layers,
+                        blocked: cell.blocked,
                     }
-                    Some(v) if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) => {
-                        PlannedCell::Overflowing {
-                            id: v.id.clone(),
-                            name: v.name.clone(),
-                            reason: v.reason.clone(),
-                            plants_per_cell: v.plants_per_cell,
-                            width_cells: v.span,
-                            length_cells: v.span,
-                            estimated_harvest_date: v.estimated_harvest_date,
-                        }
-                    }
-                    Some(v) => PlannedCell::Overflowed {
-                        covered_by: v.anchor,
-                    },
-                    None if cell.blocked => PlannedCell::Blocked,
-                    None => PlannedCell::Empty,
                 })
                 .collect()
         })
@@ -131,7 +146,10 @@ mod tests {
         let mid = NaiveDate::from_ymd_opt(2025, 6, 8).unwrap();
         let end = NaiveDate::from_ymd_opt(2025, 6, 22).unwrap();
 
-        let grid = vec![vec![crate::domain::models::response::PlannedCell::Empty]];
+        let grid = vec![vec![crate::domain::models::response::CellLayers {
+            layers: vec![],
+            blocked: false,
+        }]];
 
         let plans = vec![
             WeeklyPlan {

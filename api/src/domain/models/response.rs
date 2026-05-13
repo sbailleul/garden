@@ -108,6 +108,28 @@ pub struct SowingTask {
     pub target_week_start: NaiveDate,
 }
 
+/// One stratum layer within a cell, carrying the plant data for that layer.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PlannedCellLayer {
+    pub stratum_id: String,
+    pub stratum_name: String,
+    pub cultivation_mode_id: String,
+    pub cultivation_mode_name: String,
+    pub cell: PlannedCell,
+}
+
+/// All layers in a grid cell plus its blocked status.
+/// A cell may host up to one plant per stratum layer simultaneously.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CellLayers {
+    /// Occupied stratum layers (empty when the cell is free and not blocked).
+    pub layers: Vec<PlannedCellLayer>,
+    /// `true` when the cell is a non-plantable zone (path, alley, obstacle).
+    pub blocked: bool,
+}
+
 /// A snapshot of the garden layout for one week of the planning period.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -117,8 +139,8 @@ pub struct WeeklyPlan {
 
     pub week_count: u16,
     /// Full garden grid for this week (same dimensions as the request layout).
-    #[schema(value_type = Vec<Vec<PlannedCell>>)]
-    pub grid: Matrix<PlannedCell>,
+    #[schema(value_type = Vec<Vec<CellLayers>>)]
+    pub grid: Matrix<CellLayers>,
     /// Cumulative companion-planting score for plants placed **this week**.
     pub score: i32,
     /// Varieties to sow this week so they are ready to transplant during a

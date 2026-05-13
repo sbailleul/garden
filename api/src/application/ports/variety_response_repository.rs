@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 
 use crate::application::ports::{Page, RepositoryError};
 use crate::domain::models::variety::{
-    Category, Lifecycle, Region, RegionCalendar, SoilType, SunExposure,
+    Category, CultivationMode, Lifecycle, Region, RegionCalendar, SoilType, SunExposure,
 };
 
 /// Filters for the variety listing endpoints.
@@ -41,7 +41,7 @@ pub struct VarietyResponse {
     pub calendars: Vec<RegionCalendar>,
     pub sun_requirement: Vec<SunExposure>,
     pub soil_types: Vec<SoilType>,
-    pub spacing_cm: u32,
+    pub cultivation_modes: Vec<CultivationMode>,
     pub days_to_harvest: u32,
     pub days_to_plant: u32,
     pub lifecycle: Lifecycle,

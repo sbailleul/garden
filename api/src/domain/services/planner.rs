@@ -109,7 +109,7 @@ fn empty_cells_warning(grid: &GardenGrid) -> Option<String> {
         .cells
         .iter()
         .flat_map(|r| r.iter())
-        .filter(|c| c.variety.is_none() && !c.blocked)
+        .filter(|c| c.layers.is_empty() && !c.blocked)
         .count();
     (empty > 0).then(|| Warnings::empty_cells_not_filled(empty))
 }
@@ -179,9 +179,13 @@ pub fn plan_garden(
         let sown_prefs: Vec<Preference> = active_sown_counts
             .into_iter()
             .filter_map(|(id, count)| {
-                sown_variety_map.remove(&id).map(|variety| Preference {
-                    variety,
-                    quantity: Some(count),
+                sown_variety_map.remove(&id).map(|variety| {
+                    let cultivation_mode = variety.default_mode().clone();
+                    Preference {
+                        variety,
+                        quantity: Some(count),
+                        cultivation_mode,
+                    }
                 })
             })
             .collect();

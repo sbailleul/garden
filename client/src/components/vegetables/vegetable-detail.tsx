@@ -39,7 +39,13 @@ export function VarietyDetail({ variety: veg }: Props) {
           <CardContent className="space-y-2 text-sm">
             <Row label="Category" value={<Badge variant="secondary">{veg.category}</Badge>} />
             <Row label="Lifecycle" value={veg.lifecycle} />
-            <Row label="Spacing" value={`${veg.spacingCm} cm`} />
+            {veg.cultivationModes.map((mode) => (
+              <Row
+                key={mode.id}
+                label={`Spacing (${mode.name})`}
+                value={`${mode.spacingCm} cm — ${mode.stratum.name}`}
+              />
+            ))}
             <Row label="Days to harvest" value={veg.daysToHarvest} />
             <Row label="Days to plant" value={veg.daysToPlant} />
             <Row label="Beginner-friendly" value={veg.beginnerFriendly ? "Yes" : "No"} />
