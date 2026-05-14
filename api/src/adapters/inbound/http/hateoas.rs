@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::application::ports::Page;
 
-use crate::adapters::inbound::http::dto::VarietyResponse;
+use crate::application::models::responses::VarietyResponse;
 use crate::domain::models::{
     group::Group,
     response::{CompanionsResponse, PlanResponse},

@@ -72,7 +72,7 @@ fn compute_sowing_tasks_by_week(
                             && seen_ids.insert(veg.id.clone())
                         {
                             tasks.push(SowingTask {
-                                id: veg.id.clone(),
+                                variety_id: veg.id.clone(),
                                 name: veg.name.clone(),
                                 target_week_start: future_week.start,
                             });

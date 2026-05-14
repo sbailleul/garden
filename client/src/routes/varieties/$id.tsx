@@ -13,7 +13,6 @@ export const Route = createFileRoute("/varieties/$id")({
 });
 
 function VarietyDetailPage() {
-  
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery({
     queryKey: ["varieties", id],

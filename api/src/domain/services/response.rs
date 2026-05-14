@@ -61,7 +61,7 @@ pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<CellLayers> {
                                 && v.span == 1
                             {
                                 PlannedCell::SelfContained {
-                                    id: v.id.clone(),
+                                    variety_id: v.id.clone(),
                                     name: v.name.clone(),
                                     reason: v.reason.clone(),
                                     plants_per_cell: v.plants_per_cell,
@@ -69,7 +69,7 @@ pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<CellLayers> {
                                 }
                             } else if (row_idx, col_idx) == (v.anchor.row, v.anchor.col) {
                                 PlannedCell::Overflowing {
-                                    id: v.id.clone(),
+                                    variety_id: v.id.clone(),
                                     name: v.name.clone(),
                                     reason: v.reason.clone(),
                                     plants_per_cell: v.plants_per_cell,
@@ -84,9 +84,7 @@ pub fn build_grid_cells(grid: &GardenGrid) -> Matrix<CellLayers> {
                             };
                             PlannedCellLayer {
                                 stratum_id: v.stratum_id.clone(),
-                                stratum_name: v.stratum_id.clone(), // resolved by repo at read time; fallback to id here
                                 cultivation_mode_id: v.cultivation_mode_id.clone(),
-                                cultivation_mode_name: v.cultivation_mode_id.clone(),
                                 cell: planned,
                             }
                         })

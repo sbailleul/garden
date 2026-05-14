@@ -19,7 +19,7 @@ pub enum PlannedCell {
     /// A plant that fits entirely within one 30 cm x 30 cm cell.
     #[serde(rename_all = "camelCase")]
     SelfContained {
-        id: String,
+        variety_id: String,
         name: String,
         reason: String,
         plants_per_cell: u32,
@@ -30,7 +30,7 @@ pub enum PlannedCell {
     /// The anchor (top-left) cell of a plant that overflows into neighbouring cells.
     #[serde(rename_all = "camelCase")]
     Overflowing {
-        id: String,
+        variety_id: String,
         name: String,
         reason: String,
         plants_per_cell: u32,
@@ -54,7 +54,7 @@ impl PlannedCell {
     /// Returns the variety id if this cell is an anchor (`SelfContained` or `Overflowing`).
     pub fn id(&self) -> Option<&str> {
         match self {
-            Self::SelfContained { id, .. } | Self::Overflowing { id, .. } => Some(id),
+            Self::SelfContained { variety_id: id, .. } | Self::Overflowing { variety_id: id, .. } => Some(id),
             _ => None,
         }
     }
@@ -100,7 +100,7 @@ impl PlannedCell {
 #[serde(rename_all = "camelCase")]
 pub struct SowingTask {
     /// Variety identifier.
-    pub id: String,
+    pub variety_id: String,
     /// Human-readable variety name.
     pub name: String,
     /// Start date of the target transplanting week.
@@ -113,9 +113,7 @@ pub struct SowingTask {
 #[serde(rename_all = "camelCase")]
 pub struct PlannedCellLayer {
     pub stratum_id: String,
-    pub stratum_name: String,
     pub cultivation_mode_id: String,
-    pub cultivation_mode_name: String,
     pub cell: PlannedCell,
 }
 

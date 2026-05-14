@@ -1,11 +1,9 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use serde::Deserialize;
 
+pub use crate::application::models::responses::VarietyResponse;
 use crate::application::ports::{Page, RepositoryError};
-use crate::domain::models::variety::{
-    Category, CultivationMode, Lifecycle, Region, RegionCalendar, SoilType, SunExposure,
-};
+use crate::domain::models::variety::{Category, Lifecycle, Region, SoilType, SunExposure};
 
 /// Filters for the variety listing endpoints.
 ///
@@ -21,32 +19,6 @@ pub struct VarietyListFilter {
     pub region: Option<Region>,
     pub vegetable_id: Option<String>,
     pub search: Option<String>,
-}
-
-/// HTTP-facing flat representation of a variety.
-///
-/// Returned directly by the [`VarietyResponseRepository`] so handlers never
-/// need to build a full domain [`Variety`] (with its embedded [`Vegetable`])
-/// just to flatten it back down for the API response.
-///
-/// [`Variety`]: crate::domain::models::variety::Variety
-/// [`Vegetable`]: crate::domain::models::vegetable::Vegetable
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct VarietyResponse {
-    pub id: String,
-    pub vegetable_id: String,
-    pub name: String,
-    pub latin_name: String,
-    pub calendars: Vec<RegionCalendar>,
-    pub sun_requirement: Vec<SunExposure>,
-    pub soil_types: Vec<SoilType>,
-    pub cultivation_modes: Vec<CultivationMode>,
-    pub days_to_harvest: u32,
-    pub days_to_plant: u32,
-    pub lifecycle: Lifecycle,
-    pub beginner_friendly: bool,
-    pub category: Category,
 }
 
 /// Outbound port: provides read access to the variety catalogue returning

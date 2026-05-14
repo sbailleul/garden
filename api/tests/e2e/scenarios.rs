@@ -209,7 +209,7 @@ async fn scenario_sown_seeds_appear_in_plan() {
                         .cloned()
                         .unwrap_or_default()
                         .into_iter()
-                        .filter_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+                        .filter_map(|layer| layer["cell"]["varietyId"].as_str().map(String::from))
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>()
@@ -262,7 +262,7 @@ async fn scenario_sowing_tasks_computed_per_week() {
         .iter()
         .flat_map(|w| w["sowingTasks"].as_array().unwrap_or(&vec![]).to_owned())
         .all(|task| {
-            task["id"].is_string()
+            task["varietyId"].is_string()
                 && task["name"].is_string()
                 && task["targetWeekStart"].is_string()
         });

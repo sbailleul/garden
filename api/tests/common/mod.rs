@@ -68,7 +68,7 @@ pub fn cell_id(cell: &serde_json::Value) -> Option<String> {
     cell["layers"]
         .as_array()?
         .iter()
-        .find_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+        .find_map(|layer| layer["cell"]["varietyId"].as_str().map(String::from))
 }
 
 /// Returns `true` if any layer of a `CellLayers` response cell has the given variety id.
@@ -78,7 +78,7 @@ pub fn cell_contains_id(cell: &serde_json::Value, id: &str) -> bool {
         .map(|layers| {
             layers
                 .iter()
-                .any(|layer| layer["cell"]["id"].as_str() == Some(id))
+                .any(|layer| layer["cell"]["varietyId"].as_str() == Some(id))
         })
         .unwrap_or(false)
 }
@@ -96,7 +96,7 @@ pub fn collect_placed_ids(body: &serde_json::Value) -> Vec<String> {
                 .cloned()
                 .unwrap_or_default()
                 .into_iter()
-                .filter_map(|layer| layer["cell"]["id"].as_str().map(String::from))
+                .filter_map(|layer| layer["cell"]["varietyId"].as_str().map(String::from))
                 .collect::<Vec<_>>()
         })
         .collect()

@@ -1,6 +1,6 @@
 use utoipa::OpenApi;
 
-use crate::adapters::inbound::http::dto::VarietyResponse;
+use crate::application::models::responses::VarietyResponse;
 use crate::adapters::inbound::http::hateoas::{
     CompanionsApiResponse, ErrorResponse, GroupApiResponse, GroupsApiResponse, Link, Pagination,
     PlanApiResponse, VarietiesApiResponse, VarietyApiResponse, VegetableApiResponse,
