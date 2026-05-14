@@ -130,6 +130,8 @@ mod tests {
                 id: "tomato-standard".into(),
                 name: "Standard".into(),
                 spacing_cm: 50,
+                min_height_cm: 40,
+                max_height_cm: 120,
                 stratum: crate::domain::models::variety::Stratum {
                     id: "intermediate".into(),
                     name: "Intermediate".into(),
@@ -186,6 +188,8 @@ mod tests {
                 id: "tomato-standard".into(),
                 name: "Standard".into(),
                 spacing_cm: 50,
+                min_height_cm: 40,
+                max_height_cm: 120,
                 stratum: crate::domain::models::variety::Stratum {
                     id: "intermediate".into(),
                     name: "Intermediate".into(),
@@ -243,6 +247,8 @@ mod tests {
                 id: "tomato-standard".into(),
                 name: "Standard".into(),
                 spacing_cm: 50,
+                min_height_cm: 40,
+                max_height_cm: 120,
                 stratum: crate::domain::models::variety::Stratum {
                     id: "intermediate".into(),
                     name: "Intermediate".into(),

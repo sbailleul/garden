@@ -11,10 +11,12 @@ use crate::domain::models::{
     group::Group,
     request::{Level, Period, PreferenceEntry, SowingRecord},
     response::{
-        CompanionInfo, CompanionsResponse, PlanResponse, PlannedCell, SowingTask, WeeklyPlan,
+        CellLayers, CompanionInfo, CompanionsResponse, PlanResponse, PlannedCell, PlannedCellLayer,
+        SowingTask, WeeklyPlan,
     },
     variety::{
-        CalendarWindow, Category, Lifecycle, Month, Region, RegionCalendar, SoilType, SunExposure,
+        CalendarWindow, Category, CultivationMode, Lifecycle, Month, Region, RegionCalendar,
+        SoilType, Stratum, SunExposure,
     },
     vegetable::Vegetable,
     Coordinate,
@@ -46,6 +48,8 @@ use crate::domain::models::{
             SoilType, SunExposure, Region, Category, Lifecycle, Level, Month,
             // Variety calendar
             CalendarWindow, RegionCalendar,
+            // Cultivation mode
+            CultivationMode, Stratum,
             // Variety response DTO
             VarietyResponse,
             // Group
@@ -55,7 +59,8 @@ use crate::domain::models::{
             // Plan request
             LayoutCell, PreferenceEntry, Period, SowingRecord, PlanRequest,
             // Plan response
-            Coordinate, PlannedCell, SowingTask, WeeklyPlan, PlanResponse,
+            Coordinate, PlannedCell, PlannedCellLayer, CellLayers, SowingTask, WeeklyPlan,
+            PlanResponse,
             // Companions
             CompanionInfo, CompanionsResponse,
             // Shared

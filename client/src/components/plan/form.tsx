@@ -42,7 +42,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
 function cellColour(cell: CellLayers): string {
   if (cell.blocked) return "bg-gray-300";
   if (cell.layers.length === 0) return "bg-muted/30";
-  const first = cell.layers[0].cell;
+  const first = cell.layers[0]!.cell;
   if (first.type === "Overflowed") return "bg-blue-50";
   return CATEGORY_COLOURS["Fruit"] ?? "bg-blue-100 text-blue-800";
 }
@@ -50,7 +50,7 @@ function cellColour(cell: CellLayers): string {
 function cellLabel(cell: CellLayers): string {
   if (cell.blocked) return "✕";
   if (cell.layers.length === 0) return "";
-  const first = cell.layers[0].cell;
+  const first = cell.layers[0]!.cell;
   if (first.type === "SelfContained" || first.type === "Overflowing") {
     return first.name.slice(0, 3).toUpperCase();
   }

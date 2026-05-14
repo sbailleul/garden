@@ -22,13 +22,16 @@ pub fn companion_score(vegetable: &Vegetable, neighbor_vegetable_ids: &[&str]) -
     score
 }
 
-/// Returns a shade penalty when a canopy plant is placed over lower-stratum occupants.
-/// The penalty is -2 per distinct co-occupant that would be shaded.
+/// Returns a shade penalty for co-occupants that are shorter than the placed plant.
+///
+/// Any co-occupant whose `max_height_cm` is strictly less than the placed plant's
+/// `max_height_cm` is considered shaded and incurs a `-2` penalty.
 pub fn shade_penalty(mode: &CultivationMode, co_occupants: &[&PlacedVariety]) -> i32 {
-    if mode.stratum.id != "canopy" || co_occupants.is_empty() {
-        return 0;
-    }
-    SHADE_PENALTY * co_occupants.len() as i32
+    let shaded = co_occupants
+        .iter()
+        .filter(|v| v.max_height_cm < mode.max_height_cm)
+        .count();
+    SHADE_PENALTY * shaded as i32
 }
 
 /// Returns true if the two vegetables are compatible (neither appears in the other's bad_companions list).
@@ -124,5 +127,104 @@ mod tests {
         let radish = get("radish");
         // Lettuce and radish → compatible (good companions)
         assert!(is_compatible(&lettuce, &radish));
+    }
+
+    // ---------------------------------------------------------------------------
+    // shade_penalty
+    // ---------------------------------------------------------------------------
+
+    fn make_placed_for_shade(max_height_cm: u32) -> PlacedVariety {
+        use crate::domain::models::variety::Lifecycle;
+        PlacedVariety {
+            id: "test".into(),
+            vegetable_id: "test".into(),
+            name: "Test".into(),
+            reason: "Test".into(),
+            plants_per_cell: 1,
+            span: 1,
+            anchor: crate::domain::models::Coordinate { row: 0, col: 0 },
+            planted_week: 0,
+            days_to_harvest: 60,
+            estimated_harvest_date: chrono::NaiveDate::from_ymd_opt(2025, 8, 1).unwrap(),
+            lifecycle: Lifecycle::Annual,
+            stratum_id: "intermediate".into(),
+            cultivation_mode_id: "test-standard".into(),
+            max_height_cm,
+        }
+    }
+
+    fn make_mode_for_shade(max_height_cm: u32) -> CultivationMode {
+        use crate::domain::models::variety::Stratum;
+        CultivationMode {
+            id: "test-mode".into(),
+            name: "Test".into(),
+            stratum: Stratum {
+                id: "intermediate".into(),
+                name: "Intermediate".into(),
+            },
+            spacing_cm: 40,
+            min_height_cm: 40,
+            max_height_cm,
+        }
+    }
+
+    #[test]
+    fn test_shade_penalty_taller_plant_shades_shorter_co_occupant() {
+        // Placed plant max 120 cm > co-occupant max 40 cm → penalty applied
+        let mode = make_mode_for_shade(120);
+        let short = make_placed_for_shade(40);
+        let penalty = shade_penalty(&mode, &[&short]);
+        assert_eq!(
+            penalty, SHADE_PENALTY,
+            "Taller plant must shade shorter co-occupant"
+        );
+    }
+
+    #[test]
+    fn test_shade_penalty_equal_height_no_penalty() {
+        // Same height → no shade
+        let mode = make_mode_for_shade(120);
+        let same = make_placed_for_shade(120);
+        let penalty = shade_penalty(&mode, &[&same]);
+        assert_eq!(penalty, 0, "Equal-height plants must not shade each other");
+    }
+
+    #[test]
+    fn test_shade_penalty_shorter_plant_no_penalty() {
+        // Placed plant max 40 cm < co-occupant max 120 cm → no penalty
+        let mode = make_mode_for_shade(40);
+        let tall = make_placed_for_shade(120);
+        let penalty = shade_penalty(&mode, &[&tall]);
+        assert_eq!(
+            penalty, 0,
+            "Shorter placed plant must not shade taller co-occupant"
+        );
+    }
+
+    #[test]
+    fn test_shade_penalty_no_co_occupants() {
+        let mode = make_mode_for_shade(220);
+        let penalty = shade_penalty(&mode, &[]);
+        assert_eq!(penalty, 0, "No co-occupants means no shade penalty");
+    }
+
+    #[test]
+    fn test_shade_penalty_multiple_co_occupants() {
+        // Placed plant 220 cm; two short co-occupants (40 cm each) → 2 × penalty
+        let mode = make_mode_for_shade(220);
+        let short1 = make_placed_for_shade(40);
+        let short2 = make_placed_for_shade(40);
+        let penalty = shade_penalty(&mode, &[&short1, &short2]);
+        assert_eq!(penalty, SHADE_PENALTY * 2);
+    }
+
+    #[test]
+    fn test_shade_penalty_mixed_co_occupants() {
+        // Placed plant 220 cm; one short (40 cm) + one tall (220 cm) → only 1 × penalty
+        let mode = make_mode_for_shade(220);
+        let short = make_placed_for_shade(40);
+        let tall = make_placed_for_shade(220);
+        let penalty = shade_penalty(&mode, &[&short, &tall]);
+        assert_eq!(penalty, SHADE_PENALTY);
     }
 }

@@ -18,6 +18,8 @@ fn intermediate_mode(variety_id: &str, spacing_cm: u32) -> CultivationMode {
         id: format!("{variety_id}-standard"),
         name: "Standard".into(),
         spacing_cm,
+        min_height_cm: 40,
+        max_height_cm: 120,
         stratum: Stratum {
             id: "intermediate".into(),
             name: "Intermediate".into(),
@@ -31,6 +33,8 @@ fn ground_cover_mode(variety_id: &str, spacing_cm: u32) -> CultivationMode {
         id: format!("{variety_id}-standard"),
         name: "Standard".into(),
         spacing_cm,
+        min_height_cm: 10,
+        max_height_cm: 40,
         stratum: Stratum {
             id: "ground-cover".into(),
             name: "Ground Cover".into(),
@@ -44,6 +48,8 @@ fn canopy_mode(variety_id: &str, spacing_cm: u32) -> CultivationMode {
         id: format!("{variety_id}-standard"),
         name: "Standard".into(),
         spacing_cm,
+        min_height_cm: 100,
+        max_height_cm: 220,
         stratum: Stratum {
             id: "canopy".into(),
             name: "Canopy".into(),

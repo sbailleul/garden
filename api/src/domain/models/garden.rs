@@ -29,6 +29,8 @@ pub struct PlacedVariety {
     pub stratum_id: String,
     /// Identifier of the cultivation mode used for this placement.
     pub cultivation_mode_id: String,
+    /// Maximum plant height (cm) for this cultivation mode — used for shade scoring.
+    pub max_height_cm: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

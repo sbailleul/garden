@@ -510,3 +510,26 @@ async fn test_variety_response_list_page_by_vegetable_with_filter() {
         assert_eq!(item.lifecycle, Lifecycle::Annual);
     }
 }
+
+#[tokio::test]
+async fn test_variety_response_cultivation_modes_have_height_fields() {
+    let pool = test_pool().await;
+    let repo = PostgresVarietyResponseRepository::new(pool);
+    let variety = repo
+        .get_by_id("tomato", "en")
+        .await
+        .expect("get_by_id failed")
+        .expect("tomato must exist");
+    assert!(
+        !variety.cultivation_modes.is_empty(),
+        "tomato must have at least one cultivation mode"
+    );
+    for mode in &variety.cultivation_modes {
+        assert!(
+            mode.max_height_cm > 0,
+            "max_height_cm must be > 0 after V10 migration, got {} for mode {}",
+            mode.max_height_cm,
+            mode.id
+        );
+    }
+}

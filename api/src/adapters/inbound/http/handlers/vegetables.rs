@@ -42,6 +42,7 @@ fn default_size() -> usize {
 /// Combined pagination + filter query parameters for the
 /// `GET /api/vegetables/{id}/varieties` endpoint.
 #[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VarietyByVegetableQueryParams {
     #[serde(default = "default_page")]
     pub page: usize,
@@ -194,9 +195,9 @@ pub async fn get_vegetable(
         ("size" = Option<usize>, Query, description = "Items per page (default: 20)."),
         ("category" = Option<String>, Query, description = "Filter by category (e.g. `Fruit`, `Herb`)."),
         ("lifecycle" = Option<String>, Query, description = "Filter by lifecycle (`Annual`, `Biennial`, `Perennial`)."),
-        ("beginner_friendly" = Option<bool>, Query, description = "Filter to beginner-friendly varieties only."),
-        ("sun_requirement" = Option<String>, Query, description = "Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`)."),
-        ("soil_type" = Option<String>, Query, description = "Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`)."),
+        ("beginnerFriendly" = Option<bool>, Query, description = "Filter to beginner-friendly varieties only."),
+        ("sunRequirement" = Option<String>, Query, description = "Filter by sun exposure (`FullSun`, `PartialShade`, `Shade`)."),
+        ("soilType" = Option<String>, Query, description = "Filter by soil type (`Clay`, `Sandy`, `Loamy`, `Chalky`, `Humus`)."),
         ("region" = Option<String>, Query, description = "Filter by region (`Temperate`, `Mediterranean`, `Oceanic`, `Continental`, `Mountain`)."),
         ("search" = Option<String>, Query, description = "Case-insensitive substring search on the translated variety name."),
         ("Accept-Language" = Option<String>, Header, description = "BCP 47 language tag (e.g. `fr`, `en`). Falls back to `en`.")

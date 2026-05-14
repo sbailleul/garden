@@ -194,7 +194,7 @@ async fn test_filter_by_category_herb() {
 async fn test_filter_by_beginner_friendly_true() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties?beginner_friendly=true&size=100")
+        .uri("/api/varieties?beginnerFriendly=true&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
@@ -212,7 +212,7 @@ async fn test_filter_by_beginner_friendly_true() {
 async fn test_filter_by_beginner_friendly_false_excludes_true() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties?beginner_friendly=false&size=100")
+        .uri("/api/varieties?beginnerFriendly=false&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
@@ -238,7 +238,7 @@ async fn test_filter_by_beginner_friendly_false_excludes_true() {
 async fn test_filter_by_sun_requirement_full_sun() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties?sun_requirement=FullSun&size=100")
+        .uri("/api/varieties?sunRequirement=FullSun&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
@@ -261,7 +261,7 @@ async fn test_filter_by_sun_requirement_full_sun() {
 async fn test_filter_by_soil_type_loamy() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties?soil_type=Loamy&size=100")
+        .uri("/api/varieties?soilType=Loamy&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
@@ -284,7 +284,7 @@ async fn test_filter_by_soil_type_loamy() {
 async fn test_filter_by_vegetable_id() {
     let app = test::init_service(build_app_postgres().await).await;
     let req = test::TestRequest::get()
-        .uri("/api/varieties?vegetable_id=pepper&size=100")
+        .uri("/api/varieties?vegetableId=pepper&size=100")
         .to_request();
     let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
     let items = body["payload"].as_array().expect("payload must be array");
@@ -391,5 +391,35 @@ async fn test_combined_filter_category_and_lifecycle() {
     for item in items {
         assert_eq!(item["payload"]["category"].as_str().unwrap(), "Herb");
         assert_eq!(item["payload"]["lifecycle"].as_str().unwrap(), "Perennial");
+    }
+}
+
+#[actix_web::test]
+async fn test_variety_cultivation_modes_have_height_fields() {
+    let app = test::init_service(build_app_postgres().await).await;
+    let req = test::TestRequest::get()
+        .uri("/api/varieties/tomato")
+        .to_request();
+    let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+    let modes = body["payload"]["cultivationModes"]
+        .as_array()
+        .expect("cultivationModes must be an array");
+    assert!(
+        !modes.is_empty(),
+        "tomato must have at least one cultivation mode"
+    );
+    for mode in modes {
+        let min = mode
+            .get("minHeightCm")
+            .expect("each mode must have minHeightCm");
+        let max = mode
+            .get("maxHeightCm")
+            .expect("each mode must have maxHeightCm");
+        assert!(min.is_number(), "minHeightCm must be a number, got: {min}");
+        assert!(max.is_number(), "maxHeightCm must be a number, got: {max}");
+        assert!(
+            max.as_u64().unwrap() > 0,
+            "maxHeightCm must be > 0 after V10 migration, got: {max}"
+        );
     }
 }

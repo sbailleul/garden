@@ -94,8 +94,8 @@ fn row_to_variety(
 }
 
 /// Parses the `cultivation_modes` JSON aggregate column into domain objects.
-/// Expected JSON shape per element (camelCase to match serde attributes):
-/// `{ "id": "...", "name": "...", "spacingCm": 60, "stratum": { "id": "...", "name": "..." } }`
+/// Expected JSON shape per element (snake_case SQL keys, no serde rename):
+/// `{ "id": "...", "name": "...", "spacing_cm": 60, "stratum_id": "...", "stratum_name": "...", "min_height_cm": 10, "max_height_cm": 40 }`
 fn parse_cultivation_modes(json: JsonValue) -> Result<Vec<CultivationMode>, serde_json::Error> {
     #[derive(serde::Deserialize)]
     struct RawMode {
@@ -104,6 +104,8 @@ fn parse_cultivation_modes(json: JsonValue) -> Result<Vec<CultivationMode>, serd
         spacing_cm: u32,
         stratum_id: String,
         stratum_name: String,
+        min_height_cm: u32,
+        max_height_cm: u32,
     }
 
     let raw: Vec<RawMode> = serde_json::from_value(json)?;
@@ -113,6 +115,8 @@ fn parse_cultivation_modes(json: JsonValue) -> Result<Vec<CultivationMode>, serd
             id: m.id,
             name: m.name,
             spacing_cm: m.spacing_cm,
+            min_height_cm: m.min_height_cm,
+            max_height_cm: m.max_height_cm,
             stratum: Stratum {
                 id: m.stratum_id,
                 name: m.stratum_name,
@@ -228,7 +232,9 @@ const SELECT_COLUMNS: &str = r#"
                         'name',        COALESCE(cmt_req.name, cmt_en.name),
                         'spacing_cm',  cm.spacing_cm,
                         'stratum_id',  cm.stratum_id,
-                        'stratum_name', COALESCE(st_req.name, st_en.name))
+                        'stratum_name', COALESCE(st_req.name, st_en.name),
+                        'min_height_cm', cm.min_height_cm,
+                        'max_height_cm', cm.max_height_cm)
                     ORDER BY cm.id)
              FROM cultivation_modes cm
              LEFT JOIN cultivation_mode_translations cmt_req

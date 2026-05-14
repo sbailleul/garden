@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-
 import { fetchVariety } from "@/api/varieties";
 import { VarietyDetail } from "@/components/varieties/variety-detail";
 
@@ -14,6 +13,7 @@ export const Route = createFileRoute("/varieties/$id")({
 });
 
 function VarietyDetailPage() {
+  
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery({
     queryKey: ["varieties", id],

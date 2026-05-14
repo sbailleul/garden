@@ -177,6 +177,10 @@ pub struct CultivationMode {
     pub stratum: Stratum,
     /// Centre-to-centre spacing in centimetres.
     pub spacing_cm: u32,
+    /// Minimum plant height in centimetres for this cultivation mode.
+    pub min_height_cm: u32,
+    /// Maximum plant height in centimetres for this cultivation mode.
+    pub max_height_cm: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

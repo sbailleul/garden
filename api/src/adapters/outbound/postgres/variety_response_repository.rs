@@ -77,6 +77,8 @@ fn parse_cultivation_modes_response(
         spacing_cm: u32,
         stratum_id: String,
         stratum_name: String,
+        min_height_cm: u32,
+        max_height_cm: u32,
     }
 
     let raw: Vec<RawMode> = serde_json::from_value(json)?;
@@ -86,6 +88,8 @@ fn parse_cultivation_modes_response(
             id: m.id,
             name: m.name,
             spacing_cm: m.spacing_cm,
+            min_height_cm: m.min_height_cm,
+            max_height_cm: m.max_height_cm,
             stratum: Stratum {
                 id: m.stratum_id,
                 name: m.stratum_name,
@@ -120,7 +124,9 @@ const SELECT_COLUMNS: &str = r#"
                         'name',        COALESCE(cmt_req.name, cmt_en.name),
                         'spacing_cm',  cm.spacing_cm,
                         'stratum_id',  cm.stratum_id,
-                        'stratum_name', COALESCE(st_req.name, st_en.name))
+                        'stratum_name', COALESCE(st_req.name, st_en.name),
+                        'min_height_cm', cm.min_height_cm,
+                        'max_height_cm', cm.max_height_cm)
                     ORDER BY cm.id)
              FROM cultivation_modes cm
              LEFT JOIN cultivation_mode_translations cmt_req

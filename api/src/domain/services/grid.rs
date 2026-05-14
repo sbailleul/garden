@@ -79,6 +79,7 @@ pub fn initialize_grid(
                         lifecycle: variety.lifecycle.clone(),
                         stratum_id: mode.stratum.id.clone(),
                         cultivation_mode_id: mode.id.clone(),
+                        max_height_cm: mode.max_height_cm,
                     };
                     grid.cells[r][c]
                         .layers
@@ -121,6 +122,7 @@ pub fn initialize_grid(
                         lifecycle: variety.lifecycle.clone(),
                         stratum_id: mode.stratum.id.clone(),
                         cultivation_mode_id: mode.id.clone(),
+                        max_height_cm: mode.max_height_cm,
                     };
                     grid.cells[r][c]
                         .layers

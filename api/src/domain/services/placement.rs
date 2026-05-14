@@ -75,6 +75,7 @@ pub fn fill_block(
         lifecycle: variety.lifecycle.clone(),
         stratum_id: mode.stratum.id.clone(),
         cultivation_mode_id: mode.id.clone(),
+        max_height_cm: mode.max_height_cm,
     };
     for dr in 0..span {
         for dc in 0..span {
@@ -249,6 +250,7 @@ mod tests {
             lifecycle,
             stratum_id: "ground-cover".into(),
             cultivation_mode_id: "test-standard".into(),
+            max_height_cm: 40,
         }
     }
 
