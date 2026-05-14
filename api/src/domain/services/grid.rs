@@ -1,5 +1,6 @@
 use chrono::{Duration, NaiveDate};
 
+use crate::domain::models::garden::PlacedVariety;
 use crate::domain::models::{
     garden::GardenGrid, request::LayoutCell, variety::Region, warnings::Warnings, Coordinate,
 };
@@ -53,9 +54,10 @@ pub fn initialize_grid(
                 LayoutCell::SelfContained {
                     variety,
                     plants_per_cell: ppc_input,
+                    cultivation_mode_id,
                     planted_date,
                 } => {
-                    let mode = variety.default_mode();
+                    let mode = variety.mode_or_default(cultivation_mode_id.as_deref());
                     let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(mode.spacing_cm));
                     let effective_date = planted_date
                         .unwrap_or_else(|| infer_planted_date(variety, region, planning_start));
@@ -64,7 +66,7 @@ pub fn initialize_grid(
                         Some(effective_date),
                         planning_start,
                     );
-                    let placed = crate::domain::models::garden::PlacedVariety {
+                    let placed = PlacedVariety {
                         id: variety.id.clone(),
                         vegetable_id: variety.vegetable.id.clone(),
                         name: variety.name.clone(),
@@ -91,11 +93,12 @@ pub fn initialize_grid(
                 LayoutCell::Overflowing {
                     variety,
                     plants_per_cell: ppc_input,
+                    cultivation_mode_id,
                     width_cells,
                     length_cells,
                     planted_date,
                 } => {
-                    let mode = variety.default_mode();
+                    let mode = variety.mode_or_default(cultivation_mode_id.as_deref());
                     let span = cell_span(mode.spacing_cm);
                     let ppc = ppc_input.unwrap_or_else(|| plants_per_cell(mode.spacing_cm));
                     let w = width_cells.unwrap_or(span);

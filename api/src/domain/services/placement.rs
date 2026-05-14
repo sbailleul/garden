@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 
 use crate::domain::models::{
-    garden::GardenGrid,
-    variety::{CultivationMode, Variety},
-    Coordinate,
+    Coordinate, garden::{GardenGrid, PlacedVariety}, variety::{CultivationMode, Variety}
 };
 use crate::domain::services::companion::{companion_score, shade_penalty};
 use crate::domain::services::helpers::{cell_span, plants_per_cell};
@@ -61,7 +59,7 @@ pub fn fill_block(
 ) {
     let span = cell_span(mode.spacing_cm) as usize;
     let ppc = plants_per_cell(mode.spacing_cm);
-    let placed = crate::domain::models::garden::PlacedVariety {
+    let placed = PlacedVariety {
         id: variety.id.clone(),
         vegetable_id: variety.vegetable.id.clone(),
         name: variety.name.clone(),

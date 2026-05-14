@@ -21,6 +21,8 @@ pub enum LayoutCell {
         id: String,
         /// Number of plants per cell. Computed from the variety's spacing if absent.
         plants_per_cell: Option<u32>,
+        /// Cultivation mode id selected by the user. Falls back to the variety's default mode when absent.
+        cultivation_mode_id: Option<String>,
         /// Date when this plant was put in the ground (ISO 8601, e.g. `"2025-05-01"`).
         /// When provided, it is used to free the cell after harvest and compute
         /// `estimatedHarvestDate` in the response.
@@ -33,6 +35,8 @@ pub enum LayoutCell {
         id: String,
         /// Number of plants per cell. Computed from the variety's spacing if absent.
         plants_per_cell: Option<u32>,
+        /// Cultivation mode id selected by the user. Falls back to the variety's default mode when absent.
+        cultivation_mode_id: Option<String>,
         /// Block width in grid cells. Computed from the variety's spacing if absent.
         width_cells: Option<u32>,
         /// Block length in grid cells. Computed from the variety's spacing if absent.

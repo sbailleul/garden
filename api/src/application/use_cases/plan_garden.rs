@@ -108,17 +108,20 @@ impl<'a> PlanGardenUseCase<'a> {
                             RawLayoutCell::SelfContained {
                                 id,
                                 plants_per_cell,
+                                cultivation_mode_id,
                                 planted_date,
                             } => lookup.get(id).map_or(LayoutCell::Empty, |v| {
                                 LayoutCell::SelfContained {
                                     variety: v.clone(),
                                     plants_per_cell: *plants_per_cell,
+                                    cultivation_mode_id: cultivation_mode_id.clone(),
                                     planted_date: *planted_date,
                                 }
                             }),
                             RawLayoutCell::Overflowing {
                                 id,
                                 plants_per_cell,
+                                cultivation_mode_id,
                                 width_cells,
                                 length_cells,
                                 planted_date,
@@ -126,6 +129,7 @@ impl<'a> PlanGardenUseCase<'a> {
                                 LayoutCell::Overflowing {
                                     variety: v.clone(),
                                     plants_per_cell: *plants_per_cell,
+                                    cultivation_mode_id: cultivation_mode_id.clone(),
                                     width_cells: *width_cells,
                                     length_cells: *length_cells,
                                     planted_date: *planted_date,
