@@ -20,6 +20,7 @@ pub enum PlannedCell {
     #[serde(rename_all = "camelCase")]
     SelfContained {
         variety_id: String,
+        vegetable_id: String,
         name: String,
         reason: String,
         plants_per_cell: u32,
@@ -31,6 +32,7 @@ pub enum PlannedCell {
     #[serde(rename_all = "camelCase")]
     Overflowing {
         variety_id: String,
+        vegetable_id: String,
         name: String,
         reason: String,
         plants_per_cell: u32,
